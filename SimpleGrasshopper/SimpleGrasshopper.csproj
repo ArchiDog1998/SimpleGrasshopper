@@ -26,7 +26,6 @@
 	  <Pack>True</Pack>
 	  <PackagePath>\</PackagePath>
 	</None>
-	<ProjectReference Include="..\SimpleGrasshopper.SourceGenerators\SimpleGrasshopper.SourceGenerators.csproj" />
   </ItemGroup>
 	
 </Project>
