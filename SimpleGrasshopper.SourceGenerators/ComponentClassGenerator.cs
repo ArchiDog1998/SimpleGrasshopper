@@ -1,8 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Immutable;
-using System.ComponentModel;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -46,9 +44,10 @@ public class ComponentClassGenerator : IIncrementalGenerator
                 continue;
             }
 
-            var nameSpace = GetParent<NamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? GetParent<FileScopedNamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? "Null";
+            var nameSpace = GetParent<NamespaceDeclarationSyntax>(syntax)?.Name.ToString()
+                ?? GetParent<FileScopedNamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? "Null";
 
-            var className = GetParent<ClassDeclarationSyntax>(syntax)?.Identifier.Text ?? "Null";
+            var className = GetParent<TypeDeclarationSyntax>(syntax)?.Identifier.Text ?? "Null";
 
             var methodName = syntax.Identifier.Text;
 
@@ -65,7 +64,7 @@ public class ComponentClassGenerator : IIncrementalGenerator
             //Obsolete
             if (syntax.AttributeLists.Any(list => list.Attributes.Any(attr => attr.Name.ToString() is "Obsolete" or "ObsoleteAttribute" or "System.Obsolete" or "System.ObsoleteAttribute")))
             {
-                codeClassName += "Obsolete";
+                codeClassName += "_Obsolete";
             }
 
             var code = $$"""
