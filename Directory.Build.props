@@ -1,0 +1,9 @@
+<Project>
+    <PropertyGroup>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Authors>秋水</Authors>
+		<Version>0.9.0</Version>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+    </PropertyGroup>
+</Project>
