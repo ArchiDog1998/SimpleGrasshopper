@@ -28,6 +28,7 @@ public abstract class MethodComponent(MethodInfo methodInfo)
 
             var assembly = GetType().Assembly;
             var name = assembly.GetManifestResourceNames().FirstOrDefault(n => n.EndsWith(path));
+            if(name == null) return base.Icon;
             using var stream = assembly.GetManifestResourceStream(name);
             if (stream == null) return base.Icon;
             return _icon = new (stream);
@@ -210,9 +211,7 @@ public abstract class MethodComponent(MethodInfo methodInfo)
                 }];
 
             method.MakeGenericMethod(type.IsEnum ? typeof(int) : type).Invoke(DA, pms);
-            return access != GH_ParamAccess.item ? pms[1]
-                : type.IsEnum ? Enum.ToObject(type, pms[1])
-                : Convert.ChangeType(pms[1], type);
+            return access != GH_ParamAccess.item ? pms[1] : pms[1].ChangeType(type);
 
             static MethodInfo GetDaMethod(IGH_DataAccess DA, string name)
             {

@@ -1,36 +1,22 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using SimpleGrasshopper.SourceGenerators;
 using System.Collections.Immutable;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace SimpleGrasshopper.Generators;
 
 [Generator(LanguageNames.CSharp)]
-public class ComponentClassGenerator : IIncrementalGenerator
+public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
 {
-    public void Initialize(IncrementalGeneratorInitializationContext context)
+    protected override void Execute(SourceProductionContext context, ImmutableArray<MethodDeclarationSyntax> syntaxes)
     {
-        var provider = context.SyntaxProvider.ForAttributeWithMetadataName("SimpleGrasshopper.Attributes.DocObjAttribute",
-            static (node, _) => node is MethodDeclarationSyntax,
-            static(n, ct) => (MethodDeclarationSyntax)n.TargetNode)
-            .Where(m => m is not null);
+        var strings = new List<string>(syntaxes.Length);
 
-        context.RegisterSourceOutput(provider.Collect(), Execute);
-    }
-
-    private static T? GetParent<T>(SyntaxNode? node) where T : SyntaxNode
-    {
-        if (node == null) return null;
-        if (node is T result) return result;
-        return GetParent<T>(node.Parent);
-    }
-
-    private void Execute(SourceProductionContext context, ImmutableArray<MethodDeclarationSyntax> syntaxes)
-    {
-        foreach(var syntax in syntaxes)
+        foreach (var syntax in syntaxes)
         {
-            if(!syntax.Modifiers.Any(Microsoft.CodeAnalysis.CSharp.SyntaxKind.StaticKeyword))
+            var loc = syntax.ChildNodes().FirstOrDefault(n => n is PredefinedTypeSyntax)?.GetLocation() ?? syntax.GetLocation();
+
+            if (!syntax.Modifiers.Any(Microsoft.CodeAnalysis.CSharp.SyntaxKind.StaticKeyword))
             {
                 var desc = new DiagnosticDescriptor(
                 "SG0001",
@@ -40,29 +26,37 @@ public class ComponentClassGenerator : IIncrementalGenerator
                 DiagnosticSeverity.Warning,
                 true);
 
-                context.ReportDiagnostic(Diagnostic.Create(desc, syntax.ChildNodes().FirstOrDefault(n => n is PredefinedTypeSyntax)?.GetLocation() ?? syntax.GetLocation()));
-                continue;
+                context.ReportDiagnostic(Diagnostic.Create(desc, loc));
+                return;
             }
 
-            var nameSpace = GetParent<NamespaceDeclarationSyntax>(syntax)?.Name.ToString()
-                ?? GetParent<FileScopedNamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? "Null";
+            var nameSpace = GetParent<BaseNamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? "Null";
 
             var className = GetParent<TypeDeclarationSyntax>(syntax)?.Identifier.Text ?? "Null";
 
             var methodName = syntax.Identifier.Text;
 
-            string guidStr = string.Empty;
-            using (MD5 md5 = MD5.Create())
-            {
-                var guidId = string.Join(".", nameSpace, className, methodName);
-                byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes(guidId));
-                guidStr = new Guid(hash).ToString("B");
-            }
+            string guidStr = GetGuid(nameSpace, className, methodName);
 
-            var codeClassName = $"{className}_{methodName}Component";
+            if (strings.Contains(guidStr))
+            {
+                var desc = new DiagnosticDescriptor(
+                "SG0002",
+                "Same method name",
+                "The method name should be unique for creating components!",
+                "Problem",
+                DiagnosticSeverity.Error,
+                true);
+
+                context.ReportDiagnostic(Diagnostic.Create(desc, loc));
+                return;
+            }
+            strings.Add(guidStr);
+
+            var codeClassName = $"{className}_{methodName}_Component";
 
             //Obsolete
-            if (syntax.AttributeLists.Any(list => list.Attributes.Any(attr => attr.Name.ToString() is "Obsolete" or "ObsoleteAttribute" or "System.Obsolete" or "System.ObsoleteAttribute")))
+            if (IsObsolete(syntax))
             {
                 codeClassName += "_Obsolete";
             }
@@ -82,6 +76,7 @@ public class ComponentClassGenerator : IIncrementalGenerator
              """;
 
             context.AddSource($"{codeClassName}.g.cs", code);
+
         }
     }
 }

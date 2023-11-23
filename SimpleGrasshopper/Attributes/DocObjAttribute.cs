@@ -1,6 +1,6 @@
 ﻿namespace SimpleGrasshopper.Attributes;
 
-[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Parameter)]
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Parameter)]
 public class DocObjAttribute(string name, string nickName, string description) : Attribute
 {
     public string Name => name;

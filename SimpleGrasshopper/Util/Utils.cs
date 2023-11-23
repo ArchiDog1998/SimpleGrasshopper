@@ -4,13 +4,23 @@ using SimpleGrasshopper.Attributes;
 
 namespace SimpleGrasshopper.Util;
 
-internal static class ReflectionHelper
+internal static class Utils
 {
     public static string GetAssemblyName(this MethodInfo method)
     {
         var assembly = method.DeclaringType?.Assembly;
         if (assembly == null) return string.Empty;
 
+        return GetAssemblyName(assembly);
+    }
+
+    public static string GetAssemblyName(this Type type)
+    {
+        return GetAssemblyName(type.Assembly);
+    }
+
+    private static string GetAssemblyName(this Assembly assembly)
+    {
         var type = assembly.GetTypes().FirstOrDefault(t => t.IsAssignableTo(typeof(GH_AssemblyInfo)));
 
         if (type != null)
@@ -45,6 +55,21 @@ internal static class ReflectionHelper
     {
         var attr = method.GetCustomAttribute<DocObjAttribute>();
         return attr == null ? method.Name : getProperty(attr);   
+    }
+
+    public static string GetDocObjName(this Type type)
+        => GetDocObjProperty(type, a => a.Name);
+
+    public static string GetDocObjNickName(this Type type)
+        => GetDocObjProperty(type, a => a.NickName);
+
+    public static string GetDocObjDescription(this Type type)
+        => GetDocObjProperty(type, a => a.Description);
+
+    private static string GetDocObjProperty(this Type type, Func<DocObjAttribute, string> getProperty)
+    {
+        var attr = type.GetCustomAttribute<DocObjAttribute>();
+        return attr == null ? type.Name : getProperty(attr);
     }
 
     public static Type? IsGeneralType(this Type? type, Type targetType)
@@ -118,5 +143,11 @@ internal static class ReflectionHelper
             type = type.GetElementType() ?? type;
         }
         return type;
+    }
+
+    public static object ChangeType(this object obj, Type type)
+    {
+        return type.IsEnum ? Enum.ToObject(type, obj)
+                : Convert.ChangeType(obj, type);
     }
 }

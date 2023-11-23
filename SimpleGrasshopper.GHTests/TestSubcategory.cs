@@ -26,6 +26,19 @@ internal class TestSubcategory
     private static void PathTest(string hello, [Param(ParamGuids.FilePath)]string path)
     {
     }
+
+    [Exposure(Grasshopper.Kernel.GH_Exposure.secondary)]
+    [DocObj("测试4", "测", "嘤嘤嘤")]
+    private static void ParamTest(TestingData hello)
+    {
+    }
+}
+
+[Exposure(Grasshopper.Kernel.GH_Exposure.hidden)]
+[DocObj("数据类型", "数据", "好数据")]
+public struct TestingData
+{
+
 }
 
 public enum EnumTest
