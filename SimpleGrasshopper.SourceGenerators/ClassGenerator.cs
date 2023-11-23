@@ -1,5 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Immutable;
 using System.Security.Cryptography;
@@ -20,13 +19,6 @@ public abstract class ClassGenerator<T> : IIncrementalGenerator where T : Syntax
     }
 
     protected abstract void Execute(SourceProductionContext context, ImmutableArray<T> syntaxes);
-
-    protected static TS? GetParent<TS>(SyntaxNode? node) where TS : SyntaxNode
-    {
-        if (node == null) return null;
-        if (node is TS result) return result;
-        return GetParent<TS>(node.Parent);
-    }
 
     protected static string GetGuid(params string[] ids)
     {

@@ -12,6 +12,7 @@
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
     <ProjectReference Include="..\SimpleGrasshopper.SourceGenerators\SimpleGrasshopper.SourceGenerators.csproj" OutputItemType="Analyzer" />
     <ProjectReference Include="..\SimpleGrasshopper\SimpleGrasshopper.csproj" />
+	<EmbeddedResource Include="Icons\*.png"/>
   </ItemGroup>
-  
+
 </Project>

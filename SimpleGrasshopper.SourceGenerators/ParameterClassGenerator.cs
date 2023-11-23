@@ -11,7 +11,7 @@ internal class ParameterClassGenerator : ClassGenerator<TypeDeclarationSyntax>
     {
         foreach ( var syntax in syntaxes)
         {
-            var nameSpace = GetParent<BaseNamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? "Null";
+            var nameSpace = AssemblyPriorityGenerator.GetParent<BaseNamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? "Null";
 
             var className = syntax.Identifier.Text;
 

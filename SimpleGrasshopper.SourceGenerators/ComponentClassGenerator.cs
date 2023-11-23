@@ -30,9 +30,9 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
                 return;
             }
 
-            var nameSpace = GetParent<BaseNamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? "Null";
+            var nameSpace = AssemblyPriorityGenerator.GetParent<BaseNamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? "Null";
 
-            var className = GetParent<TypeDeclarationSyntax>(syntax)?.Identifier.Text ?? "Null";
+            var className = AssemblyPriorityGenerator.GetParent<TypeDeclarationSyntax>(syntax)?.Identifier.Text ?? "Null";
 
             var methodName = syntax.Identifier.Text;
 

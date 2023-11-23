@@ -4,6 +4,10 @@
     <TargetFramework>net7.0</TargetFramework>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<Title>Simple Grasshopper</Title>
+	<Description>A repo to simplify your plugin development in Grasshopper.</Description>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<RepositoryUrl>https://github.com/ArchiDog1998/SimpleGrasshopper</RepositoryUrl>
+	<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +21,11 @@
 		<Pack>true</Pack>
 		<PackagePath>lib\$(TargetFramework)</PackagePath>
 	</Content>
+	  
+	<None Include="..\README.md">
+	  <Pack>True</Pack>
+	  <PackagePath>\</PackagePath>
+	</None>
 	<ProjectReference Include="..\SimpleGrasshopper.SourceGenerators\SimpleGrasshopper.SourceGenerators.csproj" />
   </ItemGroup>
 	

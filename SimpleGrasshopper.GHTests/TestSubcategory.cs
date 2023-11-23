@@ -6,7 +6,7 @@ namespace SimpleGrasshopper.GHTests;
 [SubCategory("测试子集")]
 internal class TestSubcategory
 {
-    [Icon("SuperHelperIcon_256.png")]
+    [Icon("ConstructRenderItemComponent_24-24.png")]
     [DocObj("测试", "测", "嘤嘤嘤")]
     private static void TestMethod(
     [DocObj("秋水", "水", "嗷w")] int a,
@@ -21,6 +21,7 @@ internal class TestSubcategory
         ok = "alright";
     }
 
+    [Icon("CurveRenderAttributeParameter_24-24.png")]
     [Obsolete, Exposure(Grasshopper.Kernel.GH_Exposure.secondary)]
     [DocObj("测试3", "测", "嘤嘤嘤")]
     private static void PathTest(string hello, [Param(ParamGuids.FilePath)]string path)

@@ -1,6 +1,7 @@
 ﻿using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
+using System.Drawing;
 
 namespace SimpleGrasshopper.Util;
 
@@ -19,18 +20,28 @@ internal static class Utils
         return GetAssemblyName(type.Assembly);
     }
 
-    private static string GetAssemblyName(this Assembly assembly)
+    public static string GetAssemblyName(this Assembly assembly)
     {
         var type = assembly.GetTypes().FirstOrDefault(t => t.IsAssignableTo(typeof(GH_AssemblyInfo)));
 
         if (type != null)
         {
-            var category = typeof(GH_AssemblyInfo).GetRuntimeProperty("Name")?.GetValue(Activator.CreateInstance(type)) as string;
-
-            if (category != null) return category;
+            if (typeof(GH_AssemblyInfo).GetRuntimeProperty("Name")?.GetValue(Activator.CreateInstance(type)) is string category) return category;
         }
 
         return assembly.GetName().Name ?? string.Empty;
+    }
+
+    public static Bitmap? GetAssemblyIcon(this Assembly assembly)
+    {
+        var type = assembly.GetTypes().FirstOrDefault(t => t.IsAssignableTo(typeof(GH_AssemblyInfo)));
+
+        if (type != null)
+        {
+            if (typeof(GH_AssemblyInfo).GetRuntimeProperty("Icon")?.GetValue(Activator.CreateInstance(type)) is Bitmap icon) return icon;
+        }
+
+        return null;
     }
 
     public static string GetDeclaringClassName(this MethodInfo method)
