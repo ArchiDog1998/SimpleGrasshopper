@@ -99,8 +99,10 @@ public abstract class MethodComponent(MethodInfo methodInfo)
         {
             var names = Enum.GetNames(type);
             int index = 0;
-            foreach (int v in Enum.GetValues(type))
+            var underType = Enum.GetUnderlyingType(type);
+            foreach (object obj in Enum.GetValues(type))
             {
+                var v = Convert.ToInt32(Convert.ChangeType(obj, underType));
                 integerParam.AddNamedValue(names[index++], v);
             }
         }
