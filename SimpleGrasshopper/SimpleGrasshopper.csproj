@@ -16,11 +16,9 @@
 	  <Using Include="Grasshopper.Kernel" />
     <Using Include="System.Reflection" />
 	<PackageReference Include="System.Drawing.Common" Version="8.0.0" />
-	  
-	<Content Include="..\SimpleGrasshopper.SourceGenerators\bin\$(Configuration)\netstandard2.0\SimpleGrasshopper.SourceGenerators.dll">
-		<Pack>true</Pack>
-		<PackagePath>lib\$(TargetFramework)</PackagePath>
-	</Content>
+
+	<None Include="..\SimpleGrasshopper.SourceGenerators\bin\$(Configuration)\netstandard2.0\SimpleGrasshopper.SourceGenerators.dll"
+			   Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 	  
 	<None Include="..\README.md">
 	  <Pack>True</Pack>
