@@ -14,7 +14,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
 
         foreach (var syntax in syntaxes)
         {
-            var loc = syntax.ChildNodes().FirstOrDefault(n => n is PredefinedTypeSyntax)?.GetLocation() ?? syntax.GetLocation();
+            var loc = syntax.Identifier.GetLocation();
 
             if (!syntax.Modifiers.Any(Microsoft.CodeAnalysis.CSharp.SyntaxKind.StaticKeyword))
             {
