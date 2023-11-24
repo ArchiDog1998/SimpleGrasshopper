@@ -33,7 +33,8 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
             _methodIndex = value;
         }
     }
-    private MethodInfo MethodInfo => methodInfos[MethodIndex % methodInfos.Length];
+
+    private MethodInfo MethodInfo => methodInfos[MethodIndex];
 
     /// <inheritdoc/>
     public override GH_Exposure Exposure
@@ -292,16 +293,22 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
 
             item.Click += (sender, e) =>
             {
+                //Desc
                 MethodIndex = (int)((ToolStripMenuItem)sender!).Tag;
                 Name = method.GetDocObjName();
                 NickName = method.GetDocObjNickName();
                 Description = method.GetDocObjDescription();
-                Params.Clear();
 
+                //Destroy
+                Params.Clear();
                 DestroyIconCache();
+
+                //Build
                 _changing = true;
                 PostConstructor();
                 _changing = false;
+
+                //Update
                 ExpireSolution(true);
                 Attributes.ExpireLayout();
                 Instances.ActiveCanvas.Refresh();
