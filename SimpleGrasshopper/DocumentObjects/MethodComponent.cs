@@ -17,7 +17,7 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
                    methodInfos[0].GetDocObjNickName(),
                    methodInfos[0].GetDocObjDescription(),
                    methodInfos[0].GetAssemblyName(),
-                   methodInfos[0].GetDeclaringClassName())
+                   methodInfos[0].GetDeclaringClassName()), IGH_VariableParameterComponent
 {
     private int _methodIndex = 0;
     private int MethodIndex
@@ -31,6 +31,24 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
 
             if (value == _methodIndex) return;
             _methodIndex = value;
+
+            Name = MethodInfo.GetDocObjName();
+            NickName = MethodInfo.GetDocObjNickName();
+            Description = MethodInfo.GetDocObjDescription();
+
+            //Destroy
+            Params.Clear();
+            DestroyIconCache();
+
+            //Build
+            _changing = true;
+            PostConstructor();
+            _changing = false;
+
+            //Update
+            ExpireSolution(true);
+            Attributes.ExpireLayout();
+            Instances.ActiveCanvas.Refresh();
         }
     }
 
@@ -279,13 +297,16 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
     /// <inheritdoc/>
     public override void AppendAdditionalMenuItems(ToolStripDropDown menu)
     {
-        for (int i = 0; i < methodInfos.Length; i++)
+        var count = methodInfos.Length;
+        if (count < 2) return;
+
+        for (int i = 0; i < count; i++)
         {
             var method = methodInfos[i];
 
             var item = new ToolStripMenuItem
             {
-                Text = $"{method.GetDocObjName()}({method.GetDocObjNickName()})",
+                Text = $"{method.GetDocObjName()} ({method.GetDocObjNickName()})",
                 ToolTipText = method.GetDocObjDescription(),
                 Checked = i == MethodIndex,
                 Tag = i,
@@ -295,28 +316,10 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
             {
                 //Desc
                 MethodIndex = (int)((ToolStripMenuItem)sender!).Tag;
-                Name = method.GetDocObjName();
-                NickName = method.GetDocObjNickName();
-                Description = method.GetDocObjDescription();
-
-                //Destroy
-                Params.Clear();
-                DestroyIconCache();
-
-                //Build
-                _changing = true;
-                PostConstructor();
-                _changing = false;
-
-                //Update
-                ExpireSolution(true);
-                Attributes.ExpireLayout();
-                Instances.ActiveCanvas.Refresh();
             };
 
             menu.Items.Add(item);
         }
-        base.AppendAdditionalMenuItems(menu);
     }
 
     private bool _changing = false;
@@ -328,6 +331,23 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
         {
             base.CreateAttributes();
         }
+    }
+
+    /// <inheritdoc/>
+    public virtual bool CanInsertParameter(GH_ParameterSide side, int index) => false;
+
+    /// <inheritdoc/>
+    public virtual bool CanRemoveParameter(GH_ParameterSide side, int index) => false;
+
+    /// <inheritdoc/>
+    public virtual IGH_Param CreateParameter(GH_ParameterSide side, int index) => null!;
+
+    /// <inheritdoc/>
+    public virtual bool DestroyParameter(GH_ParameterSide side, int index) => false;
+
+    /// <inheritdoc/>
+    public virtual void VariableParameterMaintenance()
+    {
     }
 
     private readonly record struct OutputData(string Name, int Index, GH_ParamAccess Access);

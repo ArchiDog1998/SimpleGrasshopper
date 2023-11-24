@@ -1,5 +1,8 @@
-﻿using SimpleGrasshopper.Attributes;
+﻿using Grasshopper.Kernel.Data;
+using Grasshopper.Kernel.Types;
+using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
+using System.Drawing.Imaging;
 
 namespace SimpleGrasshopper.GHTests;
 
@@ -36,9 +39,24 @@ internal class SimpleSubcategory
     }
 
     [DocObj("Type Testing", "T", "Testing for my type")]
-    private static void MyTypeTest(TypeTest type)
+    private static void MyTypeTest(GH_Structure<SimpleGoo< TypeTest>> type, GH_Structure<GH_Boolean> bools)
     {
 
+    }
+
+    [Exposure(Grasshopper.Kernel.GH_Exposure.secondary)]
+    [DocObj("Test", "T", "Ttt")]
+
+    private static void Test(bool a)
+    {
+
+    }
+
+    [DocObj("Test2", "T2", "Ttt")]
+
+    private static void Test(out bool a)
+    {
+        a = false;
     }
 }
 

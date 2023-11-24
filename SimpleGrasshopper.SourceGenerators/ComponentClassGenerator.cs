@@ -61,7 +61,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
              namespace {{nameSpace}}
              {
                 public partial class {{codeClassName}}()
-                    :MethodComponent(typeof({{className}}).GetRuntimeMethods().Where(m => m.Name == "{{methodName}}").ToArray())
+                    : MethodComponent(typeof({{className}}).GetRuntimeMethods().Where(m => m.Name == "{{methodName}}").ToArray())
                 {
                     public override Guid ComponentGuid => new ("{{guidStr}}");
                 }

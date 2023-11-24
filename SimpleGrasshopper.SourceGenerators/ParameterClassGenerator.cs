@@ -32,7 +32,7 @@ internal class ParameterClassGenerator : ClassGenerator<TypeDeclarationSyntax>
              namespace {{nameSpace}}
              {
                 public partial class {{codeClassName}}()
-                    :TypeParameter<{{className}}>()
+                    : TypeParameter<{{className}}>()
                 {
                     public override Guid ComponentGuid => new ("{{guidStr}}");
                 }
