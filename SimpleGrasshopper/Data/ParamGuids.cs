@@ -1,7 +1,13 @@
 ﻿namespace SimpleGrasshopper.Data;
 
+/// <summary>
+/// The built-in guids for some of the <see cref="IGH_Param"/>.
+/// </summary>
 public readonly struct ParamGuids
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public const string
         AngularDimension = "1eb74534-dba3-4d5b-b177-264c9dd58549",
         Centermark = "71dfdc22-9723-4c6a-a541-a7b25c66b1a2",

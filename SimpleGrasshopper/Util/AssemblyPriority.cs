@@ -1,7 +1,11 @@
 ﻿namespace SimpleGrasshopper.Util;
 
+/// <summary>
+/// The assembly priority for adding category icon.
+/// </summary>
 public abstract class AssemblyPriority : GH_AssemblyPriority
 {
+    /// <inheritdoc/>
     public override GH_LoadingInstruction PriorityLoad()
     {
         var assembly = GetType().Assembly;

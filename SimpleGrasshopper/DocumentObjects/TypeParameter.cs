@@ -5,6 +5,10 @@ using System.Drawing;
 
 namespace SimpleGrasshopper.DocumentObjects;
 
+/// <summary>
+/// A simple <see cref="GH_PersistentParam{T}"/> for one object.
+/// </summary>
+/// <typeparam name="T">the object that it contains.</typeparam>
 public abstract class TypeParameter<T>() 
     : GH_PersistentParam<SimpleGoo<T>>(typeof(T).GetDocObjName(),
                    typeof(T).GetDocObjNickName(),
@@ -12,9 +16,11 @@ public abstract class TypeParameter<T>()
                    typeof(T).GetAssemblyName(),
                    "Parameters")
 {
+    /// <inheritdoc/>
     public override GH_Exposure Exposure => typeof(T).GetCustomAttribute<ExposureAttribute>()?.Exposure ?? base.Exposure;
 
     private Bitmap? _icon;
+    /// <inheritdoc/>
     protected override Bitmap Icon
     {
         get
@@ -23,30 +29,17 @@ public abstract class TypeParameter<T>()
             var path = typeof(T).GetCustomAttribute<IconAttribute>()?.IconPath;
             if (path == null) return base.Icon;
 
-            var assembly = GetType().Assembly;
-            var name = assembly.GetManifestResourceNames().FirstOrDefault(n => n.EndsWith(path));
-            if (name == null) return base.Icon;
-            using var stream = assembly.GetManifestResourceStream(name);
-            if (stream == null) return base.Icon;
-
-            try
-            {
-#pragma warning disable CA1416 // Validate platform compatibility
-                return _icon = new(stream);
-#pragma warning restore CA1416 // Validate platform compatibility
-            }
-            catch
-            {
-                return base.Icon;
-            }
+            return _icon = GetType().Assembly.GetBitmap(path) ?? base.Icon;
         }
     }
 
+    /// <inheritdoc/>
     protected override GH_GetterResult Prompt_Plural(ref List<SimpleGoo<T>> values)
     {
         return GH_GetterResult.cancel;
     }
 
+    /// <inheritdoc/>
     protected override GH_GetterResult Prompt_Singular(ref SimpleGoo<T> value)
     {
         return GH_GetterResult.cancel;

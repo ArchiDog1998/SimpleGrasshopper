@@ -161,4 +161,22 @@ internal static class Utils
         return type.IsEnum ? Enum.ToObject(type, obj)
                 : Convert.ChangeType(obj, type);
     }
+
+    public static Bitmap? GetBitmap(this Assembly assembly, string path)
+    {
+        var name = assembly.GetManifestResourceNames().FirstOrDefault(n => n.EndsWith(path));
+        if (name == null) return null;
+        using var stream = assembly.GetManifestResourceStream(name);
+        if (stream == null) return null;
+        try
+        {
+#pragma warning disable CA1416 // Validate platform compatibility
+            return new(stream);
+#pragma warning restore CA1416 // Validate platform compatibility
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }

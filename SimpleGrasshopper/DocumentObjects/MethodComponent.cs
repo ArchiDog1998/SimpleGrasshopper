@@ -8,6 +8,10 @@ using System.Drawing;
 
 namespace SimpleGrasshopper.DocumentObjects;
 
+/// <summary>
+/// The <see cref="GH_Component"/> that targets to a <see cref="MethodInfo"/>.
+/// </summary>
+/// <param name="methodInfo">the method.</param>
 public abstract class MethodComponent(MethodInfo methodInfo) 
     : GH_Component(methodInfo.GetDocObjName(), 
                    methodInfo.GetDocObjNickName(), 
@@ -15,9 +19,12 @@ public abstract class MethodComponent(MethodInfo methodInfo)
                    methodInfo.GetAssemblyName(),
                    methodInfo.GetDeclaringClassName())
 {
+    /// <inheritdoc/>
     public override GH_Exposure Exposure => methodInfo.GetCustomAttribute< ExposureAttribute>()?.Exposure ?? base.Exposure;
 
     private Bitmap? _icon;
+
+    /// <inheritdoc/>
     protected override Bitmap Icon
     {
         get
@@ -26,15 +33,11 @@ public abstract class MethodComponent(MethodInfo methodInfo)
             var path = methodInfo.GetCustomAttribute<IconAttribute>()?.IconPath;
             if (path == null) return base.Icon;
 
-            var assembly = GetType().Assembly;
-            var name = assembly.GetManifestResourceNames().FirstOrDefault(n => n.EndsWith(path));
-            if(name == null) return base.Icon;
-            using var stream = assembly.GetManifestResourceStream(name);
-            if (stream == null) return base.Icon;
-            return _icon = new (stream);
+            return _icon = GetType().Assembly.GetBitmap(path) ?? base.Icon;
         }
     }
 
+    /// <inheritdoc/>
     protected sealed override void RegisterInputParams(GH_InputParamManager pManager)
     {
         foreach (var param in methodInfo.GetParameters().Where(p => !p.IsOut))
@@ -49,6 +52,7 @@ public abstract class MethodComponent(MethodInfo methodInfo)
         }
     }
 
+    /// <inheritdoc/>
     protected sealed override void RegisterOutputParams(GH_OutputParamManager pManager)
     {
         foreach (var param in methodInfo.GetParameters().Where(p => p.IsOut))
@@ -111,8 +115,6 @@ public abstract class MethodComponent(MethodInfo methodInfo)
             numberParam.AngleParameter = true;
         }
 
-        //TODO: Path Type modify!
-
         return param;
 
         static void SetOptional(ParameterInfo info, IGH_Param param, GH_ParamAccess access)
@@ -139,6 +141,7 @@ public abstract class MethodComponent(MethodInfo methodInfo)
         }
     }
 
+    /// <inheritdoc/>
     protected sealed override void SolveInstance(IGH_DataAccess DA)
     {
         var ps = methodInfo.GetParameters();

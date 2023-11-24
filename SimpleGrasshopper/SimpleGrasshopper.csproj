@@ -8,6 +8,7 @@
 	<PackageReadmeFile>README.md</PackageReadmeFile>
 	<RepositoryUrl>https://github.com/ArchiDog1998/SimpleGrasshopper</RepositoryUrl>
 	<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
+	<GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
