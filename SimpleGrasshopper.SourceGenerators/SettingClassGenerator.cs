@@ -133,16 +133,16 @@ public class SettingClassGenerator : IIncrementalGenerator
 
     public static string ToPascalCase(string input)
     {
-        return string.Join(".", input.Split('.').Select(x => ConvertToPascalCase(x)));
+        return string.Join(".", input.Split('.').Select(ConvertToPascalCase));
     }
     private static string ConvertToPascalCase(string input)
     {
-        Regex invalidCharsRgx = new (@"[^_a-zA-Z0-9]");
-        Regex whiteSpace = new (@"(?<=\s)");
-        Regex startsWithLowerCaseChar = new ("^[a-z]");
-        Regex firstCharFollowedByUpperCasesOnly = new ("(?<=[A-Z])[A-Z0-9]+$");
-        Regex lowerCaseNextToNumber = new ("(?<=[0-9])[a-z]");
-        Regex upperCaseInside = new ("(?<=[A-Z])[A-Z]+?((?=[A-Z][a-z])|(?=[0-9]))");
+        Regex invalidCharsRgx = new(@"[^_a-zA-Z0-9]");
+        Regex whiteSpace = new(@"(?<=\s)");
+        Regex startsWithLowerCaseChar = new("^[a-z]");
+        Regex firstCharFollowedByUpperCasesOnly = new("(?<=[A-Z])[A-Z0-9]+$");
+        Regex lowerCaseNextToNumber = new("(?<=[0-9])[a-z]");
+        Regex upperCaseInside = new("(?<=[A-Z])[A-Z]+?((?=[A-Z][a-z])|(?=[0-9]))");
 
         // replace white spaces with undescore, then replace all invalid chars with empty string
         var pascalCase = invalidCharsRgx.Replace(whiteSpace.Replace(input, "_"), string.Empty)
