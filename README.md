@@ -6,6 +6,20 @@ With this repo, you don't need to understand what a `GH_Component` is and what a
 
 NOTICE: For some reason, the `SimpleGrasshopper.dll` won't copy to the output directory automatically. If there is any way to make the nuget pacakge only copy this file, please tell me.
 
+## Quick Start
+
+Add the package from nuget package.
+
+```html
+  <ItemGroup>
+    <PackageReference Include="SimpleGrasshopper" Version="0.9.1" />
+  <ItemGroup>
+```
+
+Don't forget to copy this `SimpleGrasshopper.dll` file to your output folder!
+
+![image-20231124084353080](assets/image-20231124084353080.png)
+
 ## How to use
 
 ### Component
