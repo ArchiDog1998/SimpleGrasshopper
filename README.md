@@ -217,3 +217,7 @@ var c = SettingStruct.AnotherSetting;
 ```
 
 That makes it easier!
+
+### Advanced
+
+So it is making it easier. But if you still want to modify the `GH_Component` or `GH_PersistentParam`. You can use the keyword `partial` to modify the class. For the components, the class is `CLASSNAME_METHODNAME_Component`. For the parameters, the class is `CLASSNAME_Parameter`.
