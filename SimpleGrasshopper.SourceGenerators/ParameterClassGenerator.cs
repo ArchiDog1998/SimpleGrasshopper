@@ -27,6 +27,7 @@ internal class ParameterClassGenerator : ClassGenerator<TypeDeclarationSyntax>
 
             var code = $$"""
              using SimpleGrasshopper.DocumentObjects;
+             using System;
 
              namespace {{nameSpace}}
              {

@@ -55,6 +55,8 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
             var code = $$"""
              using SimpleGrasshopper.DocumentObjects;
              using System.Reflection;
+             using System.Linq;
+             using System;
 
              namespace {{nameSpace}}
              {
