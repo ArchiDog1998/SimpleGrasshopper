@@ -13,7 +13,7 @@ namespace SimpleGrasshopper.GHTests
         {
             get
             {
-                if(_icon != null) return _icon;
+                if (_icon != null) return _icon;
 
                 var assembly = GetType().Assembly;
                 var name = assembly.GetManifestResourceNames().FirstOrDefault();
@@ -27,7 +27,7 @@ namespace SimpleGrasshopper.GHTests
         //Return a short string describing the purpose of this GHA library.
         public override string Description => "";
 
-        public override Guid Id => new ("8bc4c536-97be-4160-8f39-3eb65ba1f5a8");
+        public override Guid Id => new("8bc4c536-97be-4160-8f39-3eb65ba1f5a8");
 
         //Return a string identifying you or your company.
         public override string AuthorName => "";

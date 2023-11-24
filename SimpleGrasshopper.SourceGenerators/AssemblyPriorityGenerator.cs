@@ -22,9 +22,9 @@ public class AssemblyPriorityGenerator : IIncrementalGenerator
             {
                 var symbol = n.SemanticModel.GetDeclaredSymbol((ClassDeclarationSyntax)n.Node, ct) as INamedTypeSymbol;
 
-                while(symbol != null)
+                while (symbol != null)
                 {
-                    if(symbol.Name == "GH_AssemblyInfo")
+                    if (symbol.Name == "GH_AssemblyInfo")
                     {
                         return (ClassDeclarationSyntax)n.Node;
                     }
@@ -55,7 +55,7 @@ public class AssemblyPriorityGenerator : IIncrementalGenerator
 
             case 1:
                 var syntax = array[0];
-                if(syntax !=  null)
+                if (syntax != null)
                 {
                     AddPriority(context, syntax);
                 }

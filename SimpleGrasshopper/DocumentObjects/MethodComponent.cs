@@ -12,15 +12,15 @@ namespace SimpleGrasshopper.DocumentObjects;
 /// The <see cref="GH_Component"/> that targets to a <see cref="MethodInfo"/>.
 /// </summary>
 /// <param name="methodInfo">the method.</param>
-public abstract class MethodComponent(MethodInfo methodInfo) 
-    : GH_Component(methodInfo.GetDocObjName(), 
-                   methodInfo.GetDocObjNickName(), 
-                   methodInfo.GetDocObjDescription(), 
+public abstract class MethodComponent(MethodInfo methodInfo)
+    : GH_Component(methodInfo.GetDocObjName(),
+                   methodInfo.GetDocObjNickName(),
+                   methodInfo.GetDocObjDescription(),
                    methodInfo.GetAssemblyName(),
                    methodInfo.GetDeclaringClassName())
 {
     /// <inheritdoc/>
-    public override GH_Exposure Exposure => methodInfo.GetCustomAttribute< ExposureAttribute>()?.Exposure ?? base.Exposure;
+    public override GH_Exposure Exposure => methodInfo.GetCustomAttribute<ExposureAttribute>()?.Exposure ?? base.Exposure;
 
     private Bitmap? _icon;
 
@@ -110,7 +110,7 @@ public abstract class MethodComponent(MethodInfo methodInfo)
                 integerParam.AddNamedValue(names[index++], v);
             }
         }
-        else if(param is Param_Number numberParam && info.GetCustomAttribute<AngleAttribute>() != null)
+        else if (param is Param_Number numberParam && info.GetCustomAttribute<AngleAttribute>() != null)
         {
             numberParam.AngleParameter = true;
         }
@@ -145,7 +145,7 @@ public abstract class MethodComponent(MethodInfo methodInfo)
     protected sealed override void SolveInstance(IGH_DataAccess DA)
     {
         var ps = methodInfo.GetParameters();
-        if(ps == null) return;
+        if (ps == null) return;
 
         var outParams = new List<OutputData>(ps.Length);
 
@@ -164,7 +164,7 @@ public abstract class MethodComponent(MethodInfo methodInfo)
 
             if (param.IsOut)
             {
-                outParams.Add(new (name, index, access));
+                outParams.Add(new(name, index, access));
                 return access switch
                 {
                     GH_ParamAccess.list => new List<object>(),
@@ -208,7 +208,8 @@ public abstract class MethodComponent(MethodInfo methodInfo)
                 _ => GetDaMethod(DA, nameof(DA.GetData)),
             };
 
-            object[] pms = [name, access switch
+            object[] pms = [name,
+                access switch
                 {
                     GH_ParamAccess.list => Activator.CreateInstance(typeof(List<>).MakeGenericType(type))!,
                     GH_ParamAccess.tree => Activator.CreateInstance(typeof(GH_Structure<>).MakeGenericType(type))!,

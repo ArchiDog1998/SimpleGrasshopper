@@ -9,7 +9,7 @@ namespace SimpleGrasshopper.DocumentObjects;
 /// A simple <see cref="GH_PersistentParam{T}"/> for one object.
 /// </summary>
 /// <typeparam name="T">the object that it contains.</typeparam>
-public abstract class TypeParameter<T>() 
+public abstract class TypeParameter<T>()
     : GH_PersistentParam<SimpleGoo<T>>(typeof(T).GetDocObjName(),
                    typeof(T).GetDocObjNickName(),
                    typeof(T).GetDocObjDescription(),

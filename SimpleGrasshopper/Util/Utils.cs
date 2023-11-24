@@ -65,7 +65,7 @@ internal static class Utils
     private static string GetDocObjProperty(this MemberInfo method, Func<DocObjAttribute, string> getProperty)
     {
         var attr = method.GetCustomAttribute<DocObjAttribute>();
-        return attr == null ? method.Name : getProperty(attr);   
+        return attr == null ? method.Name : getProperty(attr);
     }
 
     public static string GetDocObjName(this Type type)
@@ -121,7 +121,7 @@ internal static class Utils
 
         foreach (var paramType in _paramTypes)
         {
-            if(type.GetGuid(paramType) is Guid guid)
+            if (type.GetGuid(paramType) is Guid guid)
             {
                 return guid;
             }

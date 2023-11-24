@@ -16,9 +16,9 @@ internal class SimpleSubcategory
 
     [DocObj("Special Param", "Spe", "Special Params")]
     private static void ParamTest(
-        [DocObj("Name", "N", "The name of sth.")] string name, 
-        [Param(ParamGuids.FilePath)]string path,
-        [Angle]out double angle)
+        [DocObj("Name", "N", "The name of sth.")] string name,
+        [Param(ParamGuids.FilePath)] string path,
+        [Angle] out double angle)
     {
         angle = Math.PI;
     }

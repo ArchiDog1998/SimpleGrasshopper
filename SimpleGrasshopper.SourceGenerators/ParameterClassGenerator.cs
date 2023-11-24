@@ -9,7 +9,7 @@ internal class ParameterClassGenerator : ClassGenerator<TypeDeclarationSyntax>
 {
     protected override void Execute(SourceProductionContext context, ImmutableArray<TypeDeclarationSyntax> syntaxes)
     {
-        foreach ( var syntax in syntaxes)
+        foreach (var syntax in syntaxes)
         {
             var nameSpace = AssemblyPriorityGenerator.GetParent<BaseNamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? "Null";
 
