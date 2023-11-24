@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net7.0-windows</TargetFramework>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	<Title>Simple Grasshopper</Title>
 	<Description>A repo to simplify your plugin development in Grasshopper.</Description>
@@ -9,6 +9,7 @@
 	<RepositoryUrl>https://github.com/ArchiDog1998/SimpleGrasshopper</RepositoryUrl>
 	<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
 	<GenerateDocumentationFile>True</GenerateDocumentationFile>
+	<UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>

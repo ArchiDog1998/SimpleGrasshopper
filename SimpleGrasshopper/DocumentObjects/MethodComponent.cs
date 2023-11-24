@@ -1,46 +1,74 @@
-﻿using Grasshopper.Kernel.Data;
+﻿using GH_IO.Serialization;
+using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Util;
 using System.Collections;
-using System.Drawing;
 
 namespace SimpleGrasshopper.DocumentObjects;
 
 /// <summary>
-/// The <see cref="GH_Component"/> that targets to a <see cref="MethodInfo"/>.
+/// The <see cref="GH_Component"/> that targets to a <see cref="System.Reflection.MethodInfo"/>.
 /// </summary>
-/// <param name="methodInfo">the method.</param>
-public abstract class MethodComponent(MethodInfo methodInfo)
-    : GH_Component(methodInfo.GetDocObjName(),
-                   methodInfo.GetDocObjNickName(),
-                   methodInfo.GetDocObjDescription(),
-                   methodInfo.GetAssemblyName(),
-                   methodInfo.GetDeclaringClassName())
+/// <param name="methodInfos">the method.</param>
+public abstract class MethodComponent(params MethodInfo[] methodInfos)
+    : GH_Component(methodInfos[0].GetDocObjName(),
+                   methodInfos[0].GetDocObjNickName(),
+                   methodInfos[0].GetDocObjDescription(),
+                   methodInfos[0].GetAssemblyName(),
+                   methodInfos[0].GetDeclaringClassName())
 {
-    /// <inheritdoc/>
-    public override GH_Exposure Exposure => methodInfo.GetCustomAttribute<ExposureAttribute>()?.Exposure ?? base.Exposure;
+    private int _methodIndex = 0;
+    private int MethodIndex
+    {
+        get => _methodIndex;
+        set
+        {
+            if (value == _methodIndex) return;
+            var count = methodInfos.Length;
+            value = (value + count) % count;
 
-    private Bitmap? _icon;
+            if (value == _methodIndex) return;
+            _methodIndex = value;
+        }
+    }
+    private MethodInfo MethodInfo => methodInfos[MethodIndex % methodInfos.Length];
+
+    /// <inheritdoc/>
+    public override GH_Exposure Exposure
+    {
+        get
+        {
+            foreach (var method in methodInfos)
+            {
+                var ex = method.GetCustomAttribute<ExposureAttribute>()?.Exposure;
+                if (ex.HasValue) return ex.Value;
+            }
+            return base.Exposure;
+        }
+    }
+
+    private readonly Dictionary<int, Bitmap> _icons = [];
 
     /// <inheritdoc/>
     protected override Bitmap Icon
     {
         get
         {
-            if (_icon != null) return _icon;
-            var path = methodInfo.GetCustomAttribute<IconAttribute>()?.IconPath;
+            if (_icons.TryGetValue(MethodIndex, out Bitmap? icon)) return icon;
+
+            var path = MethodInfo.GetCustomAttribute<IconAttribute>()?.IconPath;
             if (path == null) return base.Icon;
 
-            return _icon = GetType().Assembly.GetBitmap(path) ?? base.Icon;
+            return _icons[MethodIndex] = GetType().Assembly.GetBitmap(path) ?? base.Icon;
         }
     }
 
     /// <inheritdoc/>
     protected sealed override void RegisterInputParams(GH_InputParamManager pManager)
     {
-        foreach (var param in methodInfo.GetParameters().Where(p => !p.IsOut))
+        foreach (var param in MethodInfo.GetParameters().Where(p => !p.IsOut))
         {
             if (GetParameter(param, out var access)
                 is not IGH_Param gh_param) continue;
@@ -55,7 +83,7 @@ public abstract class MethodComponent(MethodInfo methodInfo)
     /// <inheritdoc/>
     protected sealed override void RegisterOutputParams(GH_OutputParamManager pManager)
     {
-        foreach (var param in methodInfo.GetParameters().Where(p => p.IsOut))
+        foreach (var param in MethodInfo.GetParameters().Where(p => p.IsOut))
         {
             if (GetParameter(param, out var access)
                 is not IGH_Param gh_param) continue;
@@ -144,7 +172,7 @@ public abstract class MethodComponent(MethodInfo methodInfo)
     /// <inheritdoc/>
     protected sealed override void SolveInstance(IGH_DataAccess DA)
     {
-        var ps = methodInfo.GetParameters();
+        var ps = MethodInfo.GetParameters();
         if (ps == null) return;
 
         var outParams = new List<OutputData>(ps.Length);
@@ -178,7 +206,7 @@ public abstract class MethodComponent(MethodInfo methodInfo)
             }
         }).ToArray();
 
-        methodInfo.Invoke(null, parameters);
+        MethodInfo.Invoke(null, parameters);
 
         foreach (var param in outParams)
         {
@@ -230,6 +258,68 @@ public abstract class MethodComponent(MethodInfo methodInfo)
                     return true;
                 });
             }
+        }
+    }
+
+    /// <inheritdoc/>
+    public override bool Read(GH_IReader reader)
+    {
+        return reader.TryGetInt32(nameof(_methodIndex), ref _methodIndex)
+            && base.Read(reader);
+    }
+
+    /// <inheritdoc/>
+    public override bool Write(GH_IWriter writer)
+    {
+        writer.SetInt32(nameof(_methodIndex), _methodIndex);
+        return base.Write(writer);
+    }
+
+    /// <inheritdoc/>
+    public override void AppendAdditionalMenuItems(ToolStripDropDown menu)
+    {
+        for (int i = 0; i < methodInfos.Length; i++)
+        {
+            var method = methodInfos[i];
+
+            var item = new ToolStripMenuItem
+            {
+                Text = $"{method.GetDocObjName()}({method.GetDocObjNickName()})",
+                ToolTipText = method.GetDocObjDescription(),
+                Checked = i == MethodIndex,
+                Tag = i,
+            };
+
+            item.Click += (sender, e) =>
+            {
+                MethodIndex = (int)((ToolStripMenuItem)sender!).Tag;
+                Name = method.GetDocObjName();
+                NickName = method.GetDocObjNickName();
+                Description = method.GetDocObjDescription();
+                Params.Clear();
+
+                DestroyIconCache();
+                _changing = true;
+                PostConstructor();
+                _changing = false;
+                ExpireSolution(true);
+                Attributes.ExpireLayout();
+                Instances.ActiveCanvas.Refresh();
+            };
+
+            menu.Items.Add(item);
+        }
+        base.AppendAdditionalMenuItems(menu);
+    }
+
+    private bool _changing = false;
+
+    /// <inheritdoc/>
+    public override void CreateAttributes()
+    {
+        if (!_changing || m_attributes == null)
+        {
+            base.CreateAttributes();
         }
     }
 

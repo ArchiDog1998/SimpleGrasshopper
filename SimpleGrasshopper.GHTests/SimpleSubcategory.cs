@@ -14,6 +14,12 @@ internal class SimpleSubcategory
         c = a + b;
     }
 
+    [DocObj("Addition2", "Add2", "The addition of the integers2.")]
+    private static void SimpleMethod(double abc, double werb, out double dfa)
+    {
+        dfa = abc + werb;
+    }
+
     [DocObj("Special Param", "Spe", "Special Params")]
     private static void ParamTest(
         [DocObj("Name", "N", "The name of sth.")] string name,

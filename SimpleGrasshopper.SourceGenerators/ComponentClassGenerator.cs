@@ -27,7 +27,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
                 true);
 
                 context.ReportDiagnostic(Diagnostic.Create(desc, loc));
-                return;
+                continue;
             }
 
             var nameSpace = AssemblyPriorityGenerator.GetParent<BaseNamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? "Null";
@@ -40,16 +40,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
 
             if (strings.Contains(guidStr))
             {
-                var desc = new DiagnosticDescriptor(
-                "SG0002",
-                "Same method name",
-                "The method name should be unique for creating components!",
-                "Problem",
-                DiagnosticSeverity.Error,
-                true);
-
-                context.ReportDiagnostic(Diagnostic.Create(desc, loc));
-                return;
+                continue;
             }
             strings.Add(guidStr);
 
@@ -68,7 +59,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
              namespace {{nameSpace}}
              {
                 public class {{codeClassName}}()
-                    :MethodComponent(typeof({{className}}).GetRuntimeMethods().FirstOrDefault(m => m.Name == "{{methodName}}") ?? throw new ArgumentNullException("Failed reflect the method!"))
+                    :MethodComponent(typeof({{className}}).GetRuntimeMethods().Where(m => m.Name == "{{methodName}}").ToArray())
                 {
                     public override Guid ComponentGuid => new ("{{guidStr}}");
                 }
@@ -76,7 +67,6 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
              """;
 
             context.AddSource($"{codeClassName}.g.cs", code);
-
         }
     }
 }

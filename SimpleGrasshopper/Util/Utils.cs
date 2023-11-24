@@ -170,9 +170,7 @@ internal static class Utils
         if (stream == null) return null;
         try
         {
-#pragma warning disable CA1416 // Validate platform compatibility
             return new(stream);
-#pragma warning restore CA1416 // Validate platform compatibility
         }
         catch
         {
