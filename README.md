@@ -103,6 +103,14 @@ internal class SimpleSubcategory
 
 ![image-20231123223455689](assets/image-20231123223455689.png)
 
+#### Data Access
+
+If you want your data access to be a list, please set the param type to `List<T>`.
+
+If you want your data access to be a tree. That would be complex.
+
+If it is a built-in type, please do it like `GH_Structure<GH_XXXX>`. If it is your type, please do it like `GH_Structure<SimpleGoo<XXXXX>>`.
+
 #### Enum Type
 
 For some cases, you may want to add some enum parameters to your project, so just do it!
