@@ -2,7 +2,6 @@
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
-using System.Drawing.Imaging;
 
 namespace SimpleGrasshopper.GHTests;
 
@@ -14,6 +13,7 @@ internal class SimpleSubcategory
     [DocObj("Addition", "Add", "The addition of the integers.")]
     private static void SimpleMethod(int a, int b, out int c)
     {
+        SettingClass.AnotherSetting = "";
         c = a + b;
     }
 
@@ -39,7 +39,7 @@ internal class SimpleSubcategory
     }
 
     [DocObj("Type Testing", "T", "Testing for my type")]
-    private static void MyTypeTest(GH_Structure<SimpleGoo< TypeTest>> type, GH_Structure<GH_Boolean> bools)
+    private static void MyTypeTest(GH_Structure<SimpleGoo<TypeTest>> type, GH_Structure<GH_Boolean> bools)
     {
 
     }

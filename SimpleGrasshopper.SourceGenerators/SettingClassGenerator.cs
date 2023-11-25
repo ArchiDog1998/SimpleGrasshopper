@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
@@ -10,11 +11,11 @@ public class SettingClassGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var provider = context.SyntaxProvider.ForAttributeWithMetadataName("SimpleGrasshopper.Attributes.GH_SettingAttribute",
+        var provider = context.SyntaxProvider.ForAttributeWithMetadataName
+("SimpleGrasshopper.Attributes.SettingAttribute",
     static (node, _) => node is VariableDeclaratorSyntax { Parent: VariableDeclarationSyntax { Parent: FieldDeclarationSyntax { Parent: ClassDeclarationSyntax or StructDeclarationSyntax } } },
     static (n, ct) => (VariableDeclaratorSyntax)n.TargetNode)
     .Where(m => m is not null);
-
         context.RegisterSourceOutput(provider.Collect(), Execute);
     }
 
@@ -54,7 +55,7 @@ public class SettingClassGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                if (!field.Modifiers.Any(Microsoft.CodeAnalysis.CSharp.SyntaxKind.StaticKeyword))
+                if (!field.Modifiers.Any(SyntaxKind.StaticKeyword))
                 {
                     var desc = new DiagnosticDescriptor(
                     "SG0001",
@@ -86,7 +87,20 @@ public class SettingClassGenerator : IIncrementalGenerator
                     continue;
                 }
 
+                var names = new List<string>();
+                foreach (var attrSet in field.AttributeLists)
+                {
+                    if (attrSet == null) continue;
+                    foreach (var attr in attrSet.Attributes)
+                    {
+                        if (IsAttribute(attr.Name.ToString(), "Config"))
+                        {
+                            names.Add(attr.ToString());
+                        }
+                    }
+                }
                 var propertyCode = $$"""
+                        [{{string.Join(", ", names)}}]
                         public static {{fieldTypeStr}} {{propertyName}}
                         {
                             get => Instances.Settings.GetValue("{{key}}", {{variableName}});
@@ -94,8 +108,10 @@ public class SettingClassGenerator : IIncrementalGenerator
                             {
                                 if ({{propertyName}} == value) return;
                                 Instances.Settings.SetValue("{{key}}", value);
+                                On{{propertyName}}Changed();
                             }
                         }
+                        static partial void On{{propertyName}}Changed();
                 """;
 
                 propertyCodes.Add(propertyCode);
@@ -104,6 +120,7 @@ public class SettingClassGenerator : IIncrementalGenerator
             var code = $$"""
              using Grasshopper;
              using System.Drawing;
+             using SimpleGrasshopper.Attributes;
 
              namespace {{nameSpace}}
              {
@@ -116,6 +133,18 @@ public class SettingClassGenerator : IIncrementalGenerator
 
             context.AddSource($"{nameSpace}_{className}.g.cs", code);
         }
+    }
+
+    internal static bool IsAttribute(string attribute, string attributeName)
+    {
+        if (attribute == attributeName) return true;
+        if (attribute == $"{attributeName}Attribute") return true;
+        if (attribute == $"Attributes.{attributeName}") return true;
+        if (attribute == $"Attributes.{attributeName}Attribute") return true;
+        if (attribute == $"SimpleGrasshopper.Attributes.{attributeName}") return true;
+        if (attribute == $"SimpleGrasshopper.Attributes.{attributeName}Attribute") return true;
+
+        return false;
     }
 
     private static readonly string[] _validTypes = ["bool", nameof(Boolean), "byte", nameof(Byte), nameof(DateTime), "double", nameof(Double), "int", nameof(Int32), "string", nameof(String), "Color", "Point", "Rectangle", "Size"];

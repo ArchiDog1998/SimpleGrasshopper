@@ -1,19 +1,20 @@
 ﻿using SimpleGrasshopper.Attributes;
 using System.Drawing;
 
-namespace SimpleGrasshopper.GHTests;
-
-internal static partial class SettingClass
+namespace SimpleGrasshopper.GHTests
 {
-    [GH_Setting]
-    private static readonly bool firstSetting = true;
+    internal partial class SettingClass
+    {
+        [Setting, Config("Major Bool")]
+        private static readonly bool firstSetting = true;
 
-    [GH_Setting]
-    private static readonly Color secondSetting = Color.AliceBlue;
-}
+        [Setting, Config("A color")]
+        private static readonly Color secondSetting = Color.AliceBlue;
 
-internal readonly partial struct SettingStruct
-{
-    [GH_Setting]
-    private static readonly string anotherSetting = default!;
+        [Setting, Config("One Setting", parent: "Major Bool")]
+        private static readonly string anotherSetting = default!;
+
+        [Config("My value", parent: "Major Bool")]
+        public static int Value { get; set; }
+    }
 }

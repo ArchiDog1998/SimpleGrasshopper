@@ -192,7 +192,7 @@ internal class SimpleSubcategory
 
 Well, for some lazy people like me, who doesn't like to use `Instances.Setting.GetValue(XXX)`, etc. I just want to make it ez.
 
-So, just tag a static field with the attribute `GH_SettingAttribute`!
+So, just tag a static field with the attribute `SettingAttribute`!
 
 ``` c#
 using SimpleGrasshopper.Attributes;
@@ -202,16 +202,16 @@ namespace SimpleGrasshopper.GHTests;
 
 internal static partial class SettingClass
 {
-    [GH_Setting]
+    [Setting]
     private static readonly bool firstSetting = true;
 
-    [GH_Setting]
+    [Setting]
     private static readonly Color secondSetting = Color.AliceBlue;
 }
 
 internal readonly partial struct SettingStruct
 {
-    [GH_Setting]
+    [Setting]
     private static readonly string anotherSetting = default!;
 }
 ```

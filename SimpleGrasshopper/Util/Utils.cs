@@ -1,7 +1,6 @@
 ﻿using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
-using System.Drawing;
 
 namespace SimpleGrasshopper.Util;
 
@@ -21,12 +20,18 @@ internal static class Utils
     }
 
     public static string GetAssemblyName(this Assembly assembly)
+        => assembly.GetAssemblyStringProperty("Name");
+
+    public static string GetAssemblyDescription(this Assembly assembly)
+        => assembly.GetAssemblyStringProperty("Description");
+
+    private static string GetAssemblyStringProperty(this Assembly assembly, string propertyName)
     {
         var type = assembly.GetTypes().FirstOrDefault(t => t.IsAssignableTo(typeof(GH_AssemblyInfo)));
 
         if (type != null)
         {
-            if (typeof(GH_AssemblyInfo).GetRuntimeProperty("Name")?.GetValue(Activator.CreateInstance(type)) is string category) return category;
+            if (typeof(GH_AssemblyInfo).GetRuntimeProperty(propertyName)?.GetValue(Activator.CreateInstance(type)) is string str) return str;
         }
 
         return assembly.GetName().Name ?? string.Empty;

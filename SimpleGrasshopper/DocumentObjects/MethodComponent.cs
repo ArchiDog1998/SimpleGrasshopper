@@ -1,4 +1,5 @@
 ﻿using GH_IO.Serialization;
+using Grasshopper.Kernel.Attributes;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
@@ -19,6 +20,8 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
                    methodInfos[0].GetAssemblyName(),
                    methodInfos[0].GetDeclaringClassName()), IGH_VariableParameterComponent
 {
+    private readonly record struct OutputData(string Name, int Index, GH_ParamAccess Access);
+
     private int _methodIndex = 0;
     private int MethodIndex
     {
@@ -314,7 +317,6 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
 
             item.Click += (sender, e) =>
             {
-                //Desc
                 MethodIndex = (int)((ToolStripMenuItem)sender!).Tag;
             };
 
@@ -325,12 +327,21 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
     private bool _changing = false;
 
     /// <inheritdoc/>
-    public override void CreateAttributes()
+    public sealed override void CreateAttributes()
     {
         if (!_changing || m_attributes == null)
         {
-            base.CreateAttributes();
+            m_attributes = CreateAttribute();
         }
+    }
+
+    /// <summary>
+    /// Your custom <see cref="IGH_Attributes"/>
+    /// </summary>
+    /// <returns>the attribute you want.</returns>
+    public virtual IGH_Attributes CreateAttribute()
+    {
+        return new GH_ComponentAttributes(this);
     }
 
     /// <inheritdoc/>
@@ -349,6 +360,4 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
     public virtual void VariableParameterMaintenance()
     {
     }
-
-    private readonly record struct OutputData(string Name, int Index, GH_ParamAccess Access);
 }
