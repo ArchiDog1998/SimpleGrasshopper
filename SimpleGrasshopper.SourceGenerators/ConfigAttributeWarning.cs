@@ -5,12 +5,20 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace SimpleGrasshopper.SourceGenerators;
 
 [Generator(LanguageNames.CSharp)]
-
-public class ConfigAttributeWarning : IIncrementalGenerator
+ public class ConfigAttributeWarning : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         InitOneAttribute(context, "Config", null);
+        InitOneAttribute(context, "Range",
+            [
+                "int",
+                "Int32",
+                "System.Int32",
+                "double",
+                "Double",
+                "System.Double",
+            ]);
     }
 
     private static void InitOneAttribute(IncrementalGeneratorInitializationContext context, string attributeName, string[]? validTypes)

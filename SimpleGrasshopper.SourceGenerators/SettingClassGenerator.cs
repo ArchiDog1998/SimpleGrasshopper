@@ -72,7 +72,7 @@ public class SettingClassGenerator : IIncrementalGenerator
                 var key = string.Join(".", nameSpace, className, propertyName);
 
                 var fieldTypeStr = field.Declaration.Type;
-
+                
                 if (!IsFieldTypeValid(fieldTypeStr.ToString()))
                 {
                     var desc = new DiagnosticDescriptor(
@@ -93,7 +93,8 @@ public class SettingClassGenerator : IIncrementalGenerator
                     if (attrSet == null) continue;
                     foreach (var attr in attrSet.Attributes)
                     {
-                        if (IsAttribute(attr.Name.ToString(), "Config"))
+                        if (IsAttribute(attr.Name.ToString(), "Config")
+                            || IsAttribute(attr.Name.ToString(), "Range"))
                         {
                             names.Add(attr.ToString());
                         }
@@ -109,9 +110,15 @@ public class SettingClassGenerator : IIncrementalGenerator
                                 if ({{propertyName}} == value) return;
                                 Instances.Settings.SetValue("{{key}}", value);
                                 On{{propertyName}}Changed();
+                                OnPropertyChanged("{{propertyName}}");
                             }
                         }
                         static partial void On{{propertyName}}Changed();
+
+                        public static void Reset{{propertyName}}()
+                        {
+                            {{propertyName}} = {{variableName}};
+                        }
                 """;
 
                 propertyCodes.Add(propertyCode);
@@ -127,6 +134,8 @@ public class SettingClassGenerator : IIncrementalGenerator
                  partial {{classType}} {{className}}
                  {
              {{string.Join("\n", propertyCodes)}}
+
+                     static partial void OnPropertyChanged(string propertyName);
                  }
              }
              """;
@@ -147,7 +156,38 @@ public class SettingClassGenerator : IIncrementalGenerator
         return false;
     }
 
-    private static readonly string[] _validTypes = ["bool", nameof(Boolean), "byte", nameof(Byte), nameof(DateTime), "double", nameof(Double), "int", nameof(Int32), "string", nameof(String), "Color", "Point", "Rectangle", "Size"];
+    private static readonly string[] _validTypes =
+        [
+            "bool",
+            "Boolean",
+            "System.Boolean",
+            "byte",
+            "Byte",
+            "System.Byte",
+            "DateTime",
+            "System.DateTime",
+            "double",
+            "Double",
+            "System.Double",
+            "int",
+            "Int32",
+            "System.Int32",
+            "string",
+            "String",
+            "System.String",
+            "Color",
+            "Drawing.Color",
+            "System.Drawing.Color",
+            "Point",
+            "Drawing.Point",
+            "System.Drawing.Point",
+            "Rectangle",
+            "Drawing.Rectangle",
+            "System.Drawing.Rectangle",
+            "Size",
+            "Drawing.Size",
+            "System.Drawing.Size",
+        ];
     private static bool IsFieldTypeValid(string typeName)
     {
         foreach (var validType in _validTypes)

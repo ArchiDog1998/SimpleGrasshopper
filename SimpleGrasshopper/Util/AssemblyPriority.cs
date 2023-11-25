@@ -1,6 +1,9 @@
 ﻿using Grasshopper.GUI;
+using Grasshopper.GUI.Base;
 using Grasshopper.GUI.Canvas;
+using Rhino.Commands;
 using SimpleGrasshopper.Attributes;
+using System.Reflection;
 
 namespace SimpleGrasshopper.Util;
 
@@ -9,6 +12,9 @@ namespace SimpleGrasshopper.Util;
 /// </summary>
 public abstract class AssemblyPriority : GH_AssemblyPriority
 {
+    private static Bitmap? _bitmap = null;
+    private static Bitmap ResetIcon => _bitmap ??= typeof(AssemblyPriority).Assembly.GetBitmap("ResetIcons_24.png")!;
+
     /// <summary>
     /// The index of the menu to insert your config menu item.
     /// </summary>
@@ -156,10 +162,22 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             item = CreateBoolItem(propertyInfo);
         }
-        //else if (type == typeof(string))
-        //{
-        //    item = CreateStringItem(propertyInfo);
-        //}
+        else if (type == typeof(string))
+        {
+            item = CreateStringItem(propertyInfo);
+        }
+        else if (type == typeof(Color))
+        {
+            item = CreateColorItem(propertyInfo);
+        }
+        else if (type == typeof(int))
+        {
+            item = CreateIntItem(propertyInfo);
+        }
+        else if (type == typeof(double))
+        {
+            item = CreateDoubleItem(propertyInfo);
+        }
         //TODO: More types of items!
         else
         {
@@ -169,9 +187,139 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         return item;
     }
 
-    //private ToolStripItem? CreateStringItem(PropertyInfo propertyInfo)
-    //{
-    //}
+    private ToolStripItem? CreateDoubleItem(PropertyInfo propertyInfo)
+    {
+        decimal min = decimal.MinValue;
+        decimal max = decimal.MaxValue;
+        int place = 1;
+
+        var range = propertyInfo.GetCustomAttribute<RangeAttribute>();
+        if (range != null)
+        {
+            min = Math.Max(min, range.Min);
+            max = Math.Min(max, range.Max);
+            place = Math.Max(place, range.Place);
+        }
+        return CreateNumberItem<double>(propertyInfo, min, max, place);
+    }
+
+    private ToolStripItem? CreateIntItem(PropertyInfo propertyInfo)
+    {
+        decimal min = int.MinValue;
+        decimal max = int.MaxValue;
+        int place = 0;
+
+        var range = propertyInfo.GetCustomAttribute<RangeAttribute>();
+        if (range != null)
+        {
+            min = Math.Max(min, range.Min);
+            max = Math.Min(max, range.Max);
+            place = Math.Min(place, range.Place);
+        }
+        return CreateNumberItem<int>(propertyInfo, min, max, place);
+    }
+
+    private ToolStripItem? CreateNumberItem<T>(PropertyInfo propertyInfo, decimal min, decimal max, int place)
+    {
+        if (propertyInfo.GetValue(null) is not T i)
+        {
+            return null;
+        }
+
+        var item = CreateBaseItem(propertyInfo);
+        if (item == null) return null;
+
+        var slider = CreateScroller(min, max, place, Convert.ToDecimal(i),
+            v => propertyInfo.SetValue(null, Convert.ChangeType(v, typeof(T))));
+
+        GH_DocumentObject.Menu_AppendCustomItem(item.DropDown, slider);
+
+        item.DropDownItems.Add(GetResetItem(propertyInfo,
+            () => slider.Value = Convert.ToDecimal(propertyInfo.GetValue(null))));
+        return item;
+    }
+
+    private static GH_DigitScroller CreateScroller(decimal min, decimal max, int decimalPlace, decimal originValue, Action<decimal> setValue)
+    {
+        GH_DigitScroller slider = new()
+        {
+            MinimumValue = min,
+            MaximumValue = max,
+            DecimalPlaces = decimalPlace,
+            Value = originValue,
+            Size = new Size(150, 24),
+        };
+
+        slider.ValueChanged += (sender, e) =>
+        {
+            var result = e.Value;
+            result = result >= min ? result : min;
+            result = result <= max ? result : max;
+            slider.Value = result;
+            setValue(result);
+        };
+
+        return slider;
+    }
+
+    private ToolStripItem? CreateColorItem(PropertyInfo propertyInfo)
+    {
+        if (propertyInfo.GetValue(null) is not Color c)
+        {
+            return null;
+        }
+
+        var item = CreateBaseItem(propertyInfo);
+        if (item == null) return null;
+
+        GH_ColourPicker picker = GH_DocumentObject.Menu_AppendColourPicker(item.DropDown, c, (sender, e) =>
+        {
+            propertyInfo.SetValue(null, e.Colour);
+        });
+
+        item.DropDownItems.Add(GetResetItem(propertyInfo,
+            () => picker.Colour = (Color)propertyInfo.GetValue(null)!));
+        return item;
+    }
+
+    private ToolStripItem? CreateStringItem(PropertyInfo propertyInfo)
+    {
+        if (propertyInfo.GetValue(null) is not string s)
+        {
+            return null;
+        }
+
+        var item = CreateBaseItem(propertyInfo);
+        if (item == null) return null;
+
+        var textItem = new ToolStripTextBox
+        {
+            Text = s,
+        };
+
+        textItem.TextChanged += (sender, e) =>
+        {
+            propertyInfo.SetValue(null, textItem.Text);
+        };
+
+        item.DropDownItems.Add(textItem);
+        item.DropDownItems.Add(GetResetItem(propertyInfo, 
+            () => textItem.Text = propertyInfo.GetValue(null) as string));
+        return item;
+    }
+
+    private static ToolStripMenuItem GetResetItem(PropertyInfo propertyInfo, Action? reset = null)
+    {
+        return new ToolStripMenuItem("Reset Value", ResetIcon, (sender, e) =>
+        {
+            var type = propertyInfo.DeclaringType;
+            if (type == null) return;
+            var method = type.GetRuntimeMethod($"Reset{propertyInfo.Name}", []);
+            if (method == null) return;
+            method.Invoke(null, []);
+            reset?.Invoke();
+        });
+    }
 
     private ToolStripItem? CreateBoolItem(PropertyInfo propertyInfo)
     {
