@@ -172,11 +172,47 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         }
         else if (type == typeof(int))
         {
-            item = CreateIntItem(propertyInfo);
+            item = CreateIntegerItem<int>(propertyInfo, int.MinValue, int.MaxValue);
+        }
+        else if (type == typeof(byte))
+        {
+            item = CreateIntegerItem<byte>(propertyInfo, byte.MinValue, byte.MaxValue);
+        }
+        else if (type == typeof(sbyte))
+        {
+            item = CreateIntegerItem<sbyte>(propertyInfo, sbyte.MinValue, sbyte.MaxValue);
+        }
+        else if (type == typeof(short))
+        {
+            item = CreateIntegerItem<short>(propertyInfo, short.MinValue, short.MaxValue);
+        }
+        else if (type == typeof(ushort))
+        {
+            item = CreateIntegerItem<ushort>(propertyInfo, ushort.MinValue, ushort.MaxValue);
+        }
+        else if (type == typeof(uint))
+        {
+            item = CreateIntegerItem<uint>(propertyInfo, uint.MinValue, uint.MaxValue);
+        }
+        else if (type == typeof(long))
+        {
+            item = CreateIntegerItem<long>(propertyInfo, long.MinValue, long.MaxValue);
+        }
+        else if (type == typeof(ulong))
+        {
+            item = CreateIntegerItem<ulong>(propertyInfo, ulong.MinValue, ulong.MaxValue);
         }
         else if (type == typeof(double))
         {
-            item = CreateDoubleItem(propertyInfo);
+            item = CreateNumberItem<double>(propertyInfo);
+        }
+        else if (type == typeof(float))
+        {
+            item = CreateNumberItem<float>(propertyInfo);
+        }
+        else if (type == typeof(decimal))
+        {
+            item = CreateNumberItem<decimal>(propertyInfo);
         }
         //TODO: More types of items!
         else
@@ -187,7 +223,21 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         return item;
     }
 
-    private ToolStripItem? CreateDoubleItem(PropertyInfo propertyInfo)
+    private ToolStripItem? CreateIntegerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max)
+    {
+        int place = 0;
+
+        var range = propertyInfo.GetCustomAttribute<RangeAttribute>();
+        if (range != null)
+        {
+            min = Math.Max(min, range.Min);
+            max = Math.Min(max, range.Max);
+            place = Math.Min(place, range.Place);
+        }
+        return CreateScrollerItem<T>(propertyInfo, min, max, place);
+    }
+
+    private ToolStripItem? CreateNumberItem<T>(PropertyInfo propertyInfo)
     {
         decimal min = decimal.MinValue;
         decimal max = decimal.MaxValue;
@@ -200,26 +250,10 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             max = Math.Min(max, range.Max);
             place = Math.Max(place, range.Place);
         }
-        return CreateNumberItem<double>(propertyInfo, min, max, place);
+        return CreateScrollerItem<T>(propertyInfo, min, max, place);
     }
 
-    private ToolStripItem? CreateIntItem(PropertyInfo propertyInfo)
-    {
-        decimal min = int.MinValue;
-        decimal max = int.MaxValue;
-        int place = 0;
-
-        var range = propertyInfo.GetCustomAttribute<RangeAttribute>();
-        if (range != null)
-        {
-            min = Math.Max(min, range.Min);
-            max = Math.Min(max, range.Max);
-            place = Math.Min(place, range.Place);
-        }
-        return CreateNumberItem<int>(propertyInfo, min, max, place);
-    }
-
-    private ToolStripItem? CreateNumberItem<T>(PropertyInfo propertyInfo, decimal min, decimal max, int place)
+    private ToolStripItem? CreateScrollerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max, int place)
     {
         if (propertyInfo.GetValue(null) is not T i)
         {

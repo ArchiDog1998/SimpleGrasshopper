@@ -15,9 +15,36 @@ namespace SimpleGrasshopper.SourceGenerators;
                 "int",
                 "Int32",
                 "System.Int32",
+                "uint",
+                "UInt32",
+                "System.UInt32",
                 "double",
                 "Double",
                 "System.Double",
+                "byte",
+                "Byte",
+                "System.Byte",
+                "sbyte",
+                "SByte",
+                "System.SByte",
+                "short",
+                "Int16",
+                "System.Int16",
+                "ushort",
+                "UInt16",
+                "System.UInt16",
+                "long",
+                "Int64",
+                "System.Int64",
+                "ulong",
+                "UInt64",
+                "System.UInt64",
+                "float",
+                "Single",
+                "System.Single",
+                "decimal",
+                "Decimal",
+                "System.Decimal",
             ]);
     }
 
@@ -35,12 +62,26 @@ namespace SimpleGrasshopper.SourceGenerators;
             {
                 var field = (FieldDeclarationSyntax)variableInfo.Parent!.Parent!;
 
+                var loc = variableInfo.Identifier.GetLocation();
+
+                if (!field.AttributeLists.Any(m => m.Attributes.Any(a => SettingClassGenerator.IsAttribute(a.Name.ToString(), "Config"))))
+                {
+                    var desc1 = new DiagnosticDescriptor(
+                                        "SG0007",
+                                        "Field Attribute",
+                                        $"The attribute SimpleGrasshopper.Attributes.{attributeName}Attribute must be used with the attribute SimpleGrasshopper.Attributes.ConfigAttribute!",
+                                        "Problem",
+                                        DiagnosticSeverity.Warning,
+                                        true);
+
+                    spc.ReportDiagnostic(Diagnostic.Create(desc1, loc));
+                }
+
                 if (field.AttributeLists.Any(m => m.Attributes.Any(a => SettingClassGenerator.IsAttribute(a.Name.ToString(), "Setting"))))
                 {
                     continue;
                 }
 
-                var loc = variableInfo.Identifier.GetLocation();
 
                 foreach (var attrs in field.AttributeLists)
                 {
@@ -100,6 +141,19 @@ namespace SimpleGrasshopper.SourceGenerators;
                         "Problem",
                         DiagnosticSeverity.Warning,
                         true);
+
+                    spc.ReportDiagnostic(Diagnostic.Create(desc, property.Identifier.GetLocation()));
+                }
+
+                if (!property.AttributeLists.Any(m => m.Attributes.Any(a => SettingClassGenerator.IsAttribute(a.Name.ToString(), "Config"))))
+                {
+                    var desc = new DiagnosticDescriptor(
+                                        "SG0007",
+                                        "Field Attribute",
+                                        $"The attribute SimpleGrasshopper.Attributes.{attributeName}Attribute must be used with the attribute SimpleGrasshopper.Attributes.ConfigAttribute!",
+                                        "Problem",
+                                        DiagnosticSeverity.Warning,
+                                        true);
 
                     spc.ReportDiagnostic(Diagnostic.Create(desc, property.Identifier.GetLocation()));
                 }
