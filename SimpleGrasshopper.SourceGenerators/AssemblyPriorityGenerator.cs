@@ -71,7 +71,7 @@ public class AssemblyPriorityGenerator : IIncrementalGenerator
 
              namespace {{nameSpace}}
              {
-                public class SimpleAssemblyPriority : AssemblyPriority
+                public partial class SimpleAssemblyPriority : AssemblyPriority
                 {
                 }
              }
