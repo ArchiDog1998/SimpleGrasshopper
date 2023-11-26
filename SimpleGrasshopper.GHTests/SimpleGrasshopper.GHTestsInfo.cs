@@ -38,5 +38,5 @@ public class SimpleGrasshopper_GHTestsInfo : GH_AssemblyInfo
 
 partial class SimpleAssemblyPriority
 {
-    protected override int? MenuIndex => 2;
+    protected override int? MenuIndex => 4;
 }
