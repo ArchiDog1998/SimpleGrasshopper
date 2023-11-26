@@ -1,4 +1,5 @@
-﻿using Grasshopper.Kernel.Parameters;
+﻿using Grasshopper.Kernel.Data;
+using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
 using System.Net;
@@ -89,6 +90,23 @@ internal static class Utils
         return attr == null ? type.Name : getProperty(attr);
     }
 
+    public static Type GetAccessAndType(this Type type, out GH_ParamAccess access)
+    {
+        access = GH_ParamAccess.item;
+
+        if (type.IsGeneralType(typeof(GH_Structure<>)) is Type treeType)
+        {
+            access = GH_ParamAccess.tree;
+            return treeType;
+        }
+        else if (type.IsGeneralType(typeof(List<>)) is Type listType)
+        {
+            access = GH_ParamAccess.list;
+            return listType;
+        }
+        return type;
+    }
+
     public static Type? IsGeneralType(this Type? type, Type targetType)
     {
         if (type == null) return null;
@@ -100,12 +118,11 @@ internal static class Utils
         return IsGeneralType(type.BaseType, targetType);
     }
 
-    private static Type[]? _paramTypes = null;
     public static Guid GetDocObjGuid(this Type type)
     {
         var proxy = Instances.ComponentServer.ObjectProxies;
 
-        _paramTypes ??= Instances.ComponentServer.ObjectProxies
+        var paramTypes = Instances.ComponentServer.ObjectProxies
             .Where(p => p.Kind == GH_ObjectType.CompiledObject)
             .Select(p => p.Type)
             .OrderByDescending(t => t.Assembly != typeof(GH_Component).Assembly)
@@ -125,7 +142,7 @@ internal static class Utils
             return new Guid("{3EDE854E-C753-40eb-84CB-B48008F14FD4}");
         }
 
-        foreach (var paramType in _paramTypes)
+        foreach (var paramType in paramTypes)
         {
             if (type.GetGuid(paramType) is Guid guid)
             {
@@ -152,9 +169,8 @@ internal static class Utils
         return null;
     }
 
-    public static Type? GetRawType(this Type? type)
+    public static Type GetRawType(this Type type)
     {
-        if (type == null) return null;
         if (type.IsByRef)
         {
             type = type.GetElementType() ?? type;
@@ -211,6 +227,40 @@ internal static class Utils
         catch
         {
             return null;
+        }
+    }
+
+    public static bool GetValue<T>(this IGH_DataAccess DA, T identify, Type type, GH_ParamAccess access, out object value)
+    {
+        MethodInfo method = access switch
+        {
+            GH_ParamAccess.list => GetDaMethod(DA, nameof(DA.GetDataList)),
+            GH_ParamAccess.tree => GetDaMethod(DA, nameof(DA.GetDataTree)),
+            _ => GetDaMethod(DA, nameof(DA.GetData)),
+        };
+
+        object[] pms = [identify!,
+            access switch
+            {
+                GH_ParamAccess.list => Activator.CreateInstance(typeof(List<>).MakeGenericType(type))!,
+                GH_ParamAccess.tree => Activator.CreateInstance(typeof(GH_Structure<>).MakeGenericType(type))!,
+                _ => type.IsEnum ? 0 : type.IsValueType ? Activator.CreateInstance(type)! : null!,
+            }];
+
+        var result = (bool)method.MakeGenericMethod(type.IsEnum ? typeof(int) : type).Invoke(DA, pms)!;
+        value = access != GH_ParamAccess.item ? pms[1] : pms[1].ChangeType(type);
+        return result;
+
+        static MethodInfo GetDaMethod(IGH_DataAccess DA, string name)
+        {
+            return DA.GetType().GetRuntimeMethods().First(m =>
+            {
+                if (m.Name != name) return false;
+                var pms = m.GetParameters();
+                if (pms.Length != 2) return false;
+                if (pms[0].ParameterType.GetRawType() != typeof(T)) return false;
+                return true;
+            });
         }
     }
 }

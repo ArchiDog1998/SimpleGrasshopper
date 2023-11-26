@@ -35,12 +35,29 @@ public abstract class TypeParameter<T>()
     /// <inheritdoc/>
     protected override GH_GetterResult Prompt_Plural(ref List<SimpleGoo<T>> values)
     {
-        return GH_GetterResult.cancel;
+        try
+        {
+            values ??= [];
+            values.Add(new SimpleGoo<T>(Activator.CreateInstance<T>()));
+            return GH_GetterResult.success;
+        }
+        catch
+        {
+            return GH_GetterResult.cancel;
+        }
     }
 
     /// <inheritdoc/>
     protected override GH_GetterResult Prompt_Singular(ref SimpleGoo<T> value)
     {
-        return GH_GetterResult.cancel;
+        try
+        {
+            value = new SimpleGoo<T>(Activator.CreateInstance<T>());
+            return GH_GetterResult.success;
+        }
+        catch
+        {
+            return GH_GetterResult.cancel;
+        }
     }
 }

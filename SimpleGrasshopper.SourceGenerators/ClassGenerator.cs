@@ -1,8 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Immutable;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace SimpleGrasshopper.SourceGenerators;
 
@@ -19,17 +16,4 @@ public abstract class ClassGenerator<T> : IIncrementalGenerator where T : Syntax
     }
 
     protected abstract void Execute(SourceProductionContext context, ImmutableArray<T> syntaxes);
-
-    protected static string GetGuid(params string[] ids)
-    {
-        var id = string.Join(".", ids);
-        using MD5 md5 = MD5.Create();
-        byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes(id));
-        return new Guid(hash).ToString("B");
-    }
-
-    protected static bool IsObsolete(MemberDeclarationSyntax syntax)
-    {
-        return syntax.AttributeLists.Any(list => list.Attributes.Any(attr => attr.Name.ToString() is "Obsolete" or "ObsoleteAttribute" or "System.Obsolete" or "System.ObsoleteAttribute"));
-    }
 }

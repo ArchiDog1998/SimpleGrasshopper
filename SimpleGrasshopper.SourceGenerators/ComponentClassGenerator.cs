@@ -36,7 +36,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
 
             var methodName = syntax.Identifier.Text;
 
-            string guidStr = GetGuid(nameSpace, className, methodName);
+            string guidStr = TypePropertyComponentGenerator.GetGuid(nameSpace, className, methodName);
 
             if (strings.Contains(guidStr))
             {
@@ -47,7 +47,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
             var codeClassName = $"{className}_{methodName}_Component";
 
             //Obsolete
-            if (IsObsolete(syntax))
+            if (TypePropertyComponentGenerator.IsObsolete(syntax))
             {
                 codeClassName += "_Obsolete";
             }
