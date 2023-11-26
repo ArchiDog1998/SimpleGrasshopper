@@ -113,6 +113,7 @@ public class SettingClassGenerator : IIncrementalGenerator
                                 OnPropertyChanged("{{propertyName}}");
                             }
                         }
+
                         static partial void On{{propertyName}}Changed();
 
                         public static void Reset{{propertyName}}()
@@ -133,7 +134,7 @@ public class SettingClassGenerator : IIncrementalGenerator
              {
                  partial {{classType}} {{className}}
                  {
-             {{string.Join("\n", propertyCodes)}}
+             {{string.Join("\n \n", propertyCodes)}}
 
                      static partial void OnPropertyChanged(string propertyName);
                  }

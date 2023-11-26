@@ -13,6 +13,12 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     private static Bitmap ResetIcon => _bitmap ??= typeof(AssemblyPriority).Assembly.GetBitmap("ResetIcons_24.png")!;
 
     /// <summary>
+    /// The canvas toolbar in grasshopper.
+    /// </summary>
+    protected static readonly ToolStrip CanvasToolbar = (Instances.DocumentEditor.Controls[0].Controls[1] as ToolStrip)!;
+
+
+    /// <summary>
     /// The index of the menu to insert your config menu item.
     /// </summary>
     protected virtual int? MenuIndex { get; } = 3;
@@ -67,6 +73,11 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             Instances.ComponentServer.AddCategoryIcon(assembly.GetAssemblyName(), icon);
         }
 
+        CreateMajorMenu(editor);
+    }
+
+    private void CreateMajorMenu(GH_DocumentEditor editor)
+    {
         var toolItems = MenuIndex.HasValue
             ? (editor.MainMenuStrip?.Items[MenuIndex.Value] as ToolStripMenuItem)?.DropDownItems
             : editor.MainMenuStrip?.Items;
@@ -86,14 +97,26 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     protected ToolStripMenuItem? CreateMajorMenuItem()
     {
         var assembly = GetType().Assembly;
+        if(assembly == null) return null;
+
         var assemblyName = assembly.GetAssemblyName();
         var icon = assembly.GetAssemblyIcon();
 
-        var items = GetAllItems(assembly.GetTypes()
+        var properties = assembly.GetTypes()
             .SelectMany(t => t.GetRuntimeProperties())
             .Where(p => p.CanWrite && p.CanRead && p.GetMethod!.IsStatic
                 && p.GetCustomAttribute<ConfigAttribute>() != null)
-            .ToArray());
+            .ToList();
+
+        var majorProperty = properties.FirstOrDefault(p => p.PropertyType.GetRawType() == typeof(bool)
+            && p.GetCustomAttribute<ConfigAttribute>()?.Name == assemblyName);
+
+        if (majorProperty != null)
+        {
+            properties.Remove(majorProperty);
+        }
+
+        var items = GetAllItems(properties!);
 
         if (items.Length == 0) return null;
 
@@ -108,15 +131,21 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             major.ToolTipText = desc;
         }
+
+        if (majorProperty != null)
+        {
+            ToBoolItem(ref major, majorProperty);
+        }
+
         major.DropDownItems.AddRange(items);
 
         return major;
     }
 
-    private ToolStripItem[] GetAllItems(PropertyInfo?[] propertyInfos)
+    private ToolStripItem[] GetAllItems(List<PropertyInfo?> propertyInfos)
     {
-        var parentList = new List<ToolStripMenuItem>(propertyInfos.Length);
-        var flattenList = new List<(ToolStripItem, string)>(propertyInfos.Length);
+        var parentList = new List<ToolStripMenuItem>(propertyInfos.Count);
+        var flattenList = new List<(ToolStripItem, string)>(propertyInfos.Count);
         foreach (var property in propertyInfos)
         {
             if (property == null) continue;
@@ -354,26 +383,32 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
     private ToolStripItem? CreateBoolItem(PropertyInfo propertyInfo)
     {
-        if (propertyInfo.GetValue(null) is not bool b)
-        {
-            return null;
-        }
-
         var item = CreateBaseItem(propertyInfo);
         if (item == null) return null;
+
+        ToBoolItem(ref item, propertyInfo);
+        return item;
+    }
+
+    private static void ToBoolItem(ref ToolStripMenuItem item, PropertyInfo propertyInfo)
+    {
+        if (propertyInfo.GetValue(null) is not bool b)
+        {
+            return;
+        }
 
         item.Checked = b;
         item.Click += (sender, e) =>
         {
             if (sender is not ToolStripMenuItem i) return;
-            item.Checked = !item.Checked;
-            propertyInfo.SetValue(null, item.Checked);
+            i.Checked = !i.Checked;
+            propertyInfo.SetValue(null, i.Checked);
 
             if (i.HasDropDownItems)
             {
                 foreach (ToolStripItem it in i.DropDownItems)
                 {
-                    it.Enabled = item.Checked;
+                    it.Enabled = i.Checked;
                 }
             }
         };
@@ -386,12 +421,10 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             {
                 foreach (ToolStripItem it in i.DropDownItems)
                 {
-                    it.Enabled = item.Checked;
+                    it.Enabled = i.Checked;
                 }
             }
         };
-
-        return item;
     }
 
     private ToolStripMenuItem? CreateBaseItem(PropertyInfo propertyInfo)

@@ -8,6 +8,9 @@ internal partial class SettingClass
     [Setting, Config("Major Bool")]
     private static readonly bool firstSetting = true;
 
+    [Setting, Config("SimpleGrasshopperTesting")]
+    private static readonly bool majorBool = true;
+
     [Setting, Config("A color")]
     private static readonly Color secondSetting = Color.AliceBlue;
 
