@@ -9,7 +9,7 @@ public class ConfigAttributeWarning : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        InitOneAttribute(context, "Config", null);
+        InitOneAttribute(context, "Config", null, null);
         InitOneAttribute(context, "Range",
             [
                 "int",
@@ -45,10 +45,49 @@ public class ConfigAttributeWarning : IIncrementalGenerator
                 "decimal",
                 "Decimal",
                 "System.Decimal",
-            ]);
+            ], "Config");
+
+        InitOneAttribute(context, "ToolButton",
+            [
+                "bool",
+                "Boolean",
+                "System.Boolean",
+            ], null);
     }
 
-    private static void InitOneAttribute(IncrementalGeneratorInitializationContext context, string attributeName, string[]? validTypes)
+    private static void ValidTypes(SourceProductionContext spc, string attributeName, string[]? validTypes, TypeSyntax type)
+    {
+        if (validTypes != null)
+        {
+            var typeName = type.ToString();
+
+            var rightType = false;
+            foreach (var validType in validTypes)
+            {
+                if (string.IsNullOrEmpty(typeName)) continue;
+                if (typeName.EndsWith(validType))
+                {
+                    rightType = true;
+                    break;
+                }
+            }
+
+            if (!rightType)
+            {
+                var desc = new DiagnosticDescriptor(
+                "SG0004",
+                "Wrong Type",
+                $"This type can't be tagged with SimpleGrasshopper.Attributes.{attributeName}Attribute!",
+                "Problem",
+                DiagnosticSeverity.Warning,
+                true);
+
+                spc.ReportDiagnostic(Diagnostic.Create(desc, type.GetLocation()));
+            }
+        }
+    }
+
+    private static void InitOneAttribute(IncrementalGeneratorInitializationContext context, string attributeName, string[]? validTypes, string? parent)
     {
         var provider = context.SyntaxProvider.ForAttributeWithMetadataName
             ($"SimpleGrasshopper.Attributes.{attributeName}Attribute",
@@ -64,12 +103,13 @@ public class ConfigAttributeWarning : IIncrementalGenerator
 
                 var loc = variableInfo.Identifier.GetLocation();
 
-                if (!field.AttributeLists.Any(m => m.Attributes.Any(a => SettingClassGenerator.IsAttribute(a.Name.ToString(), "Config"))))
+                if (parent != null 
+                    && !field.AttributeLists.Any(m => m.Attributes.Any(a => SettingClassGenerator.IsAttribute(a.Name.ToString(), parent))))
                 {
                     var desc1 = new DiagnosticDescriptor(
                                         "SG0007",
                                         "Field Attribute",
-                                        $"The attribute SimpleGrasshopper.Attributes.{attributeName}Attribute must be used with the attribute SimpleGrasshopper.Attributes.ConfigAttribute!",
+                                        $"The attribute SimpleGrasshopper.Attributes.{attributeName}Attribute must be used with the attribute SimpleGrasshopper.Attributes.{parent}Attribute!",
                                         "Problem",
                                         DiagnosticSeverity.Warning,
                                         true);
@@ -77,11 +117,12 @@ public class ConfigAttributeWarning : IIncrementalGenerator
                     spc.ReportDiagnostic(Diagnostic.Create(desc1, loc));
                 }
 
+                ValidTypes(spc, attributeName, validTypes, field.Declaration.Type);
+
                 if (field.AttributeLists.Any(m => m.Attributes.Any(a => SettingClassGenerator.IsAttribute(a.Name.ToString(), "Setting"))))
                 {
                     continue;
                 }
-
 
                 foreach (var attrs in field.AttributeLists)
                 {
@@ -145,12 +186,12 @@ public class ConfigAttributeWarning : IIncrementalGenerator
                     spc.ReportDiagnostic(Diagnostic.Create(desc, property.Identifier.GetLocation()));
                 }
 
-                if (!property.AttributeLists.Any(m => m.Attributes.Any(a => SettingClassGenerator.IsAttribute(a.Name.ToString(), "Config"))))
+                if (parent != null && !property.AttributeLists.Any(m => m.Attributes.Any(a => SettingClassGenerator.IsAttribute(a.Name.ToString(), parent))))
                 {
                     var desc = new DiagnosticDescriptor(
                                         "SG0007",
                                         "Field Attribute",
-                                        $"The attribute SimpleGrasshopper.Attributes.{attributeName}Attribute must be used with the attribute SimpleGrasshopper.Attributes.ConfigAttribute!",
+                                        $"The attribute SimpleGrasshopper.Attributes.{attributeName}Attribute must be used with the attribute SimpleGrasshopper.Attributes.{parent}Attribute!",
                                         "Problem",
                                         DiagnosticSeverity.Warning,
                                         true);
@@ -158,33 +199,7 @@ public class ConfigAttributeWarning : IIncrementalGenerator
                     spc.ReportDiagnostic(Diagnostic.Create(desc, property.Identifier.GetLocation()));
                 }
 
-                if (validTypes != null)
-                {
-                    var typeName = property.Type.ToString();
-
-                    var rightType = false;
-                    foreach (var validType in validTypes)
-                    {
-                        if (typeName.EndsWith(validType))
-                        {
-                            rightType = true;
-                            break;
-                        }
-                    }
-
-                    if (!rightType)
-                    {
-                        var desc = new DiagnosticDescriptor(
-                        "SG0004",
-                        "Wrong Type",
-                        $"This type can't be tagged with SimpleGrasshopper.Attributes.{attributeName}Attribute!",
-                        "Problem",
-                        DiagnosticSeverity.Warning,
-                        true);
-
-                        spc.ReportDiagnostic(Diagnostic.Create(desc, property.Type.GetLocation()));
-                    }
-                }
+                ValidTypes(spc, attributeName, validTypes, property.Type);
             }
         });
     }
