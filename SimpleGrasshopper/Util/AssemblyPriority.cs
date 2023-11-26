@@ -1,9 +1,6 @@
 ﻿using Grasshopper.GUI;
-using Grasshopper.GUI.Base;
 using Grasshopper.GUI.Canvas;
-using Rhino.Commands;
 using SimpleGrasshopper.Attributes;
-using System.Reflection;
 
 namespace SimpleGrasshopper.Util;
 
@@ -94,7 +91,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
         var items = GetAllItems(assembly.GetTypes()
             .SelectMany(t => t.GetRuntimeProperties())
-            .Where(p => p.CanWrite && p.CanRead && p.GetMethod!.IsStatic 
+            .Where(p => p.CanWrite && p.CanRead && p.GetMethod!.IsStatic
                 && p.GetCustomAttribute<ConfigAttribute>() != null)
             .ToArray());
 
@@ -105,7 +102,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             major.Image = icon;
         }
-        
+
         var desc = assembly.GetAssemblyDescription();
         if (!string.IsNullOrEmpty(desc))
         {
@@ -337,7 +334,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         };
 
         item.DropDownItems.Add(textItem);
-        item.DropDownItems.Add(GetResetItem(propertyInfo, 
+        item.DropDownItems.Add(GetResetItem(propertyInfo,
             () => textItem.Text = propertyInfo.GetValue(null) as string));
         return item;
     }
@@ -405,7 +402,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         var major = new ToolStripMenuItem(attribute.Name);
 
         var iconName = attribute.Icon;
-        if(!string.IsNullOrEmpty(iconName))
+        if (!string.IsNullOrEmpty(iconName))
         {
             var icon = GetType().Assembly.GetBitmap(iconName);
             if (icon != null)

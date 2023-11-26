@@ -1,7 +1,6 @@
 ﻿using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
-using System.Drawing;
 
 namespace SimpleGrasshopper.DocumentObjects;
 

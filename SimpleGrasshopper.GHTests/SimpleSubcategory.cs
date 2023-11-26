@@ -13,7 +13,6 @@ internal class SimpleSubcategory
     [DocObj("Addition", "Add", "The addition of the integers.")]
     private static void SimpleMethod(int a, int b, out int c)
     {
-        SettingClass.AnotherSetting = "";
         c = a + b;
     }
 

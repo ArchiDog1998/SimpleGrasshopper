@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace SimpleGrasshopper.SourceGenerators;
 
 [Generator(LanguageNames.CSharp)]
- public class ConfigAttributeWarning : IIncrementalGenerator
+public class ConfigAttributeWarning : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {

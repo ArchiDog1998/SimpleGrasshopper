@@ -14,11 +14,13 @@ namespace SimpleGrasshopper.DocumentObjects;
 /// </summary>
 /// <param name="methodInfos">the method.</param>
 public abstract class MethodComponent(params MethodInfo[] methodInfos)
-    : GH_Component(methodInfos[0].GetDocObjName(),
-                   methodInfos[0].GetDocObjNickName(),
-                   methodInfos[0].GetDocObjDescription(),
-                   methodInfos[0].GetAssemblyName(),
-                   methodInfos[0].GetDeclaringClassName()), IGH_VariableParameterComponent
+    : GH_TaskCapableComponent<object?[]>
+        (methodInfos[0].GetDocObjName(),
+         methodInfos[0].GetDocObjNickName(),
+         methodInfos[0].GetDocObjDescription(),
+         methodInfos[0].GetAssemblyName(),
+         methodInfos[0].GetDeclaringClassName())
+    , IGH_VariableParameterComponent
 {
     private readonly record struct OutputData(string Name, int Index, GH_ParamAccess Access);
 
@@ -228,11 +230,25 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
             }
         }).ToArray();
 
-        MethodInfo.Invoke(null, parameters);
+        if (InPreSolve)
+        {
+            TaskList.Add(Task.Run(() =>
+            {
+                MethodInfo.Invoke(null, parameters);
+                return parameters;
+            }));
+            return;
+        }
+
+        if (!GetSolveResults(DA, out var resultParams))
+        {
+            MethodInfo.Invoke(null, parameters);
+            resultParams = parameters;
+        }
 
         foreach (var param in outParams)
         {
-            var result = parameters[param.Index];
+            var result = resultParams[param.Index];
             switch (param.Access)
             {
                 case GH_ParamAccess.tree:
@@ -300,6 +316,8 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
     /// <inheritdoc/>
     public override void AppendAdditionalMenuItems(ToolStripDropDown menu)
     {
+        base.AppendAdditionalMenuItems(menu);
+
         var count = methodInfos.Length;
         if (count < 2) return;
 

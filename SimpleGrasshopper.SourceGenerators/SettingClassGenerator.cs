@@ -72,7 +72,7 @@ public class SettingClassGenerator : IIncrementalGenerator
                 var key = string.Join(".", nameSpace, className, propertyName);
 
                 var fieldTypeStr = field.Declaration.Type;
-                
+
                 if (!IsFieldTypeValid(fieldTypeStr.ToString()))
                 {
                     var desc = new DiagnosticDescriptor(
