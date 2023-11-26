@@ -1,6 +1,7 @@
 ﻿using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
+using System.Net;
 
 namespace SimpleGrasshopper.Util;
 
@@ -168,6 +169,36 @@ internal static class Utils
     }
 
     public static Bitmap? GetBitmap(this Assembly assembly, string path)
+    {
+        var bitmap = assembly.GetBitmapRaw(path);
+        if (bitmap != null) return bitmap;
+
+        try
+        {
+            if (Guid.TryParse(path, out var id))
+            {
+                return Instances.ComponentServer.EmitObjectProxy(id)?.Icon;
+            }
+            if (File.Exists(path))
+            {
+                return new Bitmap(path);
+            }
+            if (Uri.TryCreate(path, new UriCreationOptions(), out var url)
+                && url is not null)
+            {
+                using var client = new HttpClient();
+                var stream = client.GetStreamAsync(url).Result;
+                return new Bitmap(stream);
+            }
+        }
+        catch
+        {
+        }
+        
+        return null;
+    }
+
+    private static Bitmap? GetBitmapRaw(this Assembly assembly, string path)
     {
         var name = assembly.GetManifestResourceNames().FirstOrDefault(n => n.EndsWith(path));
         if (name == null) return null;

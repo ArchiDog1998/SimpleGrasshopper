@@ -8,7 +8,7 @@ internal partial class SettingClass
     [Setting, Config("Major Bool")]
     private static readonly bool firstSetting = true;
 
-    [Setting, Config("SimpleGrasshopperTesting")]
+    [Setting, Config("SimpleGrasshopperTesting"), ToolButton("b7798b74-037e-4f0c-8ac7-dc1043d093e0")]
     private static readonly bool majorBool = true;
 
     [Setting, Config("A color")]

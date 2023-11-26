@@ -94,7 +94,8 @@ public class SettingClassGenerator : IIncrementalGenerator
                     foreach (var attr in attrSet.Attributes)
                     {
                         if (IsAttribute(attr.Name.ToString(), "Config")
-                            || IsAttribute(attr.Name.ToString(), "Range"))
+                            || IsAttribute(attr.Name.ToString(), "Range")
+                            || IsAttribute(attr.Name.ToString(), "ToolButton"))
                         {
                             names.Add(attr.ToString());
                         }
@@ -109,12 +110,13 @@ public class SettingClassGenerator : IIncrementalGenerator
                             {
                                 if ({{propertyName}} == value) return;
                                 Instances.Settings.SetValue("{{key}}", value);
-                                On{{propertyName}}Changed();
-                                OnPropertyChanged("{{propertyName}}");
+
+                                On{{propertyName}}Changed?.Invoke(value);
+                                OnPropertyChanged?.Invoke("{{propertyName}}", value);
                             }
                         }
 
-                        static partial void On{{propertyName}}Changed();
+                        public static event Action<{{fieldTypeStr}}> On{{propertyName}}Changed;
 
                         public static void Reset{{propertyName}}()
                         {
@@ -136,7 +138,7 @@ public class SettingClassGenerator : IIncrementalGenerator
                  {
              {{string.Join("\n \n", propertyCodes)}}
 
-                     static partial void OnPropertyChanged(string propertyName);
+                     public static event Action<string, object> OnPropertyChanged;
                  }
              }
              """;
