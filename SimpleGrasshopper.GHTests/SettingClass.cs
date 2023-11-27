@@ -25,7 +25,7 @@ internal partial class SettingClass
     [Setting]
     private static readonly EnumTesting _enumTest;
 
-    [Setting, Config("My Time")]
+    [Setting, Config("My Time", parent: "EnumValue")]
     private static readonly DateTime _time = DateTime.Now;
 
     [Config("EnumValue")]

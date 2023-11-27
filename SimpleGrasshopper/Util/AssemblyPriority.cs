@@ -1,12 +1,9 @@
-﻿using GH_IO.Serialization;
-using Grasshopper.GUI;
+﻿using Grasshopper.GUI;
 using Grasshopper.GUI.Canvas;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
 using SimpleGrasshopper.Attributes;
-using System;
 using System.Drawing.Imaging;
-using System.Reflection;
 using GH_DigitScroller = Grasshopper.GUI.GH_DigitScroller;
 
 namespace SimpleGrasshopper.Util;
@@ -38,6 +35,16 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// The custom menu item creators.
     /// </summary>
     protected virtual Dictionary<Type, Func<PropertyInfo, ToolStripMenuItem?>> CustomItemsCreators { get; } = [];
+
+    /// <summary>
+    /// The display string about reseting the value.
+    /// </summary>
+    protected virtual string ResetValueString => "Reset Value";
+
+    /// <summary>
+    /// The format about <see cref="DateTime"/> showing.
+    /// </summary>
+    protected virtual string DateTimePickerCustomFormat => "yyyy/MM/dd hh:mm:ss";
 
     /// <inheritdoc/>
     public override GH_LoadingInstruction PriorityLoad()
@@ -156,7 +163,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             property.SetValue(null, !i.Checked);
         };
 
-        AddEvent(property, (bool b) =>
+        AddPropertyChangedEvent(property, (bool b) =>
         {
             button.Checked = b;
         });
@@ -279,15 +286,14 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             foreach(var grp in childrenList.GroupBy(c => c.Item2).OrderBy(g => g.Key))
             {
+                if (parentItem.HasDropDownItems)
+                {
+                    GH_Component.Menu_AppendSeparator(parentItem.DropDown);
+                }
                 foreach (var item in grp.OrderBy(c => c.Item3))
                 {
                     parentItem.DropDownItems.Add(item.Item1);
                 }
-                GH_Component.Menu_AppendSeparator(parentItem.DropDown);
-            }
-            if (parentItem.DropDownItems[checked(parentItem.DropDownItems.Count - 1)] is ToolStripSeparator separator)
-            {
-                parentItem.DropDownItems.Remove(separator);
             }
         }
 
@@ -362,14 +368,14 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             item = CreateDateTimeItem(propertyInfo);
         }
-        //TODO: More types of items!
         else if (type.IsEnum)
         {
             item = CreateEnumItem(propertyInfo);
         }
         else
         {
-            item = CreateBaseItem(propertyInfo);
+            item = CreateBaseItem(propertyInfo, type == typeof(object) ? null 
+                : new Param_GenericObject().Icon_24x24);
         }
 
         return item;
@@ -377,7 +383,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
     private ToolStripItem? CreateDateTimeItem(PropertyInfo propertyInfo)
     {
-        var item = CreateBaseItem(propertyInfo);
+        var item = CreateBaseItem(propertyInfo, new Param_Time().Icon_24x24);
         if (item == null) return null;
 
         if (propertyInfo.GetValue(null) is not DateTime time)
@@ -389,7 +395,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             Value = time,
             Format = DateTimePickerFormat.Custom,
-            CustomFormat = "yyyy/MM/dd hh:mm:ss",
+            CustomFormat = DateTimePickerCustomFormat,
         };
 
         ctrl.ValueChanged += (sender, e) =>
@@ -398,20 +404,19 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             propertyInfo.SetValue(null, picker.Value);
         };
 
-        AddEvent(propertyInfo, (DateTime b) =>
+        AddPropertyChangedEvent(propertyInfo, (DateTime b) =>
         {
             ctrl.Value = b;
         });
 
         GH_DocumentObject.Menu_AppendCustomItem(item.DropDown, ctrl);
-        GetResetItem(item.DropDownItems, propertyInfo);
-        SetImage(item, new Param_Time().Icon_24x24);
+        AddResetItem(item.DropDownItems, propertyInfo);
         return item;
     }
 
     private ToolStripItem? CreateEnumItem(PropertyInfo propertyInfo)
     {
-        var item = CreateBaseItem(propertyInfo);
+        var item = CreateBaseItem(propertyInfo, new GH_ValueList().Icon_24x24);
         if (item == null) return null;
 
         var i = propertyInfo.GetValue(null);
@@ -439,14 +444,13 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             propertyInfo.SetValue(null, b.SelectedItem);
         };
 
-        AddEvent(propertyInfo, (object b) =>
+        AddPropertyChangedEvent(propertyInfo, (object b) =>
         {
             box.SelectedItem = b;
         });
 
         item.DropDownItems.Add(box);
-        GetResetItem(item.DropDownItems, propertyInfo);
-        SetImage(item, new GH_ValueList().Icon_24x24);
+        AddResetItem(item.DropDownItems, propertyInfo);
         return item;
     }
 
@@ -461,8 +465,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             max = Math.Min(max, range.Max);
             place = Math.Min(place, range.Place);
         }
-        var item = CreateScrollerItem<T>(propertyInfo, min, max, place);
-        SetImage(item, new Param_Integer().Icon_24x24);
+        var item = CreateScrollerItem<T>(propertyInfo, min, max, place, new Param_Integer().Icon_24x24);
         return item;
     }
 
@@ -479,32 +482,31 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             max = Math.Min(max, range.Max);
             place = Math.Max(place, range.Place);
         }
-        var item = CreateScrollerItem<T>(propertyInfo, min, max, place);
-        SetImage(item, new Param_Number().Icon_24x24);
+        var item = CreateScrollerItem<T>(propertyInfo, min, max, place, new Param_Number().Icon_24x24);
         return item;
     }
 
-    private ToolStripItem? CreateScrollerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max, int place)
+    private ToolStripItem? CreateScrollerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max, int place, Image? defaultImage)
     {
         if (propertyInfo.GetValue(null) is not T i)
         {
             return null;
         }
 
-        var item = CreateBaseItem(propertyInfo);
+        var item = CreateBaseItem(propertyInfo, defaultImage);
         if (item == null) return null;
 
         var slider = CreateScroller(min, max, place, Convert.ToDecimal(i),
             v => propertyInfo.SetValue(null, Convert.ChangeType(v, typeof(T))));
 
-        AddEvent(propertyInfo, (T b) =>
+        AddPropertyChangedEvent(propertyInfo, (T b) =>
         {
             slider.Value = Convert.ToDecimal(b);
         });
 
         GH_DocumentObject.Menu_AppendCustomItem(item.DropDown, slider);
 
-        GetResetItem(item.DropDownItems, propertyInfo);
+        AddResetItem(item.DropDownItems, propertyInfo);
         return item;
     }
 
@@ -538,7 +540,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             return null;
         }
 
-        var item = CreateBaseItem(propertyInfo);
+        var item = CreateBaseItem(propertyInfo, new Param_Colour().Icon_24x24);
         if (item == null) return null;
 
         GH_ColourPicker picker = GH_DocumentObject.Menu_AppendColourPicker(item.DropDown, c, (sender, e) =>
@@ -546,14 +548,12 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             propertyInfo.SetValue(null, e.Colour);
         });
 
-        AddEvent(propertyInfo, (Color b) =>
+        AddPropertyChangedEvent(propertyInfo, (Color b) =>
         {
             picker.Colour = b;
         });
 
-        GetResetItem(item.DropDownItems, propertyInfo);
-
-        SetImage(item, new Param_Colour().Icon_24x24);
+        AddResetItem(item.DropDownItems, propertyInfo);
         return item;
     }
 
@@ -564,7 +564,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             return null;
         }
 
-        var item = CreateBaseItem(propertyInfo);
+        var item = CreateBaseItem(propertyInfo, new Param_String().Icon_24x24);
         if (item == null) return null;
 
         var textItem = new ToolStripTextBox
@@ -578,38 +578,22 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             propertyInfo.SetValue(null, textItem.Text);
         };
 
-        AddEvent(propertyInfo, (string b) =>
+        AddPropertyChangedEvent(propertyInfo, (string b) =>
         {
             textItem.Text = b;
         });
 
         item.DropDownItems.Add(textItem);
-        GetResetItem(item.DropDownItems, propertyInfo);
-
-        SetImage(item, new Param_String().Icon_24x24);
+        AddResetItem(item.DropDownItems, propertyInfo);
         return item;
-    }
-
-    private static void GetResetItem(ToolStripItemCollection items, PropertyInfo propertyInfo)
-    {
-        var type = propertyInfo.DeclaringType;
-        if (type == null) return;
-        var method = type.GetRuntimeMethod($"Reset{propertyInfo.Name}", []);
-        if (method == null) return;
-
-        items.Add(new ToolStripMenuItem("Reset Value", ResetIcon, (sender, e) =>
-        {
-            method.Invoke(null, []);
-        }));
     }
 
     private ToolStripItem? CreateBoolItem(PropertyInfo propertyInfo)
     {
-        var item = CreateBaseItem(propertyInfo);
+        var item = CreateBaseItem(propertyInfo, new Param_Boolean().Icon_24x24);
         if (item == null) return null;
 
         item = ToBoolItem(item, propertyInfo);
-        SetImage(item, new Param_Boolean().Icon_24x24);
         return item;
     }
 
@@ -635,7 +619,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             }
         };
 
-        AddEvent(propertyInfo, (bool b) =>
+        AddPropertyChangedEvent(propertyInfo, (bool b) =>
         {
             item.Checked = b;
         });
@@ -656,7 +640,31 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         return item;
     }
 
-    private ToolStripMenuItem? CreateBaseItem(PropertyInfo propertyInfo)
+    /// <summary>
+    /// Add the reset value item to the items collection.
+    /// </summary>
+    /// <param name="items">collection</param>
+    /// <param name="propertyInfo">the property to reset.</param>
+    protected void AddResetItem(ToolStripItemCollection items, PropertyInfo propertyInfo)
+    {
+        var type = propertyInfo.DeclaringType;
+        if (type == null) return;
+        var method = type.GetRuntimeMethod($"Reset{propertyInfo.Name}", []);
+        if (method == null) return;
+
+        items.Add(new ToolStripMenuItem(ResetValueString, ResetIcon, (sender, e) =>
+        {
+            method.Invoke(null, []);
+        }));
+    }
+
+    /// <summary>
+    /// Create the base item from a <see cref="PropertyInfo"/>
+    /// </summary>
+    /// <param name="propertyInfo">the property</param>
+    /// <param name="defaultImage">the default config image.</param>
+    /// <returns>the item.</returns>
+    protected ToolStripMenuItem? CreateBaseItem(PropertyInfo propertyInfo, Image? defaultImage)
     {
         var attribute = propertyInfo.GetCustomAttribute<ConfigAttribute>();
         if (attribute == null) return null;
@@ -672,6 +680,10 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
                 major.Image = icon;
             }
         }
+        if (major.Image == null && DefaultIconOpacity > 0 && defaultImage != null)
+        {
+            major.Image = SetImageOpacity(defaultImage, DefaultIconOpacity);
+        }
 
         var desc = attribute.Description;
         if (!string.IsNullOrEmpty(desc))
@@ -686,43 +698,40 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         };
 
         return major;
-    }
-    #endregion
 
-    private static void AddEvent(PropertyInfo propertyInfo, Delegate @delegate)
+        static Image SetImageOpacity(Image image, float opacity)
+        {
+            try
+            {
+                var bmp = new Bitmap(image.Width, image.Height);
+                using var gfx = Graphics.FromImage(bmp);
+
+                var attributes = new ImageAttributes();
+                attributes.SetColorMatrix(new ColorMatrix()
+                {
+                    Matrix33 = opacity,
+                }, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+                gfx.DrawImage(image, new Rectangle(0, 0, bmp.Width, bmp.Height), 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attributes);
+
+                return bmp;
+            }
+            catch
+            {
+                return image;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Add the event about this property changed.
+    /// </summary>
+    /// <param name="propertyInfo">the property</param>
+    /// <param name="action">the action you want to do,</param>
+    protected static void AddPropertyChangedEvent<T>(PropertyInfo propertyInfo, Action<T> action)
     {
         var propertyChanged = propertyInfo.DeclaringType?.GetRuntimeEvent($"On{propertyInfo.Name}Changed");
-        propertyChanged?.AddEventHandler(null, @delegate);
+        propertyChanged?.AddEventHandler(null, action);
     }
-
-    private void SetImage(ToolStripItem? item, Image image)
-    {
-        if (DefaultIconOpacity <= 0) return;
-        if (item != null && item.Image == null)
-        {
-            item.Image = SetImageOpacity(image, DefaultIconOpacity);
-        }
-    }
-    private static Image SetImageOpacity(Image image, float opacity)
-    {
-        try
-        {
-            var bmp = new Bitmap(image.Width, image.Height);
-            using var gfx = Graphics.FromImage(bmp);
-
-            var attributes = new ImageAttributes();
-            attributes.SetColorMatrix(new ColorMatrix()
-            {
-                Matrix33 = opacity,
-            }, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-
-            gfx.DrawImage(image, new Rectangle(0, 0, bmp.Width, bmp.Height), 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attributes);
-
-            return bmp;
-        }
-        catch
-        {
-            return image;
-        }
-    }
+    #endregion
 }
