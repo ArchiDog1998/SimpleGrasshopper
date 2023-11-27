@@ -349,16 +349,54 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             item = CreateNumberItem<decimal>(propertyInfo);
         }
+        else if (type == typeof(DateTime))
+        {
+            item = CreateDateTimeItem(propertyInfo);
+        }
+        //TODO: More types of items!
         else if (type.IsEnum)
         {
             item = CreateEnumItem(propertyInfo);
         }
-        //TODO: More types of items!
         else
         {
             item = CreateBaseItem(propertyInfo);
         }
 
+        return item;
+    }
+
+    private ToolStripItem? CreateDateTimeItem(PropertyInfo propertyInfo)
+    {
+        var item = CreateBaseItem(propertyInfo);
+        if (item == null) return null;
+
+        if (propertyInfo.GetValue(null) is not DateTime time)
+        {
+            return null;
+        }
+
+        var ctrl = new DateTimePicker()
+        {
+            Value = time,
+            Format = DateTimePickerFormat.Custom,
+            CustomFormat = "yyyy/MM/dd hh:mm:ss",
+        };
+
+        ctrl.ValueChanged += (sender, e) =>
+        {
+            if (sender is not DateTimePicker picker) return;
+            propertyInfo.SetValue(null, picker.Value);
+        };
+
+        AddEvent(propertyInfo, (DateTime b) =>
+        {
+            ctrl.Value = b;
+        });
+
+        GH_DocumentObject.Menu_AppendCustomItem(item.DropDown, ctrl);
+        GetResetItem(item.DropDownItems, propertyInfo);
+        SetImage(item, new Param_Time().Icon_24x24);
         return item;
     }
 
@@ -635,7 +673,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         //No closing when changing value.
         major.DropDown.Closing += (sender, e) =>
         {
-            e.Cancel = e.CloseReason == ToolStripDropDownCloseReason.ItemClicked;
+            e.Cancel = e.CloseReason is ToolStripDropDownCloseReason.ItemClicked;
         };
 
         return major;

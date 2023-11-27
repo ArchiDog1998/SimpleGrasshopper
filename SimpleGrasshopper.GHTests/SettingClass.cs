@@ -20,12 +20,13 @@ internal partial class SettingClass
 
     [Range(0, 10, 0)]
     [Setting, Config("My value", parent: "Major Bool", section: 1)]
-    public static int _value;
+    public static int _value = 0;
 
     [Setting]
+    private static readonly EnumTesting _enumTest;
 
-    public static EnumTesting _enumTest;
-
+    [Setting, Config("My Time")]
+    private static readonly DateTime _time = DateTime.Now;
 
     [Config("EnumValue")]
     public static EnumTesting Test { get; set; }
