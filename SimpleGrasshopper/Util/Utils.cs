@@ -2,7 +2,6 @@
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
-using System.Net;
 
 namespace SimpleGrasshopper.Util;
 
@@ -210,7 +209,7 @@ internal static class Utils
         catch
         {
         }
-        
+
         return null;
     }
 

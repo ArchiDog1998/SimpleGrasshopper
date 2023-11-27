@@ -196,7 +196,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     protected ToolStripMenuItem? CreateMajorMenuItem()
     {
         var assembly = GetType().Assembly;
-        if(assembly == null) return null;
+        if (assembly == null) return null;
 
         var assemblyName = assembly.GetAssemblyName();
         var icon = assembly.GetAssemblyIcon();
@@ -284,7 +284,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
         foreach (var (parentItem, childrenList) in sectionDict)
         {
-            foreach(var grp in childrenList.GroupBy(c => c.Item2).OrderBy(g => g.Key))
+            foreach (var grp in childrenList.GroupBy(c => c.Item2).OrderBy(g => g.Key))
             {
                 if (parentItem.HasDropDownItems)
                 {
@@ -374,7 +374,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         }
         else
         {
-            item = CreateBaseItem(propertyInfo, type == typeof(object) ? null 
+            item = CreateBaseItem(propertyInfo, type == typeof(object) ? null
                 : new Param_GenericObject().Icon_24x24);
         }
 

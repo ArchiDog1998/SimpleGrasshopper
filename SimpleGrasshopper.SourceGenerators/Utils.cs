@@ -14,12 +14,12 @@ internal static class Utils
             return string.Empty;
         }
 
-        while(s != null && s is not ITypeSymbol)
+        while (s != null && s is not ITypeSymbol)
         {
             s = s.ContainingSymbol;
         }
 
-        if (s ==  null)
+        if (s == null)
         {
             return string.Empty;
         }
@@ -87,7 +87,7 @@ internal static class Utils
 
     private static void DiagnosticWarning(this SourceProductionContext spc, Location loc, string id, string title, string message)
     {
-        var desc = new DiagnosticDescriptor(id, title, message, "Problem", 
+        var desc = new DiagnosticDescriptor(id, title, message, "Problem",
         DiagnosticSeverity.Warning, true);
 
         spc.ReportDiagnostic(Diagnostic.Create(desc, loc));

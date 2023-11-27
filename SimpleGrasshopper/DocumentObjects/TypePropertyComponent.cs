@@ -10,7 +10,7 @@ namespace SimpleGrasshopper.DocumentObjects;
 /// </summary>
 /// <typeparam name="T">the type that it wants to modify.</typeparam>
 public abstract class TypePropertyComponent<T>()
-    : GH_Component      
+    : GH_Component
         (typeof(T).GetDocObjName() + " Property",
          typeof(T).GetDocObjNickName() + " Prop",
          typeof(T).GetDocObjDescription(),

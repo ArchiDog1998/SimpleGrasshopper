@@ -14,7 +14,7 @@ public class SettingClassGenerator : IIncrementalGenerator
         var provider = context.SyntaxProvider.ForAttributeWithMetadataName
 ("SimpleGrasshopper.Attributes.SettingAttribute",
     static (node, _) => node is VariableDeclaratorSyntax { Parent: VariableDeclarationSyntax { Parent: FieldDeclarationSyntax { Parent: ClassDeclarationSyntax or StructDeclarationSyntax } } },
-    static (n, ct) =>((VariableDeclaratorSyntax)n.TargetNode, n.SemanticModel))
+    static (n, ct) => ((VariableDeclaratorSyntax)n.TargetNode, n.SemanticModel))
     .Where(m => m.Item1 != null);
         context.RegisterSourceOutput(provider.Collect(), Execute);
     }
@@ -72,7 +72,7 @@ public class SettingClassGenerator : IIncrementalGenerator
                     if (attrSet == null) continue;
                     foreach (var attr in attrSet.Attributes)
                     {
-                        if(model.GetSymbolInfo(attr).Symbol?.GetFullMetadataName()
+                        if (model.GetSymbolInfo(attr).Symbol?.GetFullMetadataName()
                             is "SimpleGrasshopper.Attributes.ConfigAttribute"
                             or "SimpleGrasshopper.Attributes.RangeAttribute"
                             or "SimpleGrasshopper.Attributes.ToolButtonAttribute")
@@ -154,7 +154,7 @@ public class SettingClassGenerator : IIncrementalGenerator
         if (typeSymbol.TypeKind == TypeKind.Enum) return true;
 
         var typeName = typeSymbol.GetFullMetadataName();
-        if(typeSymbol.SpecialType
+        if (typeSymbol.SpecialType
             is SpecialType.System_Boolean
             or SpecialType.System_Byte
             or SpecialType.System_Double

@@ -117,7 +117,7 @@ public class ConfigAttributeWarning : IIncrementalGenerator
         var provider2 = context.SyntaxProvider.ForAttributeWithMetadataName
             (attributeName,
                 static (node, _) => node is PropertyDeclarationSyntax { Parent: TypeDeclarationSyntax },
-                static (n, ct) => ((PropertyDeclarationSyntax)n.TargetNode, n.SemanticModel ))
+                static (n, ct) => ((PropertyDeclarationSyntax)n.TargetNode, n.SemanticModel))
                 .Where(m => m.Item1 is not null);
 
         context.RegisterSourceOutput(provider2.Collect(), (spc, array) =>
