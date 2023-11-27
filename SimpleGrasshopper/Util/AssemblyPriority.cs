@@ -34,6 +34,11 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// </summary>
     protected virtual float DefaultIconOpacity { get; } = 0.7f;
 
+    /// <summary>
+    /// The custom menu item creators.
+    /// </summary>
+    protected virtual Dictionary<Type, Func<PropertyInfo, ToolStripMenuItem?>> CustomItemsCreators { get; } = [];
+
     /// <inheritdoc/>
     public override GH_LoadingInstruction PriorityLoad()
     {
@@ -261,7 +266,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
                 var parentItem = parentList.FirstOrDefault(i => i.Text == parent);
                 if (parentItem != null)
                 {
-                    if (!sectionDict.TryGetValue(parentItem, out var children)) children = new();
+                    if (!sectionDict.TryGetValue(parentItem, out var children)) children = [];
                     children.Add((item, section, order));
                     sectionDict[parentItem] = children;
                     continue;
@@ -293,7 +298,11 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     {
         var type = propertyInfo.PropertyType.GetRawType();
         ToolStripItem? item;
-        if (type == typeof(bool))
+        if (CustomItemsCreators.TryGetValue(type, out var creator))
+        {
+            item = creator?.Invoke(propertyInfo);
+        }
+        else if (type == typeof(bool))
         {
             item = CreateBoolItem(propertyInfo);
         }
