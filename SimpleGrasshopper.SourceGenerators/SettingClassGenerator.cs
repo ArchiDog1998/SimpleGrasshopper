@@ -14,14 +14,14 @@ public class SettingClassGenerator : IIncrementalGenerator
         var provider = context.SyntaxProvider.ForAttributeWithMetadataName
 ("SimpleGrasshopper.Attributes.SettingAttribute",
     static (node, _) => node is VariableDeclaratorSyntax { Parent: VariableDeclarationSyntax { Parent: FieldDeclarationSyntax { Parent: ClassDeclarationSyntax or StructDeclarationSyntax } } },
-    static (n, ct) => (VariableDeclaratorSyntax)n.TargetNode)
-    .Where(m => m is not null);
+    static (n, ct) =>((VariableDeclaratorSyntax)n.TargetNode, n.SemanticModel))
+    .Where(m => m.Item1 != null);
         context.RegisterSourceOutput(provider.Collect(), Execute);
     }
 
-    private void Execute(SourceProductionContext context, ImmutableArray<VariableDeclaratorSyntax> array)
+    private void Execute(SourceProductionContext context, ImmutableArray<(VariableDeclaratorSyntax, SemanticModel SemanticModel)> array)
     {
-        var typeGrps = array.GroupBy(variable => variable.Parent!.Parent!.Parent!);
+        var typeGrps = array.GroupBy(variable => variable.Item1.Parent!.Parent!.Parent!);
 
         foreach (var grp in typeGrps)
         {
@@ -34,7 +34,7 @@ public class SettingClassGenerator : IIncrementalGenerator
             var className = type.Identifier.Text;
 
             var propertyCodes = new List<string>();
-            foreach (var variableInfo in grp)
+            foreach (var (variableInfo, model) in grp)
             {
                 var field = (FieldDeclarationSyntax)variableInfo.Parent!.Parent!;
 
@@ -43,47 +43,26 @@ public class SettingClassGenerator : IIncrementalGenerator
 
                 if (variableName == propertyName)
                 {
-                    var desc = new DiagnosticDescriptor(
-                    "SG0005",
-                    "Wrong Name",
-                    "Please don't use Pascal Case to name your field!",
-                    "Problem",
-                    DiagnosticSeverity.Warning,
-                    true);
-
-                    context.ReportDiagnostic(Diagnostic.Create(desc, variableInfo.Identifier.GetLocation()));
+                    context.DiagnosticWrongName(variableInfo.Identifier.GetLocation(),
+                        "Please don't use Pascal Case to name your field!");
                     continue;
                 }
 
                 if (!field.Modifiers.Any(SyntaxKind.StaticKeyword))
                 {
-                    var desc = new DiagnosticDescriptor(
-                    "SG0001",
-                    "Wrong Keyword",
-                    "The field should be a static method!",
-                    "Problem",
-                    DiagnosticSeverity.Warning,
-                    true);
-
-                    context.ReportDiagnostic(Diagnostic.Create(desc, variableInfo.Identifier.GetLocation()));
-                    return;
+                    context.DiagnosticWrongKeyword(variableInfo.Identifier.GetLocation(), "The field should be a static method!");
+                    continue;
                 }
 
                 var key = string.Join(".", nameSpace, className, propertyName);
 
                 var fieldTypeStr = field.Declaration.Type;
+                var fieldType = model.GetTypeInfo(fieldTypeStr).Type!;
 
-                if (!IsFieldTypeValid(fieldTypeStr.ToString()))
+                if (!IsFieldTypeValid(fieldType))
                 {
-                    var desc = new DiagnosticDescriptor(
-                    "SG0004",
-                    "Wrong Type",
-                    "This type can't be a grasshopper setting type!",
-                    "Problem",
-                    DiagnosticSeverity.Warning,
-                    true);
-
-                    context.ReportDiagnostic(Diagnostic.Create(desc, fieldTypeStr.GetLocation()));
+                    context.DiagnosticWrongType(fieldTypeStr.GetLocation(),
+                        "This type can't be a grasshopper setting type!");
                     continue;
                 }
 
@@ -93,23 +72,38 @@ public class SettingClassGenerator : IIncrementalGenerator
                     if (attrSet == null) continue;
                     foreach (var attr in attrSet.Attributes)
                     {
-                        if (IsAttribute(attr.Name.ToString(), "Config")
-                            || IsAttribute(attr.Name.ToString(), "Range")
-                            || IsAttribute(attr.Name.ToString(), "ToolButton"))
+                        if(model.GetSymbolInfo(attr).Symbol?.GetFullMetadataName()
+                            is "SimpleGrasshopper.Attributes.ConfigAttribute"
+                            or "SimpleGrasshopper.Attributes.RangeAttribute"
+                            or "SimpleGrasshopper.Attributes.ToolButtonAttribute")
                         {
                             names.Add(attr.ToString());
                         }
                     }
                 }
+
+                string getValueStr, setValueStr;
+                if (fieldType.TypeKind == TypeKind.Enum)
+                {
+                    getValueStr = $"({fieldTypeStr})Enum.ToObject(typeof({fieldTypeStr}), Instances.Settings.GetValue(\"{key}\", Convert.ToInt32({variableName})))";
+                    setValueStr = $"Instances.Settings.SetValue(\"{key}\", Convert.ToInt32(value))";
+                }
+                else
+                {
+                    getValueStr = $"Instances.Settings.GetValue(\"{key}\", {variableName})";
+                    setValueStr = $"Instances.Settings.SetValue(\"{key}\", value)";
+                }
+
+                var attributeStr = names.Count == 0 ? "" : $"[{string.Join(", ", names)}]";
                 var propertyCode = $$"""
-                        [{{string.Join(", ", names)}}]
+                        {{attributeStr}}
                         public static {{fieldTypeStr}} {{propertyName}}
                         {
-                            get => Instances.Settings.GetValue("{{key}}", {{variableName}});
+                            get => {{getValueStr}};
                             set
                             {
                                 if ({{propertyName}} == value) return;
-                                Instances.Settings.SetValue("{{key}}", value);
+                                {{setValueStr}};
 
                                 On{{propertyName}}Changed?.Invoke(value);
                                 OnPropertyChanged?.Invoke("{{propertyName}}", value);
@@ -129,6 +123,7 @@ public class SettingClassGenerator : IIncrementalGenerator
 
             var code = $$"""
              using Grasshopper;
+             using System;
              using System.Drawing;
              using SimpleGrasshopper.Attributes;
 
@@ -147,55 +142,32 @@ public class SettingClassGenerator : IIncrementalGenerator
         }
     }
 
-    internal static bool IsAttribute(string attribute, string attributeName)
-    {
-        if (attribute == attributeName) return true;
-        if (attribute == $"{attributeName}Attribute") return true;
-        if (attribute == $"Attributes.{attributeName}") return true;
-        if (attribute == $"Attributes.{attributeName}Attribute") return true;
-        if (attribute == $"SimpleGrasshopper.Attributes.{attributeName}") return true;
-        if (attribute == $"SimpleGrasshopper.Attributes.{attributeName}Attribute") return true;
-
-        return false;
-    }
-
     private static readonly string[] _validTypes =
         [
-            "bool",
-            "Boolean",
-            "System.Boolean",
-            "byte",
-            "Byte",
-            "System.Byte",
-            "DateTime",
-            "System.DateTime",
-            "double",
-            "Double",
-            "System.Double",
-            "int",
-            "Int32",
-            "System.Int32",
-            "string",
-            "String",
-            "System.String",
-            "Color",
-            "Drawing.Color",
             "System.Drawing.Color",
-            "Point",
-            "Drawing.Point",
             "System.Drawing.Point",
-            "Rectangle",
-            "Drawing.Rectangle",
             "System.Drawing.Rectangle",
-            "Size",
-            "Drawing.Size",
             "System.Drawing.Size",
         ];
-    private static bool IsFieldTypeValid(string typeName)
+    private static bool IsFieldTypeValid(ITypeSymbol typeSymbol)
     {
+        if (typeSymbol.TypeKind == TypeKind.Enum) return true;
+
+        var typeName = typeSymbol.GetFullMetadataName();
+        if(typeSymbol.SpecialType
+            is SpecialType.System_Boolean
+            or SpecialType.System_Byte
+            or SpecialType.System_Double
+            or SpecialType.System_DateTime
+            or SpecialType.System_Int32
+            or SpecialType.System_String)
+        {
+            return true;
+        }
+
         foreach (var validType in _validTypes)
         {
-            if (typeName.EndsWith(validType))
+            if (typeName == validType)
             {
                 return true;
             }
@@ -203,32 +175,27 @@ public class SettingClassGenerator : IIncrementalGenerator
         return false;
     }
 
-    public static string ToPascalCase(string input)
+    private static string ToPascalCase(string input)
     {
         return string.Join(".", input.Split('.').Select(ConvertToPascalCase));
-    }
-    private static string ConvertToPascalCase(string input)
-    {
-        Regex invalidCharsRgx = new(@"[^_a-zA-Z0-9]");
-        Regex whiteSpace = new(@"(?<=\s)");
-        Regex startsWithLowerCaseChar = new("^[a-z]");
-        Regex firstCharFollowedByUpperCasesOnly = new("(?<=[A-Z])[A-Z0-9]+$");
-        Regex lowerCaseNextToNumber = new("(?<=[0-9])[a-z]");
-        Regex upperCaseInside = new("(?<=[A-Z])[A-Z]+?((?=[A-Z][a-z])|(?=[0-9]))");
 
-        // replace white spaces with undescore, then replace all invalid chars with empty string
-        var pascalCase = invalidCharsRgx.Replace(whiteSpace.Replace(input, "_"), string.Empty)
-            // split by underscores
-            .Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries)
-            // set first letter to uppercase
-            .Select(w => startsWithLowerCaseChar.Replace(w, m => m.Value.ToUpper()))
-            // replace second and all following upper case letters to lower if there is no next lower (ABC -> Abc)
-            .Select(w => firstCharFollowedByUpperCasesOnly.Replace(w, m => m.Value.ToLower()))
-            // set upper case the first lower case following a number (Ab9cd -> Ab9Cd)
-            .Select(w => lowerCaseNextToNumber.Replace(w, m => m.Value.ToUpper()))
-            // lower second and next upper case letters except the last if it follows by any lower (ABcDEf -> AbcDef)
-            .Select(w => upperCaseInside.Replace(w, m => m.Value.ToLower()));
+        static string ConvertToPascalCase(string input)
+        {
+            Regex invalidCharsRgx = new(@"[^_a-zA-Z0-9]");
+            Regex whiteSpace = new(@"(?<=\s)");
+            Regex startsWithLowerCaseChar = new("^[a-z]");
+            Regex firstCharFollowedByUpperCasesOnly = new("(?<=[A-Z])[A-Z0-9]+$");
+            Regex lowerCaseNextToNumber = new("(?<=[0-9])[a-z]");
+            Regex upperCaseInside = new("(?<=[A-Z])[A-Z]+?((?=[A-Z][a-z])|(?=[0-9]))");
 
-        return string.Concat(pascalCase);
+            var pascalCase = invalidCharsRgx.Replace(whiteSpace.Replace(input, "_"), string.Empty)
+                .Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(w => startsWithLowerCaseChar.Replace(w, m => m.Value.ToUpper()))
+                .Select(w => firstCharFollowedByUpperCasesOnly.Replace(w, m => m.Value.ToLower()))
+                .Select(w => lowerCaseNextToNumber.Replace(w, m => m.Value.ToUpper()))
+                .Select(w => upperCaseInside.Replace(w, m => m.Value.ToLower()));
+
+            return string.Concat(pascalCase);
+        }
     }
 }

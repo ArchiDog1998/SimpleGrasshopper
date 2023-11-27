@@ -15,12 +15,12 @@ internal class ParameterClassGenerator : ClassGenerator<TypeDeclarationSyntax>
 
             var className = syntax.Identifier.Text;
 
-            string guidStr = TypePropertyComponentGenerator.GetGuid(nameSpace, className);
+            string guidStr = Utils.GetGuid(nameSpace, className);
 
             var codeClassName = $"{className}_Parameter";
 
             //Obsolete
-            if (TypePropertyComponentGenerator.IsObsolete(syntax))
+            if (syntax.IsObsolete())
             {
                 codeClassName += "_Obsolete";
             }

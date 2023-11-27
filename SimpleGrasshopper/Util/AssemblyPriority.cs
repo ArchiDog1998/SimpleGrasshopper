@@ -2,10 +2,12 @@
 using Grasshopper.GUI;
 using Grasshopper.GUI.Canvas;
 using Grasshopper.Kernel.Parameters;
+using Grasshopper.Kernel.Special;
 using SimpleGrasshopper.Attributes;
 using System;
 using System.Drawing.Imaging;
 using System.Reflection;
+using GH_DigitScroller = Grasshopper.GUI.GH_DigitScroller;
 
 namespace SimpleGrasshopper.Util;
 
@@ -347,12 +349,57 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             item = CreateNumberItem<decimal>(propertyInfo);
         }
+        else if (type.IsEnum)
+        {
+            item = CreateEnumItem(propertyInfo);
+        }
         //TODO: More types of items!
         else
         {
             item = CreateBaseItem(propertyInfo);
         }
 
+        return item;
+    }
+
+    private ToolStripItem? CreateEnumItem(PropertyInfo propertyInfo)
+    {
+        var item = CreateBaseItem(propertyInfo);
+        if (item == null) return null;
+
+        var i = propertyInfo.GetValue(null);
+        if (i == null) return null;
+
+        var type = propertyInfo.PropertyType;
+        var e = Enum.ToObject(type, i);
+
+        var box = new ToolStripComboBox()
+        {
+            FlatStyle = FlatStyle.System,
+        };
+        var array = Enum.GetValues(type);
+        var objs = new List<object>(array.Length);
+        foreach (var enumItem in array)
+        {
+            objs.Add(enumItem);
+        }
+        box.Items.AddRange([.. objs]);
+        box.SelectedItem = e;
+
+        box.SelectedIndexChanged += (sender, e) =>
+        {
+            if (sender is not ToolStripComboBox b) return;
+            propertyInfo.SetValue(null, b.SelectedItem);
+        };
+
+        AddEvent(propertyInfo, (object b) =>
+        {
+            box.SelectedItem = b;
+        });
+
+        item.DropDownItems.Add(box);
+        GetResetItem(item.DropDownItems, propertyInfo);
+        SetImage(item, new GH_ValueList().Icon_24x24);
         return item;
     }
 
@@ -410,8 +457,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
         GH_DocumentObject.Menu_AppendCustomItem(item.DropDown, slider);
 
-        item.DropDownItems.Add(GetResetItem(propertyInfo,
-            () => slider.Value = Convert.ToDecimal(propertyInfo.GetValue(null))));
+        GetResetItem(item.DropDownItems, propertyInfo);
         return item;
     }
 
@@ -458,8 +504,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             picker.Colour = b;
         });
 
-        item.DropDownItems.Add(GetResetItem(propertyInfo,
-            () => picker.Colour = (Color)propertyInfo.GetValue(null)!));
+        GetResetItem(item.DropDownItems, propertyInfo);
 
         SetImage(item, new Param_Colour().Icon_24x24);
         return item;
@@ -492,24 +537,23 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         });
 
         item.DropDownItems.Add(textItem);
-        item.DropDownItems.Add(GetResetItem(propertyInfo,
-            () => textItem.Text = propertyInfo.GetValue(null) as string));
+        GetResetItem(item.DropDownItems, propertyInfo);
 
         SetImage(item, new Param_String().Icon_24x24);
         return item;
     }
 
-    private static ToolStripMenuItem GetResetItem(PropertyInfo propertyInfo, Action? reset = null)
+    private static void GetResetItem(ToolStripItemCollection items, PropertyInfo propertyInfo)
     {
-        return new ToolStripMenuItem("Reset Value", ResetIcon, (sender, e) =>
+        var type = propertyInfo.DeclaringType;
+        if (type == null) return;
+        var method = type.GetRuntimeMethod($"Reset{propertyInfo.Name}", []);
+        if (method == null) return;
+
+        items.Add(new ToolStripMenuItem("Reset Value", ResetIcon, (sender, e) =>
         {
-            var type = propertyInfo.DeclaringType;
-            if (type == null) return;
-            var method = type.GetRuntimeMethod($"Reset{propertyInfo.Name}", []);
-            if (method == null) return;
             method.Invoke(null, []);
-            reset?.Invoke();
-        });
+        }));
     }
 
     private ToolStripItem? CreateBoolItem(PropertyInfo propertyInfo)
@@ -629,7 +673,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
             return bmp;
         }
-        catch (Exception ex)
+        catch
         {
             return image;
         }

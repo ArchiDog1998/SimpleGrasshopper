@@ -18,15 +18,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
 
             if (!syntax.Modifiers.Any(Microsoft.CodeAnalysis.CSharp.SyntaxKind.StaticKeyword))
             {
-                var desc = new DiagnosticDescriptor(
-                "SG0001",
-                "Wrong Keyword",
-                "The method should be a static method!",
-                "Problem",
-                DiagnosticSeverity.Warning,
-                true);
-
-                context.ReportDiagnostic(Diagnostic.Create(desc, loc));
+                context.DiagnosticWrongKeyword(loc, "The method should be a static method!");
                 continue;
             }
 
@@ -36,7 +28,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
 
             var methodName = syntax.Identifier.Text;
 
-            string guidStr = TypePropertyComponentGenerator.GetGuid(nameSpace, className, methodName);
+            string guidStr = Utils.GetGuid(nameSpace, className, methodName);
 
             if (strings.Contains(guidStr))
             {
@@ -47,7 +39,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
             var codeClassName = $"{className}_{methodName}_Component";
 
             //Obsolete
-            if (TypePropertyComponentGenerator.IsObsolete(syntax))
+            if (syntax.IsObsolete())
             {
                 codeClassName += "_Obsolete";
             }

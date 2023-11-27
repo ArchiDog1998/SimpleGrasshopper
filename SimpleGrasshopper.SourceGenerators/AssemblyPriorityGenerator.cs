@@ -42,15 +42,7 @@ public class AssemblyPriorityGenerator : IIncrementalGenerator
         switch (array.Length)
         {
             case > 1:
-                var desc = new DiagnosticDescriptor(
-                "SG0003",
-                "Many Infos",
-                "There should be only one assembly info!",
-                "Problem",
-                DiagnosticSeverity.Warning,
-                true);
-
-                context.ReportDiagnostic(Diagnostic.Create(desc, Location.None));
+                context.DiagnosticTooManyInstances(Location.None, "There should be only one assembly info!");
                 return;
 
             case 1:

@@ -21,4 +21,28 @@ internal partial class SettingClass
     [Range(0, 10, 0)]
     [Setting, Config("My value", parent: "Major Bool", section: 1)]
     public static int _value;
+
+    [Setting]
+
+    public static EnumTesting _enumTest;
+
+
+    [Config("EnumValue")]
+    public static EnumTesting Test { get; set; }
+
+    #region For the case you want your property can be reset. not suggested.
+    public static event Action<object>? OnTestChanged;
+    public static void ResetTest()
+    {
+        Test = EnumTesting.What;
+        OnTestChanged?.Invoke(Test);
+    }
+    #endregion
+}
+
+public enum EnumTesting : byte
+{
+    What,
+    Why,
+    How,
 }
