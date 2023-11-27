@@ -1,7 +1,10 @@
-﻿using Grasshopper.GUI;
+﻿using GH_IO.Serialization;
+using Grasshopper.GUI;
 using Grasshopper.GUI.Canvas;
+using Grasshopper.Kernel.Parameters;
 using SimpleGrasshopper.Attributes;
 using System;
+using System.Drawing.Imaging;
 using System.Reflection;
 
 namespace SimpleGrasshopper.Util;
@@ -23,6 +26,11 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// The insert index of the item;
     /// </summary>
     protected virtual int InsertIndex { get; } = 3;
+
+    /// <summary>
+    /// the opacity of the default config icon for all configs.
+    /// </summary>
+    protected virtual float DefaultIconOpacity { get; } = 0.7f;
 
     /// <inheritdoc/>
     public override GH_LoadingInstruction PriorityLoad()
@@ -222,7 +230,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     private ToolStripItem[] GetAllItems(List<PropertyInfo?> propertyInfos)
     {
         var parentList = new List<ToolStripMenuItem>(propertyInfos.Count);
-        var flattenList = new List<(ToolStripItem, string)>(propertyInfos.Count);
+        var flattenList = new List<(ToolStripItem, string, byte, ushort)>(propertyInfos.Count);
         foreach (var property in propertyInfos)
         {
             if (property == null) continue;
@@ -230,8 +238,11 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             var item = CreateItem(property);
             if (item == null) continue;
 
-            var parent = property.GetCustomAttribute<ConfigAttribute>()?.Parent ?? string.Empty;
-            flattenList.Add((item, parent));
+            var attr = property.GetCustomAttribute<ConfigAttribute>();
+            var parent = attr?.Parent ?? string.Empty;
+            var section = attr?.Section ?? 0;
+            var order = attr?.Order ?? 0;
+            flattenList.Add((item, parent, section, order));
 
             if (item is ToolStripMenuItem menuItem)
             {
@@ -240,18 +251,37 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         }
 
         var result = new List<ToolStripItem>(flattenList.Count);
-        foreach (var (item, parent) in flattenList)
+        var sectionDict = new Dictionary<ToolStripMenuItem, List<(ToolStripItem, byte, ushort)>>();
+        foreach (var (item, parent, section, order) in flattenList)
         {
             if (!string.IsNullOrEmpty(parent))
             {
                 var parentItem = parentList.FirstOrDefault(i => i.Text == parent);
                 if (parentItem != null)
                 {
-                    parentItem.DropDownItems.Add(item);
+                    if (!sectionDict.TryGetValue(parentItem, out var children)) children = new();
+                    children.Add((item, section, order));
+                    sectionDict[parentItem] = children;
                     continue;
                 }
             }
             result.Add(item);
+        }
+
+        foreach (var (parentItem, childrenList) in sectionDict)
+        {
+            foreach(var grp in childrenList.GroupBy(c => c.Item2).OrderBy(g => g.Key))
+            {
+                foreach (var item in grp.OrderBy(c => c.Item3))
+                {
+                    parentItem.DropDownItems.Add(item.Item1);
+                }
+                GH_Component.Menu_AppendSeparator(parentItem.DropDown);
+            }
+            if (parentItem.DropDownItems[checked(parentItem.DropDownItems.Count - 1)] is ToolStripSeparator separator)
+            {
+                parentItem.DropDownItems.Remove(separator);
+            }
         }
 
         return [.. result];
@@ -337,7 +367,9 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             max = Math.Min(max, range.Max);
             place = Math.Min(place, range.Place);
         }
-        return CreateScrollerItem<T>(propertyInfo, min, max, place);
+        var item = CreateScrollerItem<T>(propertyInfo, min, max, place);
+        SetImage(item, new Param_Integer().Icon_24x24);
+        return item;
     }
 
     private ToolStripItem? CreateNumberItem<T>(PropertyInfo propertyInfo)
@@ -353,7 +385,9 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             max = Math.Min(max, range.Max);
             place = Math.Max(place, range.Place);
         }
-        return CreateScrollerItem<T>(propertyInfo, min, max, place);
+        var item = CreateScrollerItem<T>(propertyInfo, min, max, place);
+        SetImage(item, new Param_Number().Icon_24x24);
+        return item;
     }
 
     private ToolStripItem? CreateScrollerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max, int place)
@@ -426,6 +460,8 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
         item.DropDownItems.Add(GetResetItem(propertyInfo,
             () => picker.Colour = (Color)propertyInfo.GetValue(null)!));
+
+        SetImage(item, new Param_Colour().Icon_24x24);
         return item;
     }
 
@@ -442,6 +478,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         var textItem = new ToolStripTextBox
         {
             Text = s,
+            BorderStyle = BorderStyle.FixedSingle,
         };
 
         textItem.TextChanged += (sender, e) =>
@@ -457,6 +494,8 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         item.DropDownItems.Add(textItem);
         item.DropDownItems.Add(GetResetItem(propertyInfo,
             () => textItem.Text = propertyInfo.GetValue(null) as string));
+
+        SetImage(item, new Param_String().Icon_24x24);
         return item;
     }
 
@@ -479,6 +518,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         if (item == null) return null;
 
         item = ToBoolItem(item, propertyInfo);
+        SetImage(item, new Param_Boolean().Icon_24x24);
         return item;
     }
 
@@ -562,5 +602,36 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     {
         var propertyChanged = propertyInfo.DeclaringType?.GetRuntimeEvent($"On{propertyInfo.Name}Changed");
         propertyChanged?.AddEventHandler(null, @delegate);
+    }
+
+    private void SetImage(ToolStripItem? item, Image image)
+    {
+        if (DefaultIconOpacity <= 0) return;
+        if (item != null && item.Image == null)
+        {
+            item.Image = SetImageOpacity(image, DefaultIconOpacity);
+        }
+    }
+    private static Image SetImageOpacity(Image image, float opacity)
+    {
+        try
+        {
+            var bmp = new Bitmap(image.Width, image.Height);
+            using var gfx = Graphics.FromImage(bmp);
+
+            var attributes = new ImageAttributes();
+            attributes.SetColorMatrix(new ColorMatrix()
+            {
+                Matrix33 = opacity,
+            }, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+            gfx.DrawImage(image, new Rectangle(0, 0, bmp.Width, bmp.Height), 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attributes);
+
+            return bmp;
+        }
+        catch (Exception ex)
+        {
+            return image;
+        }
     }
 }

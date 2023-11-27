@@ -19,6 +19,6 @@ internal partial class SettingClass
     private static readonly string anotherSetting = string.Empty;
 
     [Range(0, 10, 0)]
-    [Setting, Config("My value", parent: "Major Bool")]
+    [Setting, Config("My value", parent: "Major Bool", section: 1)]
     public static int _value;
 }
