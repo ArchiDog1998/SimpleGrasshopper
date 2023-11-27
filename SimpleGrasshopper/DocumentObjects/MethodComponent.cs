@@ -119,7 +119,6 @@ public abstract class MethodComponent(params MethodInfo[] methodInfos)
         }
     }
 
-
     private static IGH_Param? GetParameter(ParameterInfo info, out GH_ParamAccess access)
     {
         access = GH_ParamAccess.item;

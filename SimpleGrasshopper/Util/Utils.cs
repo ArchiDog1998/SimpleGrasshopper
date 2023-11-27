@@ -1,4 +1,5 @@
-﻿using Grasshopper.Kernel.Data;
+﻿using Grasshopper.Kernel.Attributes;
+using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
@@ -122,11 +123,21 @@ internal static class Utils
         var proxy = Instances.ComponentServer.ObjectProxies;
 
         var paramTypes = Instances.ComponentServer.ObjectProxies
-            .Where(p => p.Kind == GH_ObjectType.CompiledObject)
+            .Where(p =>
+            {
+                if (p.Kind != GH_ObjectType.CompiledObject) return false;
+
+                if (p.Type.IsGeneralType(typeof(GH_PersistentParam<>)) == null) return false;
+                if (p.Type == typeof(Param_FilePath)) return false;
+
+                var obj = p.CreateInstance();
+                obj.CreateAttributes();
+                if (obj.Attributes is not GH_FloatingParamAttributes) return false;
+
+                return true;
+            })
             .Select(p => p.Type)
             .OrderByDescending(t => t.Assembly != typeof(GH_Component).Assembly)
-            .Where(t => t.IsGeneralType(typeof(GH_PersistentParam<>)) != null
-                && t != typeof(Param_FilePath))
             .ToArray();
 
         if (type.IsEnum)
