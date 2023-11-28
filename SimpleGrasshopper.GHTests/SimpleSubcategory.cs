@@ -11,10 +11,12 @@ internal class SimpleSubcategory
     [Icon("ConstructRenderItemComponent_24-24.png")] // The name of the png that is embedded in your dll.
     [Exposure(Grasshopper.Kernel.GH_Exposure.secondary)]
     [DocObj("Addition", "Add", "The addition of the integers.")]
-    private static void SimpleMethod(int a, int b, out int c)
+    [return: DocObj("Result", "R", "Result")]
+    private static int SimpleMethod(int a, int b, ref int c)
     {
         SettingClass.EnumTest = EnumTesting.Why;
-        c = a + b;
+        c = a + b + c;
+        return a + b;
     }
 
     [DocObj("Addition2", "Add2", "The addition of the integers2.")]

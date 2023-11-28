@@ -190,8 +190,15 @@ internal static class Utils
 
     public static object ChangeType(this object obj, Type type)
     {
-        return type.IsEnum ? Enum.ToObject(type, obj)
-                : Convert.ChangeType(obj, type);
+        try
+        {
+            return type.IsEnum ? Enum.ToObject(type, obj)
+                    : Convert.ChangeType(obj, type);
+        }
+        catch
+        {
+            return obj;
+        }
     }
 
     public static Bitmap? GetBitmap(this Assembly assembly, string path)

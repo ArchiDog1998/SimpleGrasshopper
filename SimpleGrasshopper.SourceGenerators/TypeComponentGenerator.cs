@@ -5,11 +5,30 @@ using System.Collections.Immutable;
 namespace SimpleGrasshopper.SourceGenerators;
 
 [Generator(LanguageNames.CSharp)]
-public class TypePropertyComponentGenerator : IIncrementalGenerator
+public class TypePropertyComponentGenerator : TypeComponentGenerator
 {
+    protected override string AttrName => "PropertyComponent";
+
+    protected override string ComponentName => "TypePropertyComponent";
+}
+
+[Generator(LanguageNames.CSharp)]
+public class TypeMethodComponentGenerator : TypeComponentGenerator
+{
+    protected override string AttrName => "TypeComponent";
+
+    protected override string ComponentName => "TypeMethodComponent";
+}
+
+public abstract class TypeComponentGenerator : IIncrementalGenerator
+{
+    protected abstract string AttrName { get; }
+
+    protected abstract string ComponentName { get; }
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var provider = context.SyntaxProvider.ForAttributeWithMetadataName("SimpleGrasshopper.Attributes.PropertyComponentAttribute",
+        var provider = context.SyntaxProvider.ForAttributeWithMetadataName($"SimpleGrasshopper.Attributes.{AttrName}Attribute",
             static (node, _) => node is TypeDeclarationSyntax,
             static (n, ct) => (TypeDeclarationSyntax)n.TargetNode)
             .Where(m => m is not null);
@@ -25,9 +44,9 @@ public class TypePropertyComponentGenerator : IIncrementalGenerator
 
             var className = syntax.Identifier.Text;
 
-            string guidStr = Utils.GetGuid(nameSpace, className, "PropertyComponent");
+            string guidStr = Utils.GetGuid(nameSpace, className, AttrName);
 
-            var codeClassName = $"{className}_PropertyComponent";
+            var codeClassName = $"{className}_{AttrName}";
 
             //Obsolete
             if (syntax.IsObsolete())
@@ -42,7 +61,7 @@ public class TypePropertyComponentGenerator : IIncrementalGenerator
              namespace {{nameSpace}}
              {
                 public partial class {{codeClassName}}()
-                    : TypePropertyComponent<{{className}}>()
+                    : {{ComponentName}}<{{className}}>()
                 {
                     public override Guid ComponentGuid => new ("{{guidStr}}");
                 }

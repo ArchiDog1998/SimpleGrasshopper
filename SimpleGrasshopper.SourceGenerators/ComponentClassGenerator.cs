@@ -8,23 +8,23 @@ namespace SimpleGrasshopper.Generators;
 [Generator(LanguageNames.CSharp)]
 public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
 {
-    protected override void Execute(SourceProductionContext context, ImmutableArray<MethodDeclarationSyntax> syntaxes)
+    protected override void Execute(SourceProductionContext context, ImmutableArray<(MethodDeclarationSyntax, SemanticModel)> syntaxes)
     {
         var strings = new List<string>(syntaxes.Length);
 
-        foreach (var syntax in syntaxes)
+        foreach (var (syntax, model) in syntaxes)
         {
-            var loc = syntax.Identifier.GetLocation();
+            var nameSpace = AssemblyPriorityGenerator.GetParent<BaseNamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? "Null";
 
-            if (!syntax.Modifiers.Any(Microsoft.CodeAnalysis.CSharp.SyntaxKind.StaticKeyword))
+            var classSyntax = AssemblyPriorityGenerator.GetParent<TypeDeclarationSyntax>(syntax);
+
+            
+            if (classSyntax?.AttributeLists.Any(attrs => attrs.Attributes.Any(a => model.GetSymbolInfo(a).Symbol?.GetFullMetadataName() == "SimpleGrasshopper.Attributes.TypeComponentAttribute")) ?? false)
             {
-                context.DiagnosticWrongKeyword(loc, "The method should be a static method!");
                 continue;
             }
 
-            var nameSpace = AssemblyPriorityGenerator.GetParent<BaseNamespaceDeclarationSyntax>(syntax)?.Name.ToString() ?? "Null";
-
-            var className = AssemblyPriorityGenerator.GetParent<TypeDeclarationSyntax>(syntax)?.Identifier.Text ?? "Null";
+            var className = classSyntax?.Identifier.Text ?? "Null";
 
             var methodName = syntax.Identifier.Text;
 

@@ -12,6 +12,5 @@ public class PropertyComponentAttribute(string iconPath = "", GH_Exposure exposu
     internal GH_Exposure Exposure => exposure;
     internal string SubCategory => subCategory;
     internal string IconPath => iconPath;
-
 }
 
