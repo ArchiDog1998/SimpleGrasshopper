@@ -28,7 +28,7 @@ public abstract class MethodComponent(
         subCategory ?? methodInfos[0].GetDeclaringClassName())
     , IGH_VariableParameterComponent
 {
-    private readonly record struct OutputData(string Name, int Index, GH_ParamAccess Access);
+    private readonly record struct OutputData(int Index, GH_ParamAccess Access);
 
     private int _methodIndex = 0;
     private int MethodIndex
@@ -80,10 +80,10 @@ public abstract class MethodComponent(
     private MethodInfo MethodInfo => methodInfos[MethodIndex];
 
     /// <inheritdoc/>
-    public override string Category 
-    { 
+    public override string Category
+    {
         get => GetType().GetAssemblyName();
-        set => base.Category = value; 
+        set => base.Category = value;
     }
 
     /// <inheritdoc/>
@@ -91,7 +91,7 @@ public abstract class MethodComponent(
     {
         get
         {
-            if(exposure.HasValue) return exposure.Value;
+            if (exposure.HasValue) return exposure.Value;
 
             foreach (var method in methodInfos)
             {
@@ -287,127 +287,143 @@ public abstract class MethodComponent(
     /// <inheritdoc/>
     protected sealed override void SolveInstance(IGH_DataAccess DA)
     {
-        var ps = MethodInfo.GetParameters();
-        if (ps == null) return;
-
-        var outParams = new List<OutputData>(ps.Length);
-        object? obj = null;
-
-        var isNotStatic = false;
-        GH_ParamAccess classAccess = GH_ParamAccess.item;
-        if (!MethodInfo.IsStatic && MethodInfo.DeclaringType is Type classRawType)
+        try
         {
-            isNotStatic = true;
-            classRawType = classRawType.GetRawType();
-            var classType = classRawType.GetAccessAndType(out classAccess);
-            DA.GetValue(0, classType, classRawType, classAccess, out obj);
-        }
+            var ps = MethodInfo.GetParameters();
+            if (ps == null) return;
 
-        int index = -1;
-        var parameters = ps.Select(param =>
-        {
-            index++;
+            var isNotStatic = GetValues(DA, ps, MethodInfo, out var obj, out var parameters, out var outParams);
 
-            var rawType = param.ParameterType.GetRawType();
-            if (rawType == null) return null;
-
-            var type = rawType.GetAccessAndType(out var access);
-
-            var name = param.GetCustomAttribute<DocObjAttribute>()?.Name
-                ?? param.Name ?? string.Empty;
-
-            if (IsOut(param))
+            if (InPreSolve)
             {
-                outParams.Add(new(name, index, access));
-            }
-            
-            if (IsIn(param))
-            {
-                DA.GetValue(name, type, rawType, access, out var obj);
-                return obj;
+                TaskList.Add(Task.Run(() =>
+                {
+                    var result = MethodInfo.Invoke(obj, parameters);
+                    return (result, parameters);
+                }));
+                return;
             }
 
-            return access switch
-            {
-                GH_ParamAccess.list => new List<object>(),
-                GH_ParamAccess.tree => new GH_Structure<IGH_Goo>(),
-                _ => null,
-            };
-        }).ToArray();
-
-        if (InPreSolve)
-        {
-            TaskList.Add(Task.Run(() =>
+            if (!GetSolveResults(DA, out var resultParams))
             {
                 var result = MethodInfo.Invoke(obj, parameters);
-                return (result, parameters);
-            }));
-            return;
-        }
+                resultParams = (result, parameters);
+            }
 
-        if (!GetSolveResults(DA, out var resultParams))
-        {
-            var result = MethodInfo.Invoke(obj, parameters);
-            resultParams = (result, parameters);
+            SetValues(DA, MethodInfo, Params, obj, resultParams.Item1, resultParams.Item2, outParams, isNotStatic);
         }
-
-        #region Set Data
-        if (isNotStatic)
+        catch (Exception? ex)
         {
-            switch (classAccess)
+            var messageString = GetMessage(ex);
+            while (ex != null)
             {
-                case GH_ParamAccess.item:
-                    DA.SetData(0, obj);
-                    break;
+                messageString += "\n" + GetMessage(ex);
+                ex = ex.InnerException;
+            }
 
-                case GH_ParamAccess.list:
-                    DA.SetDataList(0, obj as IEnumerable);
-                    break;
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Error, messageString);
 
-                case GH_ParamAccess.tree:
-                    DA.SetDataTree(0, obj as IGH_Structure);
-                    break;
+            static string GetMessage(Exception ex)
+            {
+                var message = ex.Message;
+                if (ex.StackTrace != null)
+                {
+                    message += "\n" + ex.StackTrace;
+                }
+                return message;
             }
         }
 
-        if (MethodInfo.ReturnType != typeof(void))
+        static bool GetValues(IGH_DataAccess DA, ParameterInfo[] ps, MethodInfo method, out object? obj, out object?[] parameters, out OutputData[] outParams)
         {
-            var returnIndex = isNotStatic ? 1 : 0;
-            switch (Params.Output[returnIndex].Access)
+            obj = null;
+
+            var isNotStatic = false;
+            int startIndex = 0;
+            GH_ParamAccess classAccess = GH_ParamAccess.item;
+            if (!method.IsStatic && method.DeclaringType is Type classRawType)
             {
-                case GH_ParamAccess.item:
-                    DA.SetData(returnIndex, resultParams.Item1);
-                    break;
-
-                case GH_ParamAccess.list:
-                    DA.SetDataList(returnIndex, resultParams.Item1 as IEnumerable);
-                    break;
-
-                case GH_ParamAccess.tree:
-                    DA.SetDataTree(returnIndex, resultParams.Item1 as IGH_Structure);
-                    break;
+                isNotStatic = true;
+                startIndex++;
+                classRawType = classRawType.GetRawType();
+                var classType = classRawType.GetAccessAndType(out classAccess);
+                DA.GetValue(0, classType, classRawType, classAccess, out obj);
             }
+
+            var outParamsList = new List<OutputData>(ps.Length);
+            int index = -1;
+            parameters = ps.Select(param =>
+            {
+                index++;
+
+                var rawType = param.ParameterType.GetRawType();
+                if (rawType == null) return null;
+
+                var type = rawType.GetAccessAndType(out var access);
+
+                if (IsOut(param))
+                {
+                    outParamsList.Add(new(index, access));
+                }
+
+                if (IsIn(param))
+                {
+                    DA.GetValue(startIndex++, type, rawType, access, out var obj);
+                    return obj;
+                }
+
+                return access switch
+                {
+                    GH_ParamAccess.list => new List<object>(),
+                    GH_ParamAccess.tree => new GH_Structure<IGH_Goo>(),
+                    _ => null,
+                };
+            }).ToArray();
+            outParams = [.. outParamsList];
+            return isNotStatic;
         }
 
-        foreach (var param in outParams)
+        static void SetValues(IGH_DataAccess DA, MethodInfo method, GH_ComponentParamServer paramServer, object? obj, object? result, object?[] parameters, OutputData[] outParams, bool isNotStatic)
         {
-            var result = resultParams.Item2[param.Index];
-            switch (param.Access)
+            int startIndex = 0;
+            if (isNotStatic)
             {
-                case GH_ParamAccess.tree:
-                    DA.SetDataTree(Params.IndexOfOutputParam(param.Name), result as IGH_Structure);
-                    break;
+                SetData(DA, obj, paramServer.Output[0].Access, 0);
+                startIndex++;
+            }
 
-                case GH_ParamAccess.list:
-                    DA.SetDataList(param.Name, result as IEnumerable);
-                    break;
+            if (method.ReturnType != typeof(void))
+            {
+                var returnIndex = isNotStatic ? 1 : 0;
+                SetData(DA, result, paramServer.Output[returnIndex].Access, returnIndex);
+                startIndex++;
+            }
 
-                default:
-                    DA.SetData(param.Name, result);
-                    break;
+            for (int i = 0; i < outParams.Length; i++)
+            {
+                var param = outParams[i];
+                var resultParam = parameters[param.Index];
+                SetData(DA, resultParam, param.Access, startIndex + i);
+            }
+
+            static void SetData(IGH_DataAccess DA, object? data, GH_ParamAccess access, int index)
+            {
+                switch (access)
+                {
+                    case GH_ParamAccess.item:
+                        DA.SetData(index, data);
+                        break;
+
+                    case GH_ParamAccess.list:
+                        DA.SetDataList(index, data as IEnumerable);
+                        break;
+
+                    case GH_ParamAccess.tree:
+                        DA.SetDataTree(index, data as IGH_Structure);
+                        break;
+                }
             }
         }
-        #endregion
     }
 
     /// <inheritdoc/>

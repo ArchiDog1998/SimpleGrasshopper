@@ -99,7 +99,7 @@ internal static class Utils
             access = GH_ParamAccess.tree;
             return treeType;
         }
-        else if(type.IsArray)
+        else if (type.IsArray)
         {
             access = GH_ParamAccess.list;
             return type.GetElementType()!;
@@ -276,7 +276,7 @@ internal static class Utils
             GH_ParamAccess.list => rawType.IsArray ? typeof(List<>).MakeGenericType(type).GetMethod("ToArray")!.Invoke(pms[1], [])! : pms[1],
             _ => pms[1],
         };
-        
+
         return result;
 
         static MethodInfo GetDaMethod(IGH_DataAccess DA, string name)

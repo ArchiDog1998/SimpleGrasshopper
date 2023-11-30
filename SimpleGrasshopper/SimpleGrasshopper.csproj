@@ -19,7 +19,7 @@
     <Using Include="System.Reflection" />
 	<PackageReference Include="System.Drawing.Common" Version="8.0.0" />
 
-	<EmbeddedResource Include="Icons/*.png"/>
+	<EmbeddedResource Include="Icons/*.png" />
 
 	<None Include="..\SimpleGrasshopper.SourceGenerators\bin\$(Configuration)\netstandard2.0\SimpleGrasshopper.SourceGenerators.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 	  
