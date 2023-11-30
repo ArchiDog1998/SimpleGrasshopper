@@ -1,5 +1,6 @@
 ﻿using SimpleGrasshopper.Attributes;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace SimpleGrasshopper.GHTests;
 
@@ -30,6 +31,16 @@ internal partial class SettingClass
 
     [Config("EnumValue")]
     public static EnumTesting Test { get; set; }
+
+    [Config("Button")]
+    public static object Button
+    {
+        get => false;
+        set
+        {
+            MessageBox.Show("Clicked");
+        }
+    }
 
     #region For the case you want your property can be reset. not suggested.
     public static event Action<object>? OnTestChanged;

@@ -374,8 +374,16 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         }
         else
         {
-            item = CreateBaseItem(propertyInfo, type == typeof(object) ? null
+            var isObject = type == typeof(object);
+            item = CreateBaseItem(propertyInfo, isObject ? null
                 : new Param_GenericObject().Icon_24x24);
+            if (isObject && item != null)
+            {
+                item.Click += (s, e) =>
+                {
+                    propertyInfo.SetValue(null, null);
+                };
+            }
         }
 
         return item;

@@ -99,6 +99,11 @@ internal static class Utils
             access = GH_ParamAccess.tree;
             return treeType;
         }
+        else if(type.IsArray)
+        {
+            access = GH_ParamAccess.list;
+            return type.GetElementType()!;
+        }
         else if (type.IsGeneralType(typeof(List<>)) is Type listType)
         {
             access = GH_ParamAccess.list;
@@ -247,7 +252,7 @@ internal static class Utils
         }
     }
 
-    public static bool GetValue<T>(this IGH_DataAccess DA, T identify, Type type, GH_ParamAccess access, out object value)
+    public static bool GetValue<T>(this IGH_DataAccess DA, T identify, Type type, Type rawType, GH_ParamAccess access, out object value)
     {
         MethodInfo method = access switch
         {
@@ -260,12 +265,18 @@ internal static class Utils
             access switch
             {
                 GH_ParamAccess.list => Activator.CreateInstance(typeof(List<>).MakeGenericType(type))!,
-                GH_ParamAccess.tree => Activator.CreateInstance(typeof(GH_Structure<>).MakeGenericType(type))!,
+                GH_ParamAccess.tree => Activator.CreateInstance(rawType)!,
                 _ => type.IsEnum ? 0 : type.IsValueType ? Activator.CreateInstance(type)! : null!,
             }];
 
         var result = (bool)method.MakeGenericMethod(type.IsEnum ? typeof(int) : type).Invoke(DA, pms)!;
-        value = access != GH_ParamAccess.item ? pms[1] : pms[1].ChangeType(type);
+        value = access switch
+        {
+            GH_ParamAccess.item => pms[1].ChangeType(rawType),
+            GH_ParamAccess.list => rawType.IsArray ? typeof(List<>).MakeGenericType(type).GetMethod("ToArray")!.Invoke(pms[1], [])! : pms[1],
+            _ => pms[1],
+        };
+        
         return result;
 
         static MethodInfo GetDaMethod(IGH_DataAccess DA, string name)

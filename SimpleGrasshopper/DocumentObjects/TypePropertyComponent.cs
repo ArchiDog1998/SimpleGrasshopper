@@ -100,9 +100,9 @@ public abstract class TypePropertyComponent<T>()
         for (int i = 0; i < setProps.Length; i++)
         {
             var prop = setProps[i];
-            var type = prop.PropertyType.GetRawType();
-            type = type.GetAccessAndType(out var access);
-            if (DA.GetValue(i + 1, type, access, out var value))
+            var rawType = prop.PropertyType.GetRawType();
+            var type = rawType.GetAccessAndType(out var access);
+            if (DA.GetValue(i + 1, type, rawType, access, out var value))
             {
                 prop.SetValue(obj, value);
             }

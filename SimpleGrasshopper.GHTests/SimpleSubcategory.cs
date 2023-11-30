@@ -1,4 +1,5 @@
-﻿using Grasshopper.Kernel.Data;
+﻿using Grasshopper.Kernel;
+using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
@@ -46,12 +47,12 @@ internal class SimpleSubcategory
 
     }
 
-    [Exposure(Grasshopper.Kernel.GH_Exposure.secondary)]
+    [Exposure(GH_Exposure.secondary)]
     [DocObj("Test", "T", "Ttt")]
 
-    private static void Test(bool a)
+    private static bool[] Test(bool[] bs, bool a)
     {
-
+        return [true, false, a];
     }
 
     [DocObj("Test2", "T2", "Ttt")]
@@ -59,6 +60,14 @@ internal class SimpleSubcategory
     private static void Test(out bool a)
     {
         a = false;
+    }
+}
+
+partial class SimpleSubcategory_Test_Component
+{
+    public override IGH_Attributes CreateAttribute()
+    {
+        return base.CreateAttribute();
     }
 }
 

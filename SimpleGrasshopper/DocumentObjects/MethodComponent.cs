@@ -158,8 +158,9 @@ public abstract class MethodComponent(
 
             var attr = param.GetCustomAttribute<DocObjAttribute>();
             var defaultName = param.Name ?? "Input";
+            var defaultNickName = param.Name ?? "I";
 
-            pManager.AddParameter(gh_param, attr?.Name ?? defaultName, attr?.NickName ?? defaultName, attr?.Description ?? defaultName, access);
+            pManager.AddParameter(gh_param, attr?.Name ?? defaultName, attr?.NickName ?? defaultNickName, attr?.Description ?? defaultName, access);
         }
     }
 
@@ -180,8 +181,9 @@ public abstract class MethodComponent(
         {
             var attr = paramInfo.GetCustomAttribute<DocObjAttribute>();
             var defaultName = paramInfo.Name ?? "Result";
+            var defaultNickName = paramInfo.Name ?? "R";
 
-            pManager.AddParameter(gh_returnParam, attr?.Name ?? defaultName, attr?.NickName ?? defaultName, attr?.Description ?? defaultName, access);
+            pManager.AddParameter(gh_returnParam, attr?.Name ?? defaultName, attr?.NickName ?? defaultNickName, attr?.Description ?? defaultName, access);
         }
 
         foreach (var param in MethodInfo.GetParameters().Where(IsOut))
@@ -191,8 +193,9 @@ public abstract class MethodComponent(
 
             var attr = param.GetCustomAttribute<DocObjAttribute>();
             var defaultName = param.Name ?? "Output";
+            var defaultNickName = param.Name ?? "O";
 
-            pManager.AddParameter(gh_param, attr?.Name ?? defaultName, attr?.NickName ?? defaultName, attr?.Description ?? defaultName, access);
+            pManager.AddParameter(gh_param, attr?.Name ?? defaultName, attr?.NickName ?? defaultNickName, attr?.Description ?? defaultName, access);
         }
     }
 
@@ -292,11 +295,12 @@ public abstract class MethodComponent(
 
         var isNotStatic = false;
         GH_ParamAccess classAccess = GH_ParamAccess.item;
-        if (!MethodInfo.IsStatic && MethodInfo.DeclaringType is Type classType)
+        if (!MethodInfo.IsStatic && MethodInfo.DeclaringType is Type classRawType)
         {
             isNotStatic = true;
-            classType = classType.GetRawType().GetAccessAndType(out classAccess);
-            DA.GetValue(0, classType, classAccess, out obj);
+            classRawType = classRawType.GetRawType();
+            var classType = classRawType.GetAccessAndType(out classAccess);
+            DA.GetValue(0, classType, classRawType, classAccess, out obj);
         }
 
         int index = -1;
@@ -304,10 +308,10 @@ public abstract class MethodComponent(
         {
             index++;
 
-            var type = param.ParameterType.GetRawType();
-            if (type == null) return null;
+            var rawType = param.ParameterType.GetRawType();
+            if (rawType == null) return null;
 
-            type = type.GetAccessAndType(out var access);
+            var type = rawType.GetAccessAndType(out var access);
 
             var name = param.GetCustomAttribute<DocObjAttribute>()?.Name
                 ?? param.Name ?? string.Empty;
@@ -319,7 +323,7 @@ public abstract class MethodComponent(
             
             if (IsIn(param))
             {
-                DA.GetValue(name, type, access, out var obj);
+                DA.GetValue(name, type, rawType, access, out var obj);
                 return obj;
             }
 
