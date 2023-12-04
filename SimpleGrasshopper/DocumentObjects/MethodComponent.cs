@@ -1,4 +1,5 @@
 ﻿using GH_IO.Serialization;
+using Grasshopper.GUI;
 using Grasshopper.Kernel.Attributes;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
@@ -6,6 +7,7 @@ using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Util;
 using System.Collections;
+using static Rhino.Render.Dithering;
 
 namespace SimpleGrasshopper.DocumentObjects;
 
@@ -352,7 +354,7 @@ public abstract class MethodComponent(
 
             var outParamsList = new List<OutputData>(ps.Length);
             int index = -1;
-            parameters = ps.Select(param =>
+            parameters = [.. ps.Select(param =>
             {
                 index++;
 
@@ -378,7 +380,7 @@ public abstract class MethodComponent(
                     GH_ParamAccess.tree => new GH_Structure<IGH_Goo>(),
                     _ => null,
                 };
-            }).ToArray();
+            })];
             outParams = [.. outParamsList];
             return isNotStatic;
         }
@@ -440,32 +442,112 @@ public abstract class MethodComponent(
         return base.Write(writer);
     }
 
+    private readonly struct MemberShowing(MethodInfo method, int index)
+    {
+        public MethodInfo Method => method;
+        public int Index => index;
+
+        public static string GetString(MethodInfo method)
+        {
+            var name = method.GetDocObjName();
+            var nickName = method.GetDocObjNickName();
+            if (name == nickName) return name;
+            return $"{name} ({nickName})";
+        }
+
+        public override string ToString() => GetString(Method);
+    }
+
     /// <inheritdoc/>
     public override void AppendAdditionalMenuItems(ToolStripDropDown menu)
     {
         base.AppendAdditionalMenuItems(menu);
 
         var count = methodInfos.Length;
-        if (count < 2) return;
 
-        for (int i = 0; i < count; i++)
+        if (count < 2)
         {
-            var method = methodInfos[i];
+            return;
+        }
+        else if (count > 10)
+        {
+            var width = (int)Math.Round(220f * GH_GraphicsUtil.UiScale);
 
-            var item = new ToolStripMenuItem
+            var textItem = new ToolStripTextBox
             {
-                Text = $"{method.GetDocObjName()} ({method.GetDocObjNickName()})",
-                ToolTipText = method.GetDocObjDescription(),
-                Checked = i == MethodIndex,
-                Tag = i,
+                Text = string.Empty,
+                BorderStyle = BorderStyle.FixedSingle,
+                Width = width,
+                AutoSize = false,
+                ToolTipText = "Searching...",
             };
+            
+            menu.Items.Add(textItem);
 
-            item.Click += (sender, e) =>
+            var box = new ListBox()
             {
-                MethodIndex = (int)((ToolStripMenuItem)sender!).Tag;
+                BorderStyle = BorderStyle.FixedSingle,
+                Width = width,
+                Height = (int)Math.Round(150f * GH_GraphicsUtil.UiScale),
+                SelectionMode = SelectionMode.One,
             };
+            for (int i = 0; i < count; i++)
+            {
+                var method = methodInfos[i];
 
-            menu.Items.Add(item);
+                var item = new MemberShowing(method, i);
+                box.Items.Add(item);
+                if (MethodIndex == i)
+                {
+                    box.SelectedItem = item;
+                }
+            }
+            textItem.TextChanged += (sender, e) =>
+            {
+                box.Items.Clear();
+                for (int i = 0; i < count; i++)
+                {
+                    var method = methodInfos[i];
+
+                    if (!method.GetDocObjName().StartsWith(textItem.Text, StringComparison.OrdinalIgnoreCase)) continue;
+
+                    var item = new MemberShowing(method, i);
+                    box.Items.Add(item);
+                    if (MethodIndex == i)
+                    {
+                        box.SelectedItem = item;
+                    }
+                }
+            };
+            box.SelectedValueChanged += (sender, e) =>
+            {
+                if (sender is not ListBox listBox
+                || listBox.SelectedItem is not MemberShowing member) return;
+                MethodIndex = member.Index;
+            };
+            GH_Component.Menu_AppendCustomItem(menu, box);
+        }
+        else
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var method = methodInfos[i];
+
+                var item = new ToolStripMenuItem
+                {
+                    Text = MemberShowing.GetString(method),
+                    ToolTipText = method.GetDocObjDescription(),
+                    Checked = i == MethodIndex,
+                    Tag = i,
+                };
+
+                item.Click += (sender, e) =>
+                {
+                    MethodIndex = (int)((ToolStripMenuItem)sender!).Tag;
+                };
+
+                menu.Items.Add(item);
+            }
         }
     }
 
