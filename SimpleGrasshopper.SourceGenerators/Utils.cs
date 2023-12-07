@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace SimpleGrasshopper.SourceGenerators;
@@ -50,8 +49,8 @@ internal static class Utils
     public static string GetGuid(params string[] ids)
     {
         var id = string.Join(".", ids);
-        using MD5 md5 = MD5.Create();
-        byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes(id));
+
+        byte[] hash = HashAlgorithmMD5.Calculate(Encoding.UTF8.GetBytes(id));
         return new Guid(hash).ToString("B");
     }
 
