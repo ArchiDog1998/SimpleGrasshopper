@@ -282,17 +282,18 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             result.Add(item);
         }
 
-        foreach (var (parentItem, childrenList) in sectionDict)
+        //foreach (var (parentItem, childrenList) in sectionDict)
+        foreach (var element in sectionDict)
         {
-            foreach (var grp in childrenList.GroupBy(c => c.Item2).OrderBy(g => g.Key))
+            foreach (var grp in element.Value.GroupBy(c => c.Item2).OrderBy(g => g.Key))
             {
-                if (parentItem.HasDropDownItems)
+                if (element.Key.HasDropDownItems)
                 {
-                    GH_Component.Menu_AppendSeparator(parentItem.DropDown);
+                    GH_Component.Menu_AppendSeparator(element.Key.DropDown);
                 }
                 foreach (var item in grp.OrderBy(c => c.Item3))
                 {
-                    parentItem.DropDownItems.Add(item.Item1);
+                    element.Key.DropDownItems.Add(item.Item1);
                 }
             }
         }

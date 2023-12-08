@@ -298,6 +298,11 @@ public abstract class MethodComponent(
 
             if (InPreSolve)
             {
+                //TaskList.Add(Task.Run(() =>
+                //{
+                //    var result = MethodInfo.Invoke(obj, parameters);
+                //    return (result, parameters);
+                //}));
                 TaskList.Add(Task.Run(() =>
                 {
                     var result = MethodInfo.Invoke(obj, parameters);

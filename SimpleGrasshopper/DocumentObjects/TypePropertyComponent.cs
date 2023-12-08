@@ -18,7 +18,7 @@ public abstract class TypePropertyComponent<T>()
          GetSubCate(typeof(T)))
     where T : new()
 {
-    private static string GetSubCate(Type type)
+    private static string? GetSubCate(Type type)
     {
         var sub = type.GetCustomAttribute<PropertyComponentAttribute>()?.SubCategory;
         if (!string.IsNullOrEmpty(sub)) return sub;

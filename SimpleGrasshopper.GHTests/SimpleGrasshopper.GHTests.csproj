@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	
   <PropertyGroup>
-    <TargetFrameworks>net7.0-windows</TargetFrameworks>
+    <TargetFrameworks>net48</TargetFrameworks>
     <Title>SimpleGrasshopper.GHTests</Title>
     <Description>Description of SimpleGrasshopper.GHTests</Description>
     <TargetExt>.gha</TargetExt>
@@ -12,7 +12,11 @@
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
     <ProjectReference Include="..\SimpleGrasshopper.SourceGenerators\SimpleGrasshopper.SourceGenerators.csproj" OutputItemType="Analyzer" />
     <ProjectReference Include="..\SimpleGrasshopper\SimpleGrasshopper.csproj" />
-	<EmbeddedResource Include="Icons\*.png"/>
+	<EmbeddedResource Include="Icons\*.png" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
 
 </Project>
