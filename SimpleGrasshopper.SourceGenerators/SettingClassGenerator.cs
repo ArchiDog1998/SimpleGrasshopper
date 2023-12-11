@@ -126,6 +126,7 @@ public class SettingClassGenerator : IIncrementalGenerator
              using System;
              using System.Drawing;
              using SimpleGrasshopper.Attributes;
+             using SimpleGrasshopper.Data;
 
              namespace {{nameSpace}}
              {
