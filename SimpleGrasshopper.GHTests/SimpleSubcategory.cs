@@ -10,7 +10,7 @@ namespace SimpleGrasshopper.GHTests;
 internal class SimpleSubcategory
 {
     [Icon("ConstructRenderItemComponent_24-24.png")] // The name of the png that is embedded in your dll.
-    [Exposure(Grasshopper.Kernel.GH_Exposure.secondary)]
+    [Exposure(GH_Exposure.secondary)]
     [DocObj("Addition", "Add", "The addition of the integers.")]
     [return: DocObj("Result", "R", "Result")]
     private static int SimpleMethod(int a, int b, ref int c)
@@ -26,6 +26,7 @@ internal class SimpleSubcategory
         dfa = abc + werb;
     }
 
+    [Icon("https://raw.githubusercontent.com/ArchiDog1998/WatermarkPainter/master/WatermarkIcon512.png")]
     [DocObj("Special Param", "Spe", "Special Params")]
     private static void ParamTest(
         [DocObj("Name", "N", "The name of sth.")] string name,

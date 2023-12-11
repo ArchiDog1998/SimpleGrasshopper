@@ -1,18 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	
   <PropertyGroup>
-    <TargetFrameworks>net7.0-windows</TargetFrameworks>
+    <TargetFramework>net7.0</TargetFramework>
     <Title>SimpleGrasshopper.GHTests</Title>
     <Description>Description of SimpleGrasshopper.GHTests</Description>
     <TargetExt>.gha</TargetExt>
-	<LangVersion>latest</LangVersion>
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
     <ProjectReference Include="..\SimpleGrasshopper.SourceGenerators\SimpleGrasshopper.SourceGenerators.csproj" OutputItemType="Analyzer" />
     <ProjectReference Include="..\SimpleGrasshopper\SimpleGrasshopper.csproj" />
-	<EmbeddedResource Include="Icons\*.png"/>
+    <EmbeddedResource Include="Icons\*.png" />
   </ItemGroup>
-
+  
+  <ItemGroup>
+    <PackageReference Include="Grasshopper" Version="8.1.23325.13001" />
+  </ItemGroup>
 </Project>

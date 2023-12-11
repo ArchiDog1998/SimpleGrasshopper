@@ -7,7 +7,6 @@ using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Util;
 using System.Collections;
-using static Rhino.Render.Dithering;
 
 namespace SimpleGrasshopper.DocumentObjects;
 
@@ -22,7 +21,7 @@ public abstract class MethodComponent(
         string? subCategory = null,
         string? iconPath = null,
         GH_Exposure? exposure = null)
-    : GH_TaskCapableComponent<(object?, object?[])>(
+    : GH_TaskCapableComponent<(object, object?[])>(
         name ?? methodInfos[0].GetDocObjName(),
         nickName ?? methodInfos[0].GetDocObjNickName(),
         description ?? methodInfos[0].GetDocObjDescription(),
@@ -30,7 +29,11 @@ public abstract class MethodComponent(
         subCategory ?? methodInfos[0].GetDeclaringClassName())
     , IGH_VariableParameterComponent
 {
-    private readonly record struct OutputData(int Index, GH_ParamAccess Access);
+    private readonly struct OutputData(int index, GH_ParamAccess access)
+    {
+        public int Index => index;
+        public GH_ParamAccess Access => access;
+    }
 
     private int _methodIndex = 0;
     private int MethodIndex
@@ -300,16 +303,14 @@ public abstract class MethodComponent(
             {
                 TaskList.Add(Task.Run(() =>
                 {
-                    var result = MethodInfo.Invoke(obj, parameters);
-                    return (result, parameters);
+                    return (MethodInfo.Invoke(obj, parameters), parameters);
                 }));
                 return;
             }
 
             if (!GetSolveResults(DA, out var resultParams))
             {
-                var result = MethodInfo.Invoke(obj, parameters);
-                resultParams = (result, parameters);
+                resultParams = (MethodInfo.Invoke(obj, parameters), parameters);
             }
 
             SetValues(DA, MethodInfo, Params, obj, resultParams.Item1, resultParams.Item2, outParams, isNotStatic);

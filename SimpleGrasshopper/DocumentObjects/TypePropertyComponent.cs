@@ -21,8 +21,8 @@ public abstract class TypePropertyComponent<T>()
     private static string GetSubCate(Type type)
     {
         var sub = type.GetCustomAttribute<PropertyComponentAttribute>()?.SubCategory;
-        if (!string.IsNullOrEmpty(sub)) return sub;
-        return "Property";
+        if (sub == null || string.IsNullOrEmpty(sub)) return "Property"; 
+        return sub;
     }
 
     /// <inheritdoc/>
@@ -36,7 +36,7 @@ public abstract class TypePropertyComponent<T>()
         {
             if (_icon != null) return _icon;
             var path = typeof(T).GetCustomAttribute<PropertyComponentAttribute>()?.IconPath;
-            if (string.IsNullOrEmpty(path)) return base.Icon;
+            if (path == null || string.IsNullOrEmpty(path)) return base.Icon;
 
             return _icon = GetType().Assembly.GetBitmap(path) ?? base.Icon;
         }

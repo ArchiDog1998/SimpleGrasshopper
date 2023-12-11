@@ -282,8 +282,10 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             result.Add(item);
         }
 
-        foreach (var (parentItem, childrenList) in sectionDict)
+        foreach (var pair in sectionDict)
         {
+            var parentItem = pair.Key;
+            var childrenList = pair.Value;
             foreach (var grp in childrenList.GroupBy(c => c.Item2).OrderBy(g => g.Key))
             {
                 if (parentItem.HasDropDownItems)

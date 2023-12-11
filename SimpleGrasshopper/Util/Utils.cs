@@ -3,6 +3,7 @@ using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
+using System.Net;
 
 namespace SimpleGrasshopper.Util;
 
@@ -29,7 +30,7 @@ internal static class Utils
 
     private static string GetAssemblyStringProperty(this Assembly assembly, string propertyName)
     {
-        var type = assembly.GetTypes().FirstOrDefault(t => t.IsAssignableTo(typeof(GH_AssemblyInfo)));
+        var type = assembly.GetTypes().FirstOrDefault(t => typeof(GH_AssemblyInfo).IsAssignableFrom(t));
 
         if (type != null)
         {
@@ -41,7 +42,7 @@ internal static class Utils
 
     public static Bitmap? GetAssemblyIcon(this Assembly assembly)
     {
-        var type = assembly.GetTypes().FirstOrDefault(t => t.IsAssignableTo(typeof(GH_AssemblyInfo)));
+        var type = assembly.GetTypes().FirstOrDefault(t => typeof(GH_AssemblyInfo).IsAssignableFrom(t));
 
         if (type != null)
         {
@@ -221,11 +222,12 @@ internal static class Utils
             {
                 return new Bitmap(path);
             }
-            if (Uri.TryCreate(path, new UriCreationOptions(), out var url)
+            if (Uri.TryCreate(path, UriKind.RelativeOrAbsolute, out var url)
                 && url is not null)
             {
-                using var client = new HttpClient();
-                var stream = client.GetStreamAsync(url).Result;
+                using var client = new WebClient();
+                var data = client.DownloadData(url);
+                var stream = new MemoryStream(data);
                 return new Bitmap(stream);
             }
         }
