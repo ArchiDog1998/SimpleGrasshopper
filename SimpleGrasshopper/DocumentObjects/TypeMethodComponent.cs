@@ -7,7 +7,7 @@ namespace SimpleGrasshopper.DocumentObjects;
 /// </summary>
 /// <typeparam name="T">the type.</typeparam>
 public abstract class TypeMethodComponent<T>()
-    : MethodComponent(typeof(T).GetRuntimeMethods().Where(m => !m.IsSpecialName && m.DeclaringType != typeof(object)).ToArray(),
+    : MethodComponent(typeof(T).GetMethods().Where(m => !m.IsSpecialName && m.DeclaringType != typeof(object)).ToArray(),
         typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.Name,
         typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.NickName,
         typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.Description,

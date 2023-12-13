@@ -16,4 +16,10 @@ public class TypeTest
     {
         FirstValue += value;
     }
+
+    [DocObj("Reduce Property", "R P", "Testing")]
+    public void ReduceValue(int value)
+    {
+        FirstValue -= value;
+    }
 }

@@ -20,6 +20,8 @@ Don't forget to copy this `SimpleGrasshopper.dll` file to your output folder!
 
 ![image-20231124084353080](assets/image-20231124084353080.png)
 
+Notice: if you want to create a plugin in rhino8 with .Net core, please add a `Grasshoppper` reference to your project!
+
 ## How to use
 
 ### Component
@@ -45,7 +47,9 @@ Now, you'll see a component in GH!
 
 ![image-20231123221923982](assets/image-20231123221923982.png)
 
-The output is the parameters with the modifier `out`! And please don't use `ref`! It'll be regarded as input!
+The parameters can be `in`, `out,` or `ref`.
+
+The method can be `static` or not. If it is not static, it'll create an input and an output to the instance of that class.
 
 #### Component Infos
 
@@ -59,7 +63,7 @@ namespace SimpleGrasshopper.GHTests;
 [SubCategory("Just a test")]
 internal class SimpleSubcategory
 {
-    [Icon("ConstructRenderItemComponent_24-24.png")] // The name of the png that is embedded in your dll.
+    [Icon("ConstructRenderItemComponent_24-24.png")] // The name of the png that is embedded in your dll or the download link or the local path even the guid of some component to get the icon from it.
     [Exposure(Grasshopper.Kernel.GH_Exposure.secondary)]
     [DocObj("Addition", "Add", "The addition of the integers.")]
     private static void SimpleMethod(int a, int b, out int c)
@@ -75,7 +79,9 @@ If you want to change the description of the param, please use `DocObjAttribute`
 
 If you want to use some other Parameter with your parameter, please use `ParamAttribute`.
 
-One more thing, for the angle parameter, is the `AngleAttribute`!
+For the angle parameter, is the `AngleAttribute`!
+
+For the geometry parameter, if you want to hide it, please use `HiddenAttribute`!
 
 ```c#
 using SimpleGrasshopper.Attributes;
@@ -105,7 +111,7 @@ internal class SimpleSubcategory
 
 #### Data Access
 
-If you want your data access to be a list, please set the param type to `List<T>`.
+If you want your data access to be a list, please set the param type to `List<T>` or `T[]`.
 
 If you want your data access to be a tree. That would be complex.
 
@@ -113,7 +119,7 @@ If it is a built-in type, please do it like `GH_Structure<GH_XXXX>`. If it is yo
 
 #### Enum Type
 
-For some cases, you may want to add some enum parameters to your project, so just do it!
+You may want to add some enum parameters to your project in some cases, so just do it!
 
 You can also add a default value for making it optional.
 
@@ -188,9 +194,59 @@ internal class SimpleSubcategory
 
 ![image-20231123225140458](assets/image-20231123225140458.png)
 
+### Special Components
+
+For some common components, there are some ez ways to create them.
+
+#### Property Component
+
+If you create your data type, and you want to modify its property, you can add a tag called `PropertyComponentAttribute` to your type definition.
+
+![image-20231213104531419](assets/image-20231213104531419.png)
+
+``` c#
+[PropertyComponent]
+[Icon("CurveRenderAttributeParameter_24-24.png")]
+[DocObj("My type", "just a type", "Testing type.")]
+public class TypeTest
+{
+    [DocObj("Value", "V", "")]
+    public int FirstValue { get; set; }
+}
+```
+
+#### Type Component
+
+If you are soo lazy to add a lot of tags to every method in one type. You can add a tag called `TypeComponentAttribute`. It'll create a method component for your plugin, and this component can use all public methods.
+
+![image-20231213110009360](assets/image-20231213110009360.png)
+
+``` c#
+[TypeComponent]
+[Icon("CurveRenderAttributeParameter_24-24.png")]
+[DocObj("My type", "just a type", "Testing type.")]
+public class TypeTest
+{
+    [DocObj("Value", "V", "")]
+    public int FirstValue { get; set; }
+
+    public void AddValue(int value)
+    {
+        FirstValue += value;
+    }
+
+    public void ReduceValue(int value)
+    {
+        FirstValue -= value;
+    }
+}
+```
+
+Well, good news for all lazy people!
+
 ### Settings
 
-Well, for some lazy people like me, who doesn't like to use `Instances.Setting.GetValue(XXX)`, etc. I just want to make it ez.
+Well, for some lazy people like me, who don't like to use `Instances.Setting.GetValue(XXX)`, etc. I just want to make it ez.
 
 So, just tag a static field with the attribute `SettingAttribute`!
 
@@ -225,6 +281,10 @@ var c = SettingStruct.AnotherSetting;
 ```
 
 That makes it easier!
+
+#### Configurations
+
+If you want to add your custom menu to Grasshopper. You can add a tag called `ConfigAttribute` to your setting or your property.
 
 ### Advanced
 

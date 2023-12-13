@@ -3,7 +3,6 @@ using Grasshopper.GUI;
 using Grasshopper.Kernel.Attributes;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
-using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
