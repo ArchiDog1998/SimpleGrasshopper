@@ -84,7 +84,10 @@ public abstract class MethodComponent(
     /// </summary>
     protected virtual Type? DeclaringType { get; } = null;
 
-    private MethodInfo MethodInfo => methodInfos[MethodIndex];
+    /// <summary>
+    /// The method that this component is using.
+    /// </summary>
+    public MethodInfo MethodInfo => methodInfos[MethodIndex];
 
     /// <inheritdoc/>
     public override string Category
