@@ -315,6 +315,10 @@ public abstract class MethodComponent(
 
             SetValues(DA, MethodInfo, Params, obj, resultParams.Item1, resultParams.Item2, outParams, isNotStatic);
         }
+        catch (AggregateException ex) when (ex.InnerException is TargetInvocationException)
+        {
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.InnerException.InnerException.Message);
+        }
         catch (Exception? ex)
         {
             var messageString = GetMessage(ex);
@@ -375,12 +379,7 @@ public abstract class MethodComponent(
                     return obj;
                 }
 
-                return access switch
-                {
-                    GH_ParamAccess.list => new List<object>(),
-                    GH_ParamAccess.tree => new GH_Structure<IGH_Goo>(),
-                    _ => null,
-                };
+                return access.CreatInstance(type, rawType);
             })];
             outParams = [.. outParamsList];
             return isNotStatic;

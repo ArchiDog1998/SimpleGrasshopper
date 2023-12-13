@@ -254,6 +254,14 @@ internal static class Utils
         }
     }
 
+    public static object CreatInstance(this GH_ParamAccess access, Type type, Type rawType)
+    => access switch
+    {
+        GH_ParamAccess.list => Activator.CreateInstance(typeof(List<>).MakeGenericType(type))!,
+        GH_ParamAccess.tree => Activator.CreateInstance(rawType)!,
+        _ => type.IsEnum ? 0 : type.IsValueType ? Activator.CreateInstance(type)! : null!,
+    };
+
     public static bool GetValue<T>(this IGH_DataAccess DA, T identify, Type type, Type rawType, GH_ParamAccess access, out object value)
     {
         MethodInfo method = access switch
@@ -263,13 +271,8 @@ internal static class Utils
             _ => GetDaMethod(DA, nameof(DA.GetData)),
         };
 
-        object[] pms = [identify!,
-            access switch
-            {
-                GH_ParamAccess.list => Activator.CreateInstance(typeof(List<>).MakeGenericType(type))!,
-                GH_ParamAccess.tree => Activator.CreateInstance(rawType)!,
-                _ => type.IsEnum ? 0 : type.IsValueType ? Activator.CreateInstance(type)! : null!,
-            }];
+        
+        object[] pms = [identify!, access.CreatInstance(type, rawType)];
 
         var result = (bool)method.MakeGenericMethod(type.IsEnum ? typeof(int) : type).Invoke(DA, pms)!;
         value = access switch

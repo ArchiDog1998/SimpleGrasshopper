@@ -1,6 +1,7 @@
 ﻿using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
+using Rhino.Geometry;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 
@@ -61,6 +62,52 @@ internal class SimpleSubcategory
     private static void Test(out bool a)
     {
         a = false;
+    }
+
+    [DocObj("BendLine", "SM-Unfold", "")]
+    public static void BendL(
+           [DocObj("Brep", "B", "Input Brep")] Brep brep,
+           [DocObj("BendLines", "L", "BendLines for the Brep")] out List<Curve> BL,
+           [DocObj("Indices", "I", "Indices of the bend Srf")] out List<int> ID)
+
+    {
+        double t = 0.5;
+
+        List<Curve> bendLines = [];
+        List<int> indices = [];
+
+        throw new Exception("What?");
+
+        //if (brep == null || brep.Faces.Count == 0)
+        //{
+        //    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid input Brep");
+        //    return;
+        //}
+
+        for (int i = 0; i < brep.Faces.Count; i++)
+        {
+            BrepFace srf = brep.Faces[i];
+            if (!srf.IsPlanar(Rhino.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance))
+            {
+                srf.SetDomain(0, new Interval(0, 1));
+                srf.SetDomain(1, new Interval(0, 1));
+
+                for (int d = 0; d <= 1; d++) // Iterate over both directions
+                {
+                    Curve[] curves = srf.TrimAwareIsoCurve(d, t);
+                    foreach (Curve curve in curves)
+                    {
+                        if (curve.IsLinear())
+                        {
+                            bendLines.Add(curve);
+                            indices.Add(i);
+                        }
+                    }
+                }
+            }
+        }
+        BL = bendLines;
+        ID = indices;
     }
 }
 
