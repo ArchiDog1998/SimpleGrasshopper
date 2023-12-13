@@ -64,6 +64,7 @@ internal class SimpleSubcategory
         a = false;
     }
 
+    [Message("Great")]
     [DocObj("BendLine", "SM-Unfold", "")]
     public static RuntimeData BendL(
            [DocObj("Brep", "B", "Input Brep")] Brep brep,
@@ -106,7 +107,7 @@ internal class SimpleSubcategory
         BL = bendLines;
         ID = indices;
 
-        return new RuntimeData("Hahaha", [new RuntimeMessage(GH_RuntimeMessageLevel.Warning, "just a test")]);
+        return new RuntimeData(null, [new RuntimeMessage(GH_RuntimeMessageLevel.Warning, "just a test")]);
     }
 }
 

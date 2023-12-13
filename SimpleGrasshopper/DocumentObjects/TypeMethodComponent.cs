@@ -13,7 +13,9 @@ public abstract class TypeMethodComponent<T>()
         typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.Description,
         typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.SubCategory,
         typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.IconPath,
-        typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.Exposure)
+        typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.Exposure,
+        typeof(T).GetCustomAttribute<MessageAttribute>()?.Message,
+        typeof(T).GetCustomAttribute<ParallelAttribute>() != null)
 {
     /// <inheritdoc/>
     protected override Type? DeclaringType => typeof(T);

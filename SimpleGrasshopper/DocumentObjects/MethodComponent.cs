@@ -20,7 +20,9 @@ public abstract class MethodComponent(
         string? description = null,
         string? subCategory = null,
         string? iconPath = null,
-        GH_Exposure? exposure = null)
+        GH_Exposure? exposure = null,
+        string? message = null,
+        bool isParallel = false)
     : GH_TaskCapableComponent<(object, object?[])>(
         name ?? methodInfos[0].GetDocObjName(),
         nickName ?? methodInfos[0].GetDocObjNickName(),
@@ -167,6 +169,16 @@ public abstract class MethodComponent(
 
             pManager.AddParameter(gh_param, attr?.Name ?? defaultName, attr?.NickName ?? defaultNickName, attr?.Description ?? defaultName, access);
         }
+
+        this.Message = message ?? MethodInfo.GetCustomAttribute<MessageAttribute>()?.Message;
+        this.UseTasks = isParallel || MethodInfo.GetCustomAttribute<ParallelAttribute>() != null;
+    }
+
+    /// <inheritdoc/>
+    public override void AddedToDocument(GH_Document document)
+    {
+        this.UseTasks = isParallel || MethodInfo.GetCustomAttribute<ParallelAttribute>() != null;
+        base.AddedToDocument(document);
     }
 
     /// <inheritdoc/>
@@ -315,7 +327,10 @@ public abstract class MethodComponent(
             }
             if (resultParams.Item1 is RuntimeData data)
             {
-                this.Message = data.Message;
+                if(data.Message != null)
+                {
+                    this.Message = data.Message;
+                }
                 if (data.RuntimeMessages != null)
                 {
                     foreach (var message in data.RuntimeMessages)

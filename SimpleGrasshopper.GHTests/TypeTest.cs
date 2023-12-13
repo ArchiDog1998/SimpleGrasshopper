@@ -2,7 +2,7 @@
 
 namespace SimpleGrasshopper.GHTests;
 
-[TypeComponent]
+[TypeComponent("Type Methods", "methods")]
 [PropertyComponent]
 [Icon("CurveRenderAttributeParameter_24-24.png")]
 [DocObj("My type", "just a type", "Testing type.")]
