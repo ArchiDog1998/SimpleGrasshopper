@@ -52,9 +52,9 @@ internal class SimpleSubcategory
     [Exposure(GH_Exposure.secondary)]
     [DocObj("Test", "T", "Ttt")]
 
-    private static bool[] Test(bool[] bs, bool a)
+    private static void Test(bool[] bs, bool a, out bool[] re)
     {
-        return [true, false, a];
+        re = [true, false, a];
     }
 
     [DocObj("Test2", "T2", "Ttt")]
@@ -65,7 +65,7 @@ internal class SimpleSubcategory
     }
 
     [DocObj("BendLine", "SM-Unfold", "")]
-    public static void BendL(
+    public static RuntimeData BendL(
            [DocObj("Brep", "B", "Input Brep")] Brep brep,
            [DocObj("BendLines", "L", "BendLines for the Brep")] out List<Curve> BL,
            [DocObj("Indices", "I", "Indices of the bend Srf")] out List<int> ID)
@@ -76,13 +76,10 @@ internal class SimpleSubcategory
         List<Curve> bendLines = [];
         List<int> indices = [];
 
-        throw new Exception("What?");
-
-        //if (brep == null || brep.Faces.Count == 0)
-        //{
-        //    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Invalid input Brep");
-        //    return;
-        //}
+        if (brep == null || brep.Faces.Count == 0)
+        {
+            throw new Exception("Invalid input Brep");
+        }
 
         for (int i = 0; i < brep.Faces.Count; i++)
         {
@@ -108,6 +105,8 @@ internal class SimpleSubcategory
         }
         BL = bendLines;
         ID = indices;
+
+        return new RuntimeData("Hahaha", [new RuntimeMessage(GH_RuntimeMessageLevel.Warning, "just a test")]);
     }
 }
 

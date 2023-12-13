@@ -5,6 +5,7 @@ using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
+using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
 using System.Collections;
 
@@ -182,6 +183,7 @@ public abstract class MethodComponent(
 
         if (MethodInfo.ReturnParameter is ParameterInfo paramInfo
             && paramInfo.ParameterType != typeof(void)
+            && paramInfo.ParameterType != typeof(RuntimeData)
             && GetParameter(paramInfo, out access) is IGH_Param gh_returnParam)
         {
             var attr = paramInfo.GetCustomAttribute<DocObjAttribute>();
@@ -312,7 +314,17 @@ public abstract class MethodComponent(
             {
                 resultParams = (MethodInfo.Invoke(obj, parameters), parameters);
             }
-
+            if (resultParams.Item1 is RuntimeData data)
+            {
+                this.Message = data.Message;
+                if (data.RuntimeMessages != null)
+                {
+                    foreach (var message in data.RuntimeMessages)
+                    {
+                        AddRuntimeMessage(message.Level, message.Message);
+                    }
+                }
+            }
             SetValues(DA, MethodInfo, Params, obj, resultParams.Item1, resultParams.Item2, outParams, isNotStatic);
         }
         catch (AggregateException ex) when (ex.InnerException is TargetInvocationException)
@@ -394,7 +406,7 @@ public abstract class MethodComponent(
                 startIndex++;
             }
 
-            if (method.ReturnType != typeof(void))
+            if (method.ReturnType != typeof(void) && method.ReturnType != typeof(RuntimeData))
             {
                 var returnIndex = isNotStatic ? 1 : 0;
                 SetData(DA, result, paramServer.Output[returnIndex].Access, returnIndex);
