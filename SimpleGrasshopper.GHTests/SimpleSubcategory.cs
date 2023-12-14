@@ -14,11 +14,13 @@ internal class SimpleSubcategory
     [Exposure(GH_Exposure.secondary)]
     [DocObj("Addition", "Add", "The addition of the integers.")]
     [return: DocObj("Result", "R", "Result")]
-    private static int SimpleMethod(int a, int b, ref int c)
+    private static int SimpleMethod(
+        [Range(0, 10)] List<int> a,
+        [Range(0, 5)] GH_Structure<GH_Integer> b, ref int c)
     {
         SettingClass.EnumTest = EnumTesting.Why;
-        c = a + b + c;
-        return a + b;
+        c = 11 + c;
+        return 11;
     }
 
     [DocObj("Addition2", "Add2", "The addition of the integers2.")]

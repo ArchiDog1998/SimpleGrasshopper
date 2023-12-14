@@ -170,7 +170,10 @@ public abstract class MethodComponent(
             var defaultName = param.Name ?? "Input";
             var defaultNickName = param.Name ?? "I";
 
-            pManager.AddParameter(gh_param, attr?.Name ?? defaultName, attr?.NickName ?? defaultNickName, attr?.Description ?? defaultName, access);
+            var desc = attr?.Description ?? defaultName;
+            desc += param.GetCustomAttribute<RangeAttribute>()?.ToString() ?? string.Empty;
+
+            pManager.AddParameter(gh_param, attr?.Name ?? defaultName, attr?.NickName ?? defaultNickName, desc, access);
         }
 
         this.Message = message ?? MethodInfo.GetCustomAttribute<MessageAttribute>()?.Message;
@@ -330,7 +333,7 @@ public abstract class MethodComponent(
             }
             if (resultParams.Item1 is RuntimeData data)
             {
-                if(data.Message != null)
+                if (data.Message != null)
                 {
                     this.Message = data.Message;
                 }
@@ -370,7 +373,8 @@ public abstract class MethodComponent(
             }
         }
 
-        static bool GetValues(IGH_DataAccess DA, ParameterInfo[] ps, MethodInfo method, out object? obj, out object?[] parameters, out OutputData[] outParams)
+        bool GetValues(IGH_DataAccess DA, ParameterInfo[] ps, MethodInfo method,
+            out object? obj, out object?[] parameters, out OutputData[] outParams)
         {
             obj = null;
 
@@ -380,20 +384,26 @@ public abstract class MethodComponent(
             if (!method.IsStatic && method.DeclaringType is Type classRawType)
             {
                 isNotStatic = true;
-                startIndex++;
                 classRawType = classRawType.GetRawType();
                 var classType = classRawType.GetAccessAndType(out classAccess);
-                DA.GetValue(0, classType, classRawType, classAccess, out obj);
+                DA.GetValue(startIndex++, classType, classRawType, classAccess, out obj, null, out var mgs);
+
+                this.Params.Input[startIndex - 1].AddRuntimeMessages(mgs);
             }
 
             var outParamsList = new List<OutputData>(ps.Length);
-            int index = -1;
-            parameters = [.. ps.Select(param =>
+
+            parameters = new object?[ps.Length];
+            for (int index = 0; index < ps.Length; index++)
             {
-                index++;
+                var param = ps[index];
 
                 var rawType = param.ParameterType.GetRawType();
-                if (rawType == null) return null;
+                if (rawType == null)
+                {
+                    parameters[index] = null;
+                    continue;
+                }
 
                 var type = rawType.GetAccessAndType(out var access);
 
@@ -404,12 +414,17 @@ public abstract class MethodComponent(
 
                 if (IsIn(param))
                 {
-                    DA.GetValue(startIndex++, type, rawType, access, out var obj);
-                    return obj;
+                    DA.GetValue(startIndex++, type, rawType, access, out var o, param.GetCustomAttribute<RangeAttribute>(), out var mgs);
+
+                    this.Params.Input[startIndex - 1].AddRuntimeMessages(mgs);
+
+                    parameters[index] = o;
+                    continue;
                 }
 
-                return access.CreatInstance(type, rawType);
-            })];
+                parameters[index] = access.CreatInstance(type, rawType);
+            }
+
             outParams = [.. outParamsList];
             return isNotStatic;
         }
@@ -510,7 +525,7 @@ public abstract class MethodComponent(
                 AutoSize = false,
                 ToolTipText = "Searching...",
             };
-            
+
             menu.Items.Add(textItem);
 
             var box = new ListBox()

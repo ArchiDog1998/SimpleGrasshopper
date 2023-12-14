@@ -21,7 +21,7 @@ public abstract class TypePropertyComponent<T>()
     private static string GetSubCate(Type type)
     {
         var sub = type.GetCustomAttribute<PropertyComponentAttribute>()?.SubCategory;
-        if (sub == null || string.IsNullOrEmpty(sub)) return "Property"; 
+        if (sub == null || string.IsNullOrEmpty(sub)) return "Property";
         return sub;
     }
 
@@ -66,7 +66,10 @@ public abstract class TypePropertyComponent<T>()
             var param = GetTypeParam(prop.PropertyType, prop.GetCustomAttribute<ParamAttribute>()?.Guid);
             prop.PropertyType.GetAccessAndType(out var access);
 
-            pManager.AddParameter(param, attr?.Name ?? prop.Name, attr?.NickName ?? prop.Name, attr?.Description ?? prop.Name, access);
+            var desc = attr?.Description ?? prop.Name;
+            desc += prop.GetCustomAttribute<RangeAttribute>()?.ToString() ?? string.Empty;
+
+            pManager.AddParameter(param, attr?.Name ?? prop.Name, attr?.NickName ?? prop.Name, desc, access);
         }
     }
 
@@ -102,10 +105,11 @@ public abstract class TypePropertyComponent<T>()
             var prop = setProps[i];
             var rawType = prop.PropertyType.GetRawType();
             var type = rawType.GetAccessAndType(out var access);
-            if (DA.GetValue(i + 1, type, rawType, access, out var value))
+            if (DA.GetValue(i + 1, type, rawType, access, out var value, prop.GetCustomAttribute<RangeAttribute>(), out var mgs))
             {
                 prop.SetValue(obj, value);
             }
+            this.Params.Input[i + 1].AddRuntimeMessages(mgs);
         }
 
         DA.SetData(0, obj);

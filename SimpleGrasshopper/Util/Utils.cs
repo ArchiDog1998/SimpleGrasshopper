@@ -3,6 +3,7 @@ using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
+using SimpleGrasshopper.Data;
 using System.Net;
 
 namespace SimpleGrasshopper.Util;
@@ -262,7 +263,8 @@ internal static class Utils
         _ => type.IsEnum ? 0 : type.IsValueType ? Activator.CreateInstance(type)! : null!,
     };
 
-    public static bool GetValue<T>(this IGH_DataAccess DA, T identify, Type type, Type rawType, GH_ParamAccess access, out object value)
+    public static bool GetValue<T>(this IGH_DataAccess DA, T identify, Type type, Type rawType, GH_ParamAccess access,
+        out object value, RangeAttribute? range, out List<RuntimeMessage> messages)
     {
         MethodInfo method = access switch
         {
@@ -271,7 +273,6 @@ internal static class Utils
             _ => GetDaMethod(DA, nameof(DA.GetData)),
         };
 
-        
         object[] pms = [identify!, access.CreatInstance(type, rawType)];
 
         var result = (bool)method.MakeGenericMethod(type.IsEnum ? typeof(int) : type).Invoke(DA, pms)!;
@@ -281,6 +282,26 @@ internal static class Utils
             GH_ParamAccess.list => rawType.IsArray ? typeof(List<>).MakeGenericType(type).GetMethod("ToArray")!.Invoke(pms[1], [])! : pms[1],
             _ => pms[1],
         };
+
+        messages = [];
+        if (range != null)
+        {
+            switch (access)
+            {
+                case GH_ParamAccess.item:
+                    var message = ModifyValueItem(ref value, range);
+                    if (message.HasValue) messages.Add(message.Value);
+                    break;
+
+                case GH_ParamAccess.list:
+                    messages.AddRange(ModifyValueList(ref value, range));
+                    break;
+
+                case GH_ParamAccess.tree:
+                    messages.AddRange(ModifyValueTree(ref value, range));
+                    break;
+            }
+        }
 
         return result;
 
@@ -294,6 +315,166 @@ internal static class Utils
                 if (pms[0].ParameterType.GetRawType() != typeof(T)) return false;
                 return true;
             });
+        }
+    }
+
+    private static RuntimeMessage[] ModifyValueTree(ref object value, RangeAttribute range)
+    {
+        if (value is GH_Structure<GH_Integer> intTree)
+        {
+            var result = ModifyValue(ref intTree, range);
+            value = intTree;
+            return result;
+        }
+        else if (value is GH_Structure<GH_Number> numTree)
+        {
+            var result = ModifyValue(ref numTree, range);
+            value = numTree;
+            return result;
+        }
+        return [];
+
+        static RuntimeMessage[] ModifyValue<T>(ref GH_Structure<T> structure, RangeAttribute range)
+        where T : IGH_Goo
+        {
+            var field = structure.GetType().GetRuntimeFields().FirstOrDefault(f => f.Name == "m_data");
+            if (field == null) return [];
+
+            if (field.GetValue(structure) is not SortedList<GH_Path, List<GH_Integer>> data) return [];
+
+            var messages = new List<RuntimeMessage>();
+            foreach (var list in data)
+            {
+                for (int i = 0; i < list.Value.Count; i++)
+                {
+                    object item = list.Value[i];
+                    var message = ModifyValueItem(ref item, range);
+                    if (message.HasValue) messages.Add(message.Value);
+                    list.Value[i] = (GH_Integer)item;
+                }
+            }
+            field.SetValue(structure, data);
+            return [.. messages];
+        }
+    }
+
+    private static RuntimeMessage[] ModifyValueList(ref object value, RangeAttribute range)
+    {
+        var messages = new List<RuntimeMessage>();
+
+        if (value is List<int> intList)
+        {
+            messages.AddRange(ModifyValuesLoc(ref intList, range));
+            value = intList;
+        }
+        else if (value is int[] intArray)
+        {
+            var input = intArray.ToList();
+            messages.AddRange(ModifyValuesLoc(ref input, range));
+            value = input;
+        }
+        else if (value is List<double> doubleList)
+        {
+            messages.AddRange(ModifyValuesLoc(ref doubleList, range));
+            value = doubleList;
+        }
+        else if (value is double[] doubleArray)
+        {
+            var input = doubleArray.ToList();
+            messages.AddRange(ModifyValuesLoc(ref input, range));
+            value = input;
+        }
+        else if (value is List<GH_Integer> ghIntList)
+        {
+            messages.AddRange(ModifyValuesLoc(ref ghIntList, range));
+            value = ghIntList;
+        }
+        else if (value is GH_Integer[] ghIntArray)
+        {
+            var input = ghIntArray.ToList();
+            messages.AddRange(ModifyValuesLoc(ref input, range));
+            value = input;
+        }
+        else if (value is List<GH_Number> ghNumList)
+        {
+            messages.AddRange(ModifyValuesLoc(ref ghNumList, range));
+            value = ghNumList;
+        }
+        else if (value is GH_Number[] ghNumArray)
+        {
+            var input = ghNumArray.ToList();
+            messages.AddRange(ModifyValuesLoc(ref input, range));
+            value = input;
+        }
+
+        return [.. messages];
+
+        static RuntimeMessage[] ModifyValuesLoc<T>(ref List<T> values, RangeAttribute range)
+        {
+            var messages = new List<RuntimeMessage>(values.Count);
+            for (int i = 0; i < values.Count; i++)
+            {
+                object item = values[i]!;
+                var message = ModifyValueItem(ref item, range);
+                if (message.HasValue) messages.Add(message.Value);
+                values[i] = (T)item;
+            }
+            return [.. messages];
+        }
+    }
+
+    private static RuntimeMessage? ModifyValueItem(ref object value, RangeAttribute range)
+    {
+        var min = range.Min;
+        var max = range.Max;
+        var warning = $"The value {value} is out of range {min} to {max}, it was set to {{0}}.";
+        if (value is int)
+        {
+            return ChangeValue(ref value, min, max, warning, Convert.ToDecimal, Convert.ToInt32);
+        }
+        else if (value is double)
+        {
+            return ChangeValue(ref value, min, max, warning, Convert.ToDecimal, Convert.ToDouble);
+        }
+        else if (value is GH_Integer integer)
+        {
+            return ChangeValue(ref value, min, max, warning, i => Convert.ToDecimal(i.Value),
+                i => new GH_Integer(Convert.ToInt32(i)));
+        }
+        else if (value is GH_Number number)
+        {
+            return ChangeValue(ref value, min, max, warning, i => Convert.ToDecimal(i.Value),
+                i => new GH_Number(Convert.ToDouble(i)));
+        }
+
+        return null;
+
+        static RuntimeMessage? ChangeValue<T>(ref object value, decimal min, decimal max, in string warning,
+        Converter<T, decimal> getValue, Converter<decimal, T> setvalue)
+        {
+            var v = getValue((T)value);
+            if (v < min)
+            {
+                value = setvalue(min)!;
+                return new RuntimeMessage(GH_RuntimeMessageLevel.Warning, string.Format(warning, value));
+            }
+            else if (v > max)
+            {
+                value = setvalue(max)!;
+                return new RuntimeMessage(GH_RuntimeMessageLevel.Warning, string.Format(warning, value));
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
+
+    public static void AddRuntimeMessages(this IGH_Param param, IEnumerable<RuntimeMessage> messages)
+    {
+        foreach (var msg in messages)
+        {
+            param.AddRuntimeMessage(msg.Level, $"Param \"{param.NickName}\": {msg.Message}");
         }
     }
 }
