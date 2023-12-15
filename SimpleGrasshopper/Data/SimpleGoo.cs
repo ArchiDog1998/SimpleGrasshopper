@@ -28,7 +28,7 @@ public class SimpleGoo<T> : GH_Goo<T>
     public override IGH_Goo Duplicate() => new SimpleGoo<T>(Value);
 
     /// <inheritdoc/>
-    public override string ToString() => Value?.ToString() ?? TypeName;
+    public override string ToString() => Value?.ToString() ?? TypeName + " <Null>";
 
     /// <inheritdoc/>
     public override bool CastFrom(object source)
