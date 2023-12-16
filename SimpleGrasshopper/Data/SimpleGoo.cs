@@ -50,8 +50,6 @@ public class SimpleGoo<T> : GH_Goo<T>
                 return true;
             }
 
-            var ms = type.GetRuntimeMethods();
-
             if (source is IGH_Goo
                 && sType.GetRuntimeProperty("Value") is PropertyInfo property
                 && GetOperatorCast(type, type, property.PropertyType) is MethodInfo method1)
@@ -95,9 +93,7 @@ public class SimpleGoo<T> : GH_Goo<T>
                 && GetOperatorCast(type, property.PropertyType, type) is MethodInfo method1)
             {
                 var v = method1.Invoke(null, [Value]);
-                var t = Activator.CreateInstance<Q>();
-                property.SetValue(t, v);
-                target = t;
+                property.SetValue(target, v);
                 return true;
             }
 
