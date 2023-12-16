@@ -54,9 +54,9 @@ public class TypeTest : IPreviewData, IGH_BakeAwareData
         FirstValue -= value;
     }
 
-    public static explicit operator GH_Integer(TypeTest _) => new (10);
-    public static explicit operator GH_Number(TypeTest _) => new (10);
+    public static explicit operator int(TypeTest _) => 10;
+    public static implicit operator double (TypeTest _) => 20;
 
-    public static explicit operator TypeTest(GH_Integer _) => new();
-    public static implicit operator TypeTest(GH_Number _) => new();
+    public static explicit operator TypeTest(int i) => new() { FirstValue = i};
+    public static implicit operator TypeTest(double d) => new() { FirstValue = (int)d };
 }

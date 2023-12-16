@@ -34,8 +34,9 @@ public class SimpleGoo<T> : GH_Goo<T>
     public override bool CastFrom(object source)
     {
         var type = typeof(T);
+        var sType = source.GetType();
 
-        if (source.GetType() == type)
+        if (sType == type)
         {
             Value = (T)source;
             return true;
@@ -43,16 +44,24 @@ public class SimpleGoo<T> : GH_Goo<T>
 
         try
         {
-            var method = GetOperatorCast(type, type, source.GetType());
+            if (GetOperatorCast(type, type, sType) is MethodInfo method)
+            {
+                Value = (T)method.Invoke(null, [source]);
+                return true;
+            }
 
-            if (method is not null)
+            var ms = type.GetRuntimeMethods();
+
+            if (source is IGH_Goo
+                && sType.GetRuntimeProperty("Value") is PropertyInfo property
+                && GetOperatorCast(type, type, property.PropertyType) is MethodInfo method1)
             {
-                Value = (T)method.Invoke(Value, [Value]);
+                var v = property.GetValue(source);
+                Value = (T)method1.Invoke(null, [v]);
+                return true;
             }
-            else
-            {
-                Value = (T)source.ChangeType(typeof(T));
-            }
+
+            Value = (T)source.ChangeType(typeof(T));
             return true;
         }
         catch
@@ -65,8 +74,9 @@ public class SimpleGoo<T> : GH_Goo<T>
     public override bool CastTo<Q>(ref Q target)
     {
         var type = typeof(T);
+        var QType = typeof(Q);
 
-        if (typeof(Q) == type)
+        if (QType == type)
         {
             target = (Q)(object)Value!;
             return true;
@@ -74,17 +84,24 @@ public class SimpleGoo<T> : GH_Goo<T>
 
         try
         {
-            var method = GetOperatorCast(type, typeof(Q), type);
-
-            if (method is not null)
+            if (GetOperatorCast(type, QType, type) is MethodInfo method)
             {
-                target = (Q)method.Invoke(Value, [Value]);
-            }
-            else
-            {
-                target = (Q)Value!.ChangeType(typeof(Q));
+                target = (Q)method.Invoke(null, [Value]);
+                return true;
             }
 
+            if (target is IGH_Goo 
+                && QType.GetRuntimeProperty("Value") is PropertyInfo property
+                && GetOperatorCast(type, property.PropertyType, type) is MethodInfo method1)
+            {
+                var v = method1.Invoke(null, [Value]);
+                var t = Activator.CreateInstance<Q>();
+                property.SetValue(t, v);
+                target = t;
+                return true;
+            }
+
+            target = (Q)Value!.ChangeType(QType);
             return true;
         }
         catch
@@ -98,7 +115,7 @@ public class SimpleGoo<T> : GH_Goo<T>
         return type.GetRuntimeMethods().FirstOrDefault(m =>
         {
             if (!m.IsSpecialName) return false;
-            if (m.Name is not "op_Explicit" or "op_Implicit") return false;
+            if (m.Name is not "op_Explicit" and not "op_Implicit") return false;
 
             if (m.ReturnType != returnType) return false;
 
