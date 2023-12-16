@@ -22,6 +22,8 @@ Don't forget to copy this `SimpleGrasshopper.dll` file to your output folder!
 
 Notice: if you want to create a plugin in rhino8 with .Net core, please add a `Grasshoppper` reference to your project!
 
+If you want to see more examples, please go [here](https://github.com/ArchiDog1998/SimpleGrasshopper/tree/main/SimpleGrasshopper.GHTests).
+
 ## How to use
 
 ### Component
@@ -82,6 +84,8 @@ If you want to use some other Parameter with your parameter, please use `ParamAt
 For the angle parameter, is the `AngleAttribute`!
 
 For the geometry parameter, if you want to hide it, please use `HiddenAttribute`!
+
+If your parameter is `int` or `double`, you can add `RangeAttribute` to control the range of it. It'll automatically make the input value in this range, and make a warning to Grasshopper.
 
 ```c#
 using SimpleGrasshopper.Attributes;
@@ -193,6 +197,10 @@ internal class SimpleSubcategory
 ```
 
 ![image-20231123225140458](assets/image-20231123225140458.png)
+
+If you want your parameter can be previewed, please add the interface `IPreviewData`. If you want your data can be baked, please add the interface `IGH_BakeAwareData`.
+
+If you want your type can be converted, please do it with [explicit and implicit conversion operators](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/user-defined-conversion-operators).
 
 ### Special Components
 
