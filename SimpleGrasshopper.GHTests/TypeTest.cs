@@ -18,6 +18,7 @@ public class TypeTest : IPreviewData, IGH_BakeAwareData
     [DocObj("Value", "V", "")]
     public int FirstValue { get; set; }
 
+    [Ignore]
     public BoundingBox ClippingBox => new (0,0,0,1,1,1);
 
     [DocObj("Add Property", "A P", "Testing")]

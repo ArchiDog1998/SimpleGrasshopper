@@ -54,13 +54,18 @@ public abstract class TypePropertyComponent<T>()
         return param;
     }
 
+    private static IEnumerable<PropertyInfo> AllProperties => typeof(T).GetRuntimeProperties().Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null);
+
+    private static IEnumerable<PropertyInfo> SetProperties => AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic);
+    private static IEnumerable<PropertyInfo> GetProperties => AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic);
+
     /// <inheritdoc/>
     protected sealed override void RegisterInputParams(GH_InputParamManager pManager)
     {
         var keyParam = GetTypeParam(typeof(T));
         pManager.AddParameter(keyParam, keyParam.Name, keyParam.NickName, keyParam.Description, GH_ParamAccess.item);
 
-        foreach (var prop in typeof(T).GetRuntimeProperties().Where(p => p.SetMethod != null && !p.SetMethod.IsStatic))
+        foreach (var prop in SetProperties)
         {
             var attr = prop.GetCustomAttribute<DocObjAttribute>();
             var param = GetTypeParam(prop.PropertyType, prop.GetCustomAttribute<ParamAttribute>()?.Guid);
@@ -79,7 +84,7 @@ public abstract class TypePropertyComponent<T>()
         var keyParam = GetTypeParam(typeof(T));
         pManager.AddParameter(keyParam, keyParam.Name, keyParam.NickName, keyParam.Description, GH_ParamAccess.item);
 
-        foreach (var prop in typeof(T).GetRuntimeProperties().Where(p => p.GetMethod != null && !p.GetMethod.IsStatic))
+        foreach (var prop in GetProperties)
         {
             var attr = prop.GetCustomAttribute<DocObjAttribute>();
             var param = GetTypeParam(prop.PropertyType, prop.GetCustomAttribute<ParamAttribute>()?.Guid);
@@ -98,7 +103,7 @@ public abstract class TypePropertyComponent<T>()
             obj = new T();
         }
 
-        var setProps = typeof(T).GetRuntimeProperties().Where(p => p.SetMethod != null && !p.SetMethod.IsStatic).ToArray();
+        var setProps = SetProperties.ToArray();
 
         for (int i = 0; i < setProps.Length; i++)
         {
@@ -114,7 +119,7 @@ public abstract class TypePropertyComponent<T>()
 
         DA.SetData(0, obj);
 
-        var getProps = typeof(T).GetRuntimeProperties().Where(p => p.GetMethod != null && !p.GetMethod.IsStatic).ToArray();
+        var getProps = GetProperties.ToArray();
 
         for (int i = 0; i < getProps.Length; i++)
         {
