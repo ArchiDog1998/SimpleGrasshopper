@@ -24,7 +24,9 @@ internal class SimpleSubcategory
     }
 
     [DocObj("Addition2", "Add2", "The addition of the integers2.")]
-    private static void SimpleMethod(double abc, double werb, out double dfa)
+    private static void SimpleMethod(
+        [Range(0, double.PositiveInfinity)]double abc,
+        [Range(0, double.MaxValue)] double werb, out double dfa)
     {
         dfa = abc + werb;
     }

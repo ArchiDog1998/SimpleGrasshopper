@@ -425,32 +425,32 @@ internal static class Utils
 
     private static RuntimeMessage? ModifyValueItem(ref object value, RangeAttribute range)
     {
-        var min = range.Min;
-        var max = range.Max;
+        var min = range.MinD;
+        var max = range.MaxD;
         var warning = $"The value {value} is out of range {min} to {max}, it was set to {{0}}.";
         if (value is int)
         {
-            return ChangeValue(ref value, min, max, warning, Convert.ToDecimal, Convert.ToInt32);
+            return ChangeValue(ref value, min, max, warning, Convert.ToDouble, Convert.ToInt32);
         }
         else if (value is double)
         {
-            return ChangeValue(ref value, min, max, warning, Convert.ToDecimal, Convert.ToDouble);
+            return ChangeValue(ref value, min, max, warning, Convert.ToDouble, Convert.ToDouble);
         }
         else if (value is GH_Integer integer)
         {
-            return ChangeValue(ref value, min, max, warning, i => Convert.ToDecimal(i.Value),
+            return ChangeValue(ref value, min, max, warning, i => Convert.ToDouble(i.Value),
                 i => new GH_Integer(Convert.ToInt32(i)));
         }
         else if (value is GH_Number number)
         {
-            return ChangeValue(ref value, min, max, warning, i => Convert.ToDecimal(i.Value),
+            return ChangeValue(ref value, min, max, warning, i => Convert.ToDouble(i.Value),
                 i => new GH_Number(Convert.ToDouble(i)));
         }
 
         return null;
 
-        static RuntimeMessage? ChangeValue<T>(ref object value, decimal min, decimal max, in string warning,
-        Converter<T, decimal> getValue, Converter<decimal, T> setvalue)
+        static RuntimeMessage? ChangeValue<T>(ref object value, double min, double max, in string warning,
+        Converter<T, double> getValue, Converter<double, T> setvalue)
         {
             var v = getValue((T)value);
             if (v < min)
