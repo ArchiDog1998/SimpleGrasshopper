@@ -163,6 +163,7 @@ internal class ParameterClassGenerator : ClassGenerator<TypeDeclarationSyntax>
              using SimpleGrasshopper.Data;
              using SimpleGrasshopper.DocumentObjects;
              using System;
+             using System.Linq;
              using System.Reflection;
 
              namespace {{nameSpace}}
