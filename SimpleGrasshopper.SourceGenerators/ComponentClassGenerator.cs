@@ -45,6 +45,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
             }
 
             var code = $$"""
+             using SimpleGrasshopper.Attributes;
              using SimpleGrasshopper.DocumentObjects;
              using System.Reflection;
              using System.Linq;
@@ -53,7 +54,8 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
              namespace {{nameSpace}}
              {
                 public partial class {{codeClassName}}()
-                    : MethodComponent(typeof({{className}}).GetRuntimeMethods().Where(m => m.Name == "{{methodName}}").ToArray())
+                    : MethodComponent(typeof({{className}}).GetRuntimeMethods()
+                    .Where(m => m.Name == "{{methodName}}" && m.GetCustomAttribute<IgnoreAttribute>() == null).ToArray())
                 {
                     public override Guid ComponentGuid => new ("{{guidStr}}");
                 }

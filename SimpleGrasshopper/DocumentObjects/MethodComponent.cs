@@ -1,12 +1,9 @@
 ﻿using GH_IO.Serialization;
 using Grasshopper.GUI;
 using Grasshopper.Kernel.Attributes;
-using Grasshopper.Kernel.Data;
-using Grasshopper.Kernel.Parameters;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
-using System.Collections;
 
 namespace SimpleGrasshopper.DocumentObjects;
 
@@ -31,11 +28,9 @@ public abstract class MethodComponent(
         subCategory ?? methodInfos[0].GetDeclaringClassName())
     , IGH_VariableParameterComponent
 {
-    private readonly struct OutputData(int index, GH_ParamAccess access)
-    {
-        public int Index => index;
-        public GH_ParamAccess Access => access;
-    }
+    private TypeParam? _declarationParam = null;
+    private readonly List<ParameterParam> _inputParams = [], _outputParams = [];
+    private ParameterParam? _resultParam = null;
 
     private int _methodIndex = 0;
     private int MethodIndex
@@ -127,57 +122,44 @@ public abstract class MethodComponent(
             return _icons[MethodIndex] = GetType().Assembly.GetBitmap(path) ?? base.Icon;
         }
     }
-
-    private static IGH_Param? GetParamFromType(Type type, out GH_ParamAccess access)
-    {
-        type = type.GetRawType().GetAccessAndType(out access);
-
-        var proxy = Instances.ComponentServer.EmitObjectProxy(type.GetDocObjGuid());
-
-        if (proxy.CreateInstance() is not IGH_Param param) return null;
-
-        if (type.IsEnum && param is Param_Integer integerParam)
-        {
-            var names = Enum.GetNames(type);
-            int index = 0;
-            var underType = Enum.GetUnderlyingType(type);
-            foreach (object obj in Enum.GetValues(type))
-            {
-                var v = Convert.ToInt32(Convert.ChangeType(obj, underType));
-                integerParam.AddNamedValue(names[index++], v);
-            }
-        }
-        return param;
-    }
-
     /// <inheritdoc/>
     protected sealed override void RegisterInputParams(GH_InputParamManager pManager)
     {
-        if (CanCreateDeclaringType(out var type, out var access, out var gh_paramMajor))
-        {
-            var attr = type.GetCustomAttribute<DocObjAttribute>();
-            var defaultName = type.Name ?? string.Empty;
+        _inputParams.Clear();
 
-            pManager.AddParameter(gh_paramMajor, attr?.Name ?? defaultName, attr?.NickName ?? defaultName, attr?.Description ?? defaultName, access);
+        var paramIndex = 0;
+        if (CanCreateDeclaringType(out var param))
+        {
+            _declarationParam = param;
+
+            param.GetNames("Object", "Obj",
+                out var name, out var nickName, out var description);
+
+            pManager.AddParameter(param.CreateParam(), name, nickName, description, param.Access);
+            paramIndex++;
         }
 
-        foreach (var param in MethodInfo.GetParameters().Where(IsIn))
+        var parameters = MethodInfo.GetParameters();
+        for (int i = 0; i < parameters.Length; i++)
         {
-            if (GetParameter(param, out access)
-                is not IGH_Param gh_param) continue;
+            if (!IsIn(parameters[i])) continue;
 
-            var attr = param.GetCustomAttribute<DocObjAttribute>();
-            var defaultName = param.Name ?? "Input";
-            var defaultNickName = param.Name ?? "I";
+            var p = new ParameterParam(parameters[i], paramIndex++, i);
 
-            var desc = attr?.Description ?? defaultName;
-            desc += param.GetCustomAttribute<RangeAttribute>()?.ToString() ?? string.Empty;
+            _inputParams.Add(p);
+            p.GetNames("Input", "I",
+                out var name, out var nickName, out var description);
 
-            pManager.AddParameter(gh_param, attr?.Name ?? defaultName, attr?.NickName ?? defaultNickName, desc, access);
+            pManager.AddParameter(p.CreateParam(), name, nickName, description, p.Access);
         }
 
         this.Message = message ?? MethodInfo.GetCustomAttribute<MessageAttribute>()?.Message;
         this.UseTasks = isParallel || MethodInfo.GetCustomAttribute<ParallelAttribute>() != null;
+
+        static bool IsIn(ParameterInfo info)
+        {
+            return !(info.ParameterType.IsByRef && info.IsOut);
+        }
     }
 
     /// <inheritdoc/>
@@ -190,122 +172,103 @@ public abstract class MethodComponent(
     /// <inheritdoc/>
     protected sealed override void RegisterOutputParams(GH_OutputParamManager pManager)
     {
-        if (CanCreateDeclaringType(out var type, out var access, out var gh_paramMajor))
+        var paramIndex = 0;
+        if (CanCreateDeclaringType(out var tp))
         {
-            var attr = type.GetCustomAttribute<DocObjAttribute>();
-            var defaultName = type.Name ?? string.Empty;
+            _declarationParam = tp;
 
-            pManager.AddParameter(gh_paramMajor, attr?.Name ?? defaultName, attr?.NickName ?? defaultName, attr?.Description ?? defaultName, access);
+            tp.GetNames("Object", "Obj",
+                out var name, out var nickName, out var description);
+
+            pManager.AddParameter(tp.CreateParam(), name, nickName, description, tp.Access);
+            paramIndex++;
         }
 
         if (MethodInfo.ReturnParameter is ParameterInfo paramInfo
             && paramInfo.ParameterType != typeof(void)
-            && paramInfo.ParameterType != typeof(RuntimeData)
-            && GetParameter(paramInfo, out access) is IGH_Param gh_returnParam)
+            && paramInfo.ParameterType != typeof(RuntimeData))
         {
-            var attr = paramInfo.GetCustomAttribute<DocObjAttribute>();
-            var defaultName = paramInfo.Name ?? "Result";
-            var defaultNickName = paramInfo.Name ?? "R";
+            var param = new ParameterParam(paramInfo, paramIndex++, 0);
 
-            pManager.AddParameter(gh_returnParam, attr?.Name ?? defaultName, attr?.NickName ?? defaultNickName, attr?.Description ?? defaultName, access);
+            _resultParam = param;
+
+            param.GetNames("Result", "R",
+                out var name, out var nickName, out var description);
+
+            pManager.AddParameter(param.CreateParam(), name, nickName, description, param.Access);
+        }
+        else
+        {
+            _resultParam = null;
         }
 
-        foreach (var param in MethodInfo.GetParameters().Where(IsOut))
+        _outputParams.Clear();
+        var parameters = MethodInfo.GetParameters();
+        for (int i = 0; i < parameters.Length; i++)
         {
-            if (GetParameter(param, out access)
-                is not IGH_Param gh_param) continue;
+            if (!IsOut(parameters[i])) continue;
 
-            var attr = param.GetCustomAttribute<DocObjAttribute>();
-            var defaultName = param.Name ?? "Output";
-            var defaultNickName = param.Name ?? "O";
+            var p = new ParameterParam(parameters[i], paramIndex++, i);
 
-            pManager.AddParameter(gh_param, attr?.Name ?? defaultName, attr?.NickName ?? defaultNickName, attr?.Description ?? defaultName, access);
+            _outputParams.Add(p);
+
+            p.GetNames("Output", "O",
+                out var name, out var nickName, out var description);
+
+            pManager.AddParameter(p.CreateParam(), name, nickName, description, p.Access);
+        }
+
+        static bool IsOut(ParameterInfo info)
+        {
+            return info.ParameterType.IsByRef;
         }
     }
 
-    private bool CanCreateDeclaringType(out Type type, out GH_ParamAccess access, out IGH_Param param)
+    private bool CanCreateDeclaringType(out TypeParam param)
     {
-        type = null!;
-        param = null!;
-        access = GH_ParamAccess.item;
+        param = default;
         if (MethodInfo.IsStatic) return false;
         if (MethodInfo.DeclaringType is not Type t) return false;
-        type = DeclaringType ?? t;
-        if (GetParamFromType(type, out access) is not IGH_Param gh_paramMajor) return false;
-        param = gh_paramMajor;
+        param = new(t, 0);
         return true;
     }
 
-    private static IGH_Param? GetParameter(ParameterInfo info, out GH_ParamAccess access)
+    private object?[] GetParameters(IGH_DataAccess DA, out object? obj)
     {
-        access = GH_ParamAccess.item;
+        var result = new object?[_inputParams.Concat(_outputParams).Max(p => p.MethodParamIndex) + 1];
 
-        var type = info.ParameterType.GetRawType();
-        if (type == null) return null;
-
-        type = type.GetAccessAndType(out access);
-
-        var proxy = Instances.ComponentServer.EmitObjectProxy(
-            info.GetCustomAttribute<ParamAttribute>()?.Guid ?? type.GetDocObjGuid());
-
-        if (proxy.CreateInstance() is not IGH_Param param) return null;
-
-        SetOptional(info, param, access);
-
-        if (type.IsEnum && param is Param_Integer integerParam)
+        foreach (var param in _outputParams)
         {
-            var names = Enum.GetNames(type);
-            int index = 0;
-            var underType = Enum.GetUnderlyingType(type);
-            foreach (object obj in Enum.GetValues(type))
-            {
-                var v = Convert.ToInt32(Convert.ChangeType(obj, underType));
-                integerParam.AddNamedValue(names[index++], v);
-            }
+            result[param.MethodParamIndex] = param.Param.Type.CreateInstance();
         }
-        else if (param is Param_Number numberParam && info.GetCustomAttribute<AngleAttribute>() != null)
+        foreach (var param in _inputParams)
         {
-            numberParam.AngleParameter = true;
-        }
-        else if (param is IGH_PreviewObject previewObject && info.GetCustomAttribute<HiddenAttribute>() != null)
-        {
-            previewObject.Hidden = true;
+            var ghParam = Params.Input[param.Param.ParamIndex];
+            result[param.MethodParamIndex] = param.GetValue(DA, out var value, ghParam)
+                ? value : param.Param.Type.CreateInstance();
         }
 
-        return param;
+        if (!_declarationParam.HasValue || !_declarationParam.Value.GetValue(DA, out obj)) obj = null;
 
-        static void SetOptional(ParameterInfo info, IGH_Param param, GH_ParamAccess access)
-        {
-            if (access == GH_ParamAccess.item && info.DefaultValue != null)
-            {
-                SetPersistentData(ref param, info.DefaultValue);
-            }
-            else if (info.HasDefaultValue)
-            {
-                param.Optional = true;
-            }
-
-            static void SetPersistentData(ref IGH_Param param, object data)
-            {
-                var persistType = typeof(GH_PersistentParam<>);
-                if (param.GetType().IsGeneralType(persistType) is not Type persistParam) return;
-
-                var method = persistType.MakeGenericType(persistParam).GetRuntimeMethod("SetPersistentData", [typeof(object[])]);
-
-                if (method == null) return;
-                method.Invoke(param, [new object[] { data }]);
-            }
-        }
+        return result;
     }
 
-    private static bool IsIn(ParameterInfo info)
+    private void SetParameters(IGH_DataAccess DA, object? obj, object? result, object?[] parameters)
     {
-        return !(info.ParameterType.IsByRef && info.IsOut);
-    }
+        if (_declarationParam.HasValue)
+        {
+            _declarationParam.Value.SetValue(DA, obj);
+        }
 
-    private static bool IsOut(ParameterInfo info)
-    {
-        return info.ParameterType.IsByRef;
+        if (_resultParam.HasValue)
+        {
+            _resultParam.Value.SetValue(DA, result);
+        }
+
+        foreach (var param in _outputParams)
+        {
+            param.SetValue(DA, parameters[param.MethodParamIndex]);
+        }
     }
 
     /// <inheritdoc/>
@@ -313,10 +276,7 @@ public abstract class MethodComponent(
     {
         try
         {
-            var ps = MethodInfo.GetParameters();
-            if (ps == null) return;
-
-            var isNotStatic = GetValues(DA, ps, MethodInfo, out var obj, out var parameters, out var outParams);
+            var parameters = GetParameters(DA, out var obj);
 
             if (InPreSolve)
             {
@@ -339,13 +299,11 @@ public abstract class MethodComponent(
                 }
                 if (data.RuntimeMessages != null)
                 {
-                    foreach (var message in data.RuntimeMessages)
-                    {
-                        AddRuntimeMessage(message.Level, message.Message);
-                    }
+                    this.AddRuntimeMessages(data.RuntimeMessages);
                 }
             }
-            SetValues(DA, MethodInfo, Params, obj, resultParams.Item1, resultParams.Item2, outParams, isNotStatic);
+
+            SetParameters(DA, obj, resultParams.Item1, resultParams.Item2);
         }
         catch (AggregateException ex) when (ex.InnerException is TargetInvocationException)
         {
@@ -354,6 +312,8 @@ public abstract class MethodComponent(
         catch (Exception? ex)
         {
             var messageString = GetMessage(ex);
+            ex = ex.InnerException;
+
             while (ex != null)
             {
                 messageString += "\n" + GetMessage(ex);
@@ -370,104 +330,6 @@ public abstract class MethodComponent(
                     message += "\n" + ex.StackTrace;
                 }
                 return message;
-            }
-        }
-
-        bool GetValues(IGH_DataAccess DA, ParameterInfo[] ps, MethodInfo method,
-            out object? obj, out object?[] parameters, out OutputData[] outParams)
-        {
-            obj = null;
-
-            var isNotStatic = false;
-            int startIndex = 0;
-            GH_ParamAccess classAccess = GH_ParamAccess.item;
-            if (!method.IsStatic && method.DeclaringType is Type classRawType)
-            {
-                isNotStatic = true;
-                classRawType = classRawType.GetRawType();
-                var classType = classRawType.GetAccessAndType(out classAccess);
-                DA.GetValue(startIndex++, classType, classRawType, classAccess, out obj, null, out var mgs);
-
-                this.Params.Input[startIndex - 1].AddRuntimeMessages(mgs);
-            }
-
-            var outParamsList = new List<OutputData>(ps.Length);
-
-            parameters = new object?[ps.Length];
-            for (int index = 0; index < ps.Length; index++)
-            {
-                var param = ps[index];
-
-                var rawType = param.ParameterType.GetRawType();
-                if (rawType == null)
-                {
-                    parameters[index] = null;
-                    continue;
-                }
-
-                var type = rawType.GetAccessAndType(out var access);
-
-                if (IsOut(param))
-                {
-                    outParamsList.Add(new(index, access));
-                }
-
-                if (IsIn(param))
-                {
-                    DA.GetValue(startIndex++, type, rawType, access, out var o, param.GetCustomAttribute<RangeAttribute>(), out var mgs);
-
-                    this.Params.Input[startIndex - 1].AddRuntimeMessages(mgs);
-
-                    parameters[index] = o;
-                    continue;
-                }
-
-                parameters[index] = access.CreatInstance(type, rawType);
-            }
-
-            outParams = [.. outParamsList];
-            return isNotStatic;
-        }
-
-        static void SetValues(IGH_DataAccess DA, MethodInfo method, GH_ComponentParamServer paramServer, object? obj, object? result, object?[] parameters, OutputData[] outParams, bool isNotStatic)
-        {
-            int startIndex = 0;
-            if (isNotStatic)
-            {
-                SetData(DA, obj, paramServer.Output[0].Access, 0);
-                startIndex++;
-            }
-
-            if (method.ReturnType != typeof(void) && method.ReturnType != typeof(RuntimeData))
-            {
-                var returnIndex = isNotStatic ? 1 : 0;
-                SetData(DA, result, paramServer.Output[returnIndex].Access, returnIndex);
-                startIndex++;
-            }
-
-            for (int i = 0; i < outParams.Length; i++)
-            {
-                var param = outParams[i];
-                var resultParam = parameters[param.Index];
-                SetData(DA, resultParam, param.Access, startIndex + i);
-            }
-
-            static void SetData(IGH_DataAccess DA, object? data, GH_ParamAccess access, int index)
-            {
-                switch (access)
-                {
-                    case GH_ParamAccess.item:
-                        DA.SetData(index, data);
-                        break;
-
-                    case GH_ParamAccess.list:
-                        DA.SetDataList(index, data as IEnumerable);
-                        break;
-
-                    case GH_ParamAccess.tree:
-                        DA.SetDataTree(index, data as IGH_Structure);
-                        break;
-                }
             }
         }
     }

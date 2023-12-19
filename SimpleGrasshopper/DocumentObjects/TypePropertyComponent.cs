@@ -1,7 +1,6 @@
-﻿using Grasshopper.Kernel.Data;
-using SimpleGrasshopper.Attributes;
+﻿using SimpleGrasshopper.Attributes;
+using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
-using System.Collections;
 
 namespace SimpleGrasshopper.DocumentObjects;
 
@@ -18,6 +17,9 @@ public abstract class TypePropertyComponent<T>()
          GetSubCate(typeof(T)))
     where T : new()
 {
+    private readonly List<PropertyParam> _setProps = [], _getProps = [];
+    private readonly Guid _guid = typeof(T).GetDocObjGuid();
+
     private static string GetSubCate(Type type)
     {
         var sub = type.GetCustomAttribute<PropertyComponentAttribute>()?.SubCategory;
@@ -42,9 +44,9 @@ public abstract class TypePropertyComponent<T>()
         }
     }
 
-    private static IGH_Param GetTypeParam(Type t, Guid? guid = null)
+    private IGH_Param CreateTypeParam()
     {
-        if (Instances.ComponentServer.EmitObjectProxy(guid ?? t.GetDocObjGuid()).CreateInstance()
+        if (Instances.ComponentServer.EmitObjectProxy(_guid).CreateInstance()
             is not IGH_Param param)
         {
             throw new Exception("The type of this document object is not param!");
@@ -56,41 +58,45 @@ public abstract class TypePropertyComponent<T>()
 
     private static IEnumerable<PropertyInfo> AllProperties => typeof(T).GetRuntimeProperties().Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null);
 
-    private static IEnumerable<PropertyInfo> SetProperties => AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic);
-    private static IEnumerable<PropertyInfo> GetProperties => AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic);
-
     /// <inheritdoc/>
     protected sealed override void RegisterInputParams(GH_InputParamManager pManager)
     {
-        var keyParam = GetTypeParam(typeof(T));
+        var keyParam = CreateTypeParam();
         pManager.AddParameter(keyParam, keyParam.Name, keyParam.NickName, keyParam.Description, GH_ParamAccess.item);
 
-        foreach (var prop in SetProperties)
+        var setProperties = AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic).ToArray();
+
+        for (int i = 0; i < setProperties.Length; i++)
         {
-            var attr = prop.GetCustomAttribute<DocObjAttribute>();
-            var param = GetTypeParam(prop.PropertyType, prop.GetCustomAttribute<ParamAttribute>()?.Guid);
-            prop.PropertyType.GetAccessAndType(out var access);
+            var param = new PropertyParam(setProperties[i], i + 1);
 
-            var desc = attr?.Description ?? prop.Name;
-            desc += prop.GetCustomAttribute<RangeAttribute>()?.ToString() ?? string.Empty;
+            _setProps.Add(param);
 
-            pManager.AddParameter(param, attr?.Name ?? prop.Name, attr?.NickName ?? prop.Name, desc, access);
+            param.GetNames($"Prop {i}", $"P {i}",
+                out var name, out var nickName, out var description);
+
+            pManager.AddParameter(param.CreateParam(), name, nickName, description, param.Access);
         }
     }
 
     /// <inheritdoc/>
     protected sealed override void RegisterOutputParams(GH_OutputParamManager pManager)
     {
-        var keyParam = GetTypeParam(typeof(T));
+        var keyParam = CreateTypeParam();
         pManager.AddParameter(keyParam, keyParam.Name, keyParam.NickName, keyParam.Description, GH_ParamAccess.item);
 
-        foreach (var prop in GetProperties)
-        {
-            var attr = prop.GetCustomAttribute<DocObjAttribute>();
-            var param = GetTypeParam(prop.PropertyType, prop.GetCustomAttribute<ParamAttribute>()?.Guid);
-            prop.PropertyType.GetAccessAndType(out var access);
+        var getProperties = AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic).ToArray();
 
-            pManager.AddParameter(param, attr?.Name ?? prop.Name, attr?.NickName ?? prop.Name, attr?.Description ?? prop.Name, access);
+        for (int i = 0; i < getProperties.Length; i++)
+        {
+            var param = new PropertyParam(getProperties[i], i + 1);
+
+            _getProps.Add(param);
+
+            param.GetNames($"Prop {i}", $"P {i}",
+                out var name, out var nickName, out var description);
+
+            pManager.AddParameter(param.CreateParam(), name, nickName, description, param.Access);
         }
     }
 
@@ -103,42 +109,17 @@ public abstract class TypePropertyComponent<T>()
             obj = new T();
         }
 
-        var setProps = SetProperties.ToArray();
-
-        for (int i = 0; i < setProps.Length; i++)
+        object o = obj!;
+        foreach (var prop in _setProps)
         {
-            var prop = setProps[i];
-            var rawType = prop.PropertyType.GetRawType();
-            var type = rawType.GetAccessAndType(out var access);
-            if (DA.GetValue(i + 1, type, rawType, access, out var value, prop.GetCustomAttribute<RangeAttribute>(), out var mgs))
-            {
-                prop.SetValue(obj, value);
-            }
-            this.Params.Input[i + 1].AddRuntimeMessages(mgs);
+            prop.GetValue(DA, ref o, Params.Input[prop.Param.ParamIndex]);
         }
 
-        DA.SetData(0, obj);
-
-        var getProps = GetProperties.ToArray();
-
-        for (int i = 0; i < getProps.Length; i++)
+        foreach (var prop in _getProps)
         {
-            var prop = getProps[i];
-            var type = prop.PropertyType.GetRawType();
-            var value = prop.GetValue(obj);
-            type.GetAccessAndType(out var access);
-            switch (access)
-            {
-                case GH_ParamAccess.item:
-                    DA.SetData(i + 1, value);
-                    break;
-                case GH_ParamAccess.list:
-                    DA.SetDataList(i + 1, value as IEnumerable);
-                    break;
-                case GH_ParamAccess.tree:
-                    DA.SetDataTree(i + 1, value as IGH_Structure);
-                    break;
-            }
+            prop.SetValue(DA, o);
         }
+
+        DA.SetData(0, o);
     }
 }

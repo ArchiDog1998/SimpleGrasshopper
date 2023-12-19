@@ -88,7 +88,7 @@ public class SimpleGoo<T> : GH_Goo<T>
                 return true;
             }
 
-            if (target is IGH_Goo 
+            if (target is IGH_Goo
                 && QType.GetRuntimeProperty("Value") is PropertyInfo property
                 && GetOperatorCast(type, property.PropertyType, type) is MethodInfo method1)
             {

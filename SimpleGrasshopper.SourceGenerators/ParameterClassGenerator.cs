@@ -16,7 +16,7 @@ internal class ParameterClassGenerator : ClassGenerator<TypeDeclarationSyntax>
             var className = syntax.Identifier.Text;
 
             var guidStr = Utils.GetGuid(nameSpace, className);
-            var interfaces = string.Empty;  
+            var interfaces = string.Empty;
             var interfacesBody = string.Empty;
 
             var codeClassName = $"{className}_Parameter";

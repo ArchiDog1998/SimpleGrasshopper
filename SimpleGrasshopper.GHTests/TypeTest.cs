@@ -19,7 +19,7 @@ public class TypeTest : IPreviewData, IGH_BakeAwareData
     public int FirstValue { get; set; }
 
     [Ignore]
-    public BoundingBox ClippingBox => new (0,0,0,1,1,1);
+    public BoundingBox ClippingBox => new(0, 0, 0, 1, 1, 1);
 
     [DocObj("Add Property", "A P", "Testing")]
     public void AddValue(int value)
@@ -55,8 +55,8 @@ public class TypeTest : IPreviewData, IGH_BakeAwareData
     }
 
     public static explicit operator int(TypeTest _) => 10;
-    public static implicit operator double (TypeTest _) => 20;
+    public static implicit operator double(TypeTest _) => 20;
 
-    public static explicit operator TypeTest(int i) => new() { FirstValue = i};
+    public static explicit operator TypeTest(int i) => new() { FirstValue = i };
     public static implicit operator TypeTest(double d) => new() { FirstValue = (int)d };
 }
