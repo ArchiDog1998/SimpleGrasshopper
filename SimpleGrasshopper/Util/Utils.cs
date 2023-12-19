@@ -201,9 +201,13 @@ internal static class Utils
 
         static object ChangeTypeNotNull(object obj, Type type)
         {
-            return type.IsEnum
-                ? Enum.ToObject(type, obj)
-                : Convert.ChangeType(obj, type);
+            if (type.IsEnum) return Enum.ToObject(type, obj);
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)
+                && Nullable.GetUnderlyingType(type) == obj.GetType())
+            {
+                return Activator.CreateInstance(typeof(Nullable<>).MakeGenericType(obj.GetType()), obj);
+            }
+            return Convert.ChangeType(obj, type);
         }
     }
 

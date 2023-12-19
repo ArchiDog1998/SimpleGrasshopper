@@ -160,37 +160,65 @@ internal readonly struct TypeParam
         if (Access == GH_ParamAccess.item) return;
         if (targetType == sourceType) return;
 
-        var me = typeof(TypeParam).GetRuntimeMethods().First(m => m.Name == nameof(ChangeTypePrivate)).MakeGenericMethod(sourceType, targetType);
-
         switch (Access)
         {
             case GH_ParamAccess.list:
-                var dele = Delegate.CreateDelegate(Expression.GetDelegateType(sourceType, targetType), me);
-
-                obj = typeof(Enumerable).GetRuntimeMethods()
-                    .First(m => m.Name == "Select")
-                    .MakeGenericMethod(sourceType, targetType)
-                    .Invoke(null, [obj, dele]);
+                ChangeTypeList(ref obj, sourceType, targetType);
                 break;
 
             case GH_ParamAccess.tree:
-                var t = obj.GetType().GetNestedTypes()[0].MakeGenericType(sourceType, sourceType, targetType);
-                dele = Delegate.CreateDelegate(t, me);
+                var dataInfo = obj.GetType().GetRuntimeFields().FirstOrDefault(p => p.Name == "m_data");
+                
+                var data = dataInfo.GetValue(obj);
 
-                obj = obj.GetType().GetRuntimeMethods()
-                    .First(m => m.Name == "DuplicateCast")
-                    .MakeGenericMethod(targetType)
-                    .Invoke(obj, [dele]);
+                var pathsInfo = data.GetType().GetRuntimeFields().FirstOrDefault(p => p.Name == "keys");
+                var valuesInfo = data.GetType().GetRuntimeFields().FirstOrDefault(p => p.Name == "values");
+
+                var paths = (pathsInfo.GetValue(data) as IList)!;
+                var values = (valuesInfo.GetValue(data) as IList)!;
+
+                var treeType = typeof(GH_Structure<>).MakeGenericType(targetType);
+                var result = Activator.CreateInstance(treeType);
+
+                var addMethod = treeType.GetRuntimeMethods().FirstOrDefault(m => m.Name == "AppendRange" && m.GetParameters().Length == 2);
+
+                for (int i = 0; i < paths.Count; i++)
+                {
+                    var path = paths[i];
+                    var list = values[i];
+                    ChangeTypeList(ref list, sourceType, targetType);
+                    addMethod.Invoke(result, [list, path]);
+                }
+
+                obj = result;
                 break;
         }
     }
 
+    private static void ChangeTypeList(ref object list, Type sourceType, Type targetType)
+    {
+        var me = typeof(TypeParam).GetRuntimeMethods().First(m => m.Name == nameof(ChangeTypePrivate)).MakeGenericMethod(sourceType, targetType);
+        var dele = Delegate.CreateDelegate(Expression.GetDelegateType(sourceType, targetType), me);
+
+        list = typeof(Enumerable).GetRuntimeMethods()
+            .First(m => m.Name == "Select")
+            .MakeGenericMethod(sourceType, targetType)
+            .Invoke(null, [list, dele]);
+    }
+
     private static TR ChangeTypePrivate<TS, TR>(TS source)
     {
-        if(typeof(TS).GetInterface("Grasshopper.Kernel.Types.IGH_Goo") != null 
-            && typeof(TR).GetInterface("Grasshopper.Kernel.Types.IGH_Goo") != null)
+        if(typeof(TS).IsGeneralType(typeof(GH_Goo<>)) != null
+            && typeof(TR).IsGeneralType(typeof(GH_Goo<>)) != null)
         {
-            throw new Exception("Hi!");
+            var getProp = typeof(TS).GetRuntimeProperties().FirstOrDefault(p => p.Name == "Value");
+            var setProp = typeof(TR).GetRuntimeProperties().FirstOrDefault(p => p.Name == "Value");
+
+            var result = Activator.CreateInstance<TR>();
+
+            var v = getProp.GetValue(source).ChangeType(setProp.PropertyType);
+            setProp.SetValue(result, v);
+            return result;
         }
         return (TR)source!.ChangeType(typeof(TR));
     }
