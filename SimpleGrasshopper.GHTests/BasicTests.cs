@@ -61,7 +61,6 @@ internal static class BasicTests
     {
 
     }
-
 }
 
 public enum EnumTest : byte
