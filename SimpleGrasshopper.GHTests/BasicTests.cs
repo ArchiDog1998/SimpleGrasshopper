@@ -68,6 +68,18 @@ internal static class BasicTests
     {
         return new TypeTest();
     }
+
+    [DocObj("Save", "S", "S")]
+
+    private static void SaveTest()
+    {
+
+    }
+
+    private static void SaveTest(int a, int b)
+    {
+
+    }
 }
 
 public enum EnumTest : byte

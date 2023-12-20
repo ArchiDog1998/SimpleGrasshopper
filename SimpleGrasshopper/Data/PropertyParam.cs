@@ -31,7 +31,7 @@ internal readonly struct PropertyParam(PropertyInfo info, int index)
 
         param.Optional = true;
 
-        Utils.SetSpecial(param, Param.RawInnerType,
+        Utils.SetSpecial(ref param, Param.RawInnerType,
             PropInfo.GetCustomAttribute<AngleAttribute>() != null,
             PropInfo.GetCustomAttribute<HiddenAttribute>() != null);
         return param;

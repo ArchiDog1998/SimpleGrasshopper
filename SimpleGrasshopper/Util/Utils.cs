@@ -214,7 +214,6 @@ internal static class Utils
     public static object CreateInstance(this Type type)
     {
         if (type.IsEnum || type.IsValueType) return Activator.CreateInstance(type)!;
-        if (type == typeof(string)) return "";
         try
         {
             return Activator.CreateInstance(type)!;
@@ -470,7 +469,7 @@ internal static class Utils
         }
     }
 
-    public static void SetSpecial(IGH_Param param, Type rawInnerType, bool hasAngle, bool hasHidden)
+    public static void SetSpecial(ref IGH_Param param, Type rawInnerType, bool hasAngle, bool hasHidden)
     {
         if (param is Param_Integer integerParam && rawInnerType.IsEnum)
         {

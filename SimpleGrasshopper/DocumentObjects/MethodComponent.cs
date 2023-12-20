@@ -26,7 +26,6 @@ public abstract class MethodComponent(
         description ?? methodInfos[0].GetDocObjDescription(),
         string.Empty,
         subCategory ?? methodInfos[0].GetDeclaringClassName())
-    , IGH_VariableParameterComponent
 {
     private TypeParam? _declarationParam = null;
     private readonly List<ParameterParam> _inputParams = [], _outputParams = [];
@@ -346,14 +345,18 @@ public abstract class MethodComponent(
     /// <inheritdoc/>
     public override bool Read(GH_IReader reader)
     {
-        return reader.TryGetInt32(nameof(_methodIndex), ref _methodIndex)
-            && base.Read(reader);
+        int index = 0;
+        if(reader.TryGetInt32(nameof(_methodIndex), ref index))
+        {
+            MethodIndex = index;
+        }
+        return base.Read(reader);
     }
 
     /// <inheritdoc/>
     public override bool Write(GH_IWriter writer)
     {
-        writer.SetInt32(nameof(_methodIndex), _methodIndex);
+        writer.SetInt32(nameof(_methodIndex), MethodIndex);
         return base.Write(writer);
     }
 
@@ -484,22 +487,5 @@ public abstract class MethodComponent(
     public virtual IGH_Attributes CreateAttribute()
     {
         return new GH_ComponentAttributes(this);
-    }
-
-    /// <inheritdoc/>
-    public virtual bool CanInsertParameter(GH_ParameterSide side, int index) => false;
-
-    /// <inheritdoc/>
-    public virtual bool CanRemoveParameter(GH_ParameterSide side, int index) => false;
-
-    /// <inheritdoc/>
-    public virtual IGH_Param CreateParameter(GH_ParameterSide side, int index) => null!;
-
-    /// <inheritdoc/>
-    public virtual bool DestroyParameter(GH_ParameterSide side, int index) => false;
-
-    /// <inheritdoc/>
-    public virtual void VariableParameterMaintenance()
-    {
     }
 }
