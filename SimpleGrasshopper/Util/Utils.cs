@@ -195,6 +195,8 @@ internal static class Utils
     public static object ChangeType(this object obj, Type type)
     {
         type = type.GetRefType();
+        if (type.IsInterface) return obj;
+
         var tNull = type.GetNullType();
         obj = ChangeTypeNotNull(obj, tNull);
         return ChangeTypeNotNull(obj, type);

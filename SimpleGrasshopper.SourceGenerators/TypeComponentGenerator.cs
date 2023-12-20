@@ -9,7 +9,7 @@ public class TypePropertyComponentGenerator : TypeComponentGenerator
 {
     protected override string AttrName => "PropertyComponent";
 
-    protected override string ComponentName => "TypePropertyComponent";
+    protected override string ComponentParent => "TypePropertyComponent<{0}>()";
 }
 
 [Generator(LanguageNames.CSharp)]
@@ -17,14 +17,14 @@ public class TypeMethodComponentGenerator : TypeComponentGenerator
 {
     protected override string AttrName => "TypeComponent";
 
-    protected override string ComponentName => "TypeMethodComponent";
+    protected override string ComponentParent => "TypeMethodComponent(typeof({0}))";
 }
 
 public abstract class TypeComponentGenerator : IIncrementalGenerator
 {
     protected abstract string AttrName { get; }
 
-    protected abstract string ComponentName { get; }
+    protected abstract string ComponentParent { get; }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -61,7 +61,7 @@ public abstract class TypeComponentGenerator : IIncrementalGenerator
              namespace {{nameSpace}}
              {
                 public partial class {{codeClassName}}()
-                    : {{ComponentName}}<{{className}}>()
+                    : {{string.Format(ComponentParent, className)}}
                 {
                     public override Guid ComponentGuid => new ("{{guidStr}}");
                 }

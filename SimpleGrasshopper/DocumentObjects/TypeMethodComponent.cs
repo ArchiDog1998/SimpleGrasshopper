@@ -5,20 +5,20 @@ namespace SimpleGrasshopper.DocumentObjects;
 /// <summary>
 /// Create the <see cref="GH_Component"/> about one type.
 /// </summary>
-/// <typeparam name="T">the type.</typeparam>
-public abstract class TypeMethodComponent<T>()
-    : MethodComponent(typeof(T).GetMethods()
+/// <param name="type">the type of it.</param>
+public abstract class TypeMethodComponent(Type type)
+    : MethodComponent(type.GetMethods()
         .Where(m => !m.IsSpecialName && m.DeclaringType != typeof(object) && m.GetCustomAttribute<IgnoreAttribute>() == null)
         .ToArray(),
-        typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.Name,
-        typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.NickName,
-        typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.Description,
-        typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.SubCategory,
-        typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.IconPath,
-        typeof(T).GetCustomAttribute<TypeComponentAttribute>()?.Exposure,
-        typeof(T).GetCustomAttribute<MessageAttribute>()?.Message,
-        typeof(T).GetCustomAttribute<ParallelAttribute>() != null)
+        type.GetCustomAttribute<TypeComponentAttribute>()?.Name,
+        type.GetCustomAttribute<TypeComponentAttribute>()?.NickName,
+        type.GetCustomAttribute<TypeComponentAttribute>()?.Description,
+        type.GetCustomAttribute<TypeComponentAttribute>()?.SubCategory,
+        type.GetCustomAttribute<TypeComponentAttribute>()?.IconPath,
+        type.GetCustomAttribute<TypeComponentAttribute>()?.Exposure,
+        type.GetCustomAttribute<MessageAttribute>()?.Message,
+        type.GetCustomAttribute<ParallelAttribute>() != null)
 {
     /// <inheritdoc/>
-    protected override Type? DeclaringType => typeof(T);
+    protected override Type? DeclaringType => type;
 }
