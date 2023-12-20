@@ -36,7 +36,7 @@ public class SimpleGoo<T> : GH_Goo<T>
         var type = typeof(T);
         var sType = source.GetType();
 
-        if (sType == type)
+        if (type.IsAssignableFrom(sType))
         {
             Value = (T)source;
             return true;
@@ -74,7 +74,7 @@ public class SimpleGoo<T> : GH_Goo<T>
         var type = typeof(T);
         var QType = typeof(Q);
 
-        if (QType == type)
+        if (QType.IsAssignableFrom(type))
         {
             target = (Q)(object)Value!;
             return true;

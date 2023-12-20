@@ -60,3 +60,8 @@ public class TypeTest : IPreviewData, IGH_BakeAwareData
     public static explicit operator TypeTest(int i) => new() { FirstValue = i };
     public static implicit operator TypeTest(double d) => new() { FirstValue = (int)d };
 }
+
+public class SubTypeTest : TypeTest
+{
+
+}

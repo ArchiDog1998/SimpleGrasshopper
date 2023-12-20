@@ -57,9 +57,10 @@ internal static class BasicTests
     [DocObj("Type Testing", "T", "Testing for my type")]
     private static void MyTypeTest(
         GH_Structure<SimpleGoo<TypeTest>> type, 
-        GH_Structure<GH_Boolean> bools)
+        GH_Structure<GH_Boolean> bools,
+        out TypeTest typeTest)
     {
-
+        typeTest = new SubTypeTest();
     }
 }
 
