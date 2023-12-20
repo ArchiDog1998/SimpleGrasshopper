@@ -9,19 +9,29 @@ using System.Reflection;
 
 namespace SimpleGrasshopper.GHTests;
 
-[TypeComponent("Type Methods", "methods")]
+[TypeComponent("Type Methods", "methods", null, "Methods")]
 [PropertyComponent]
 [Icon("CurveRenderAttributeParameter_24-24.png")]
 [DocObj("My type", "just a type", "Testing type.")]
-public class TypeTest : IPreviewData, IGH_BakeAwareData
+public interface ITypeTest : IPreviewData, IGH_BakeAwareData
 {
     [DocObj("Value", "V", "")]
+    int FirstValue { get; set; }
+
+    [DocObj("Add Property", "A P", "Testing")]
+    void AddValue(int value);
+
+    [DocObj("Reduce Property", "R P", "Testing")]
+    void ReduceValue(int value);
+}
+
+public class TypeTest : ITypeTest
+{
     public int FirstValue { get; set; }
 
     [Ignore]
     public BoundingBox ClippingBox => new(0, 0, 0, 1, 1, 1);
 
-    [DocObj("Add Property", "A P", "Testing")]
     public void AddValue(int value)
     {
         FirstValue += value;
@@ -48,7 +58,6 @@ public class TypeTest : IPreviewData, IGH_BakeAwareData
         args.Pipeline.DrawBox(ClippingBox, selected ? args.Color : System.Drawing.Color.White);
     }
 
-    [DocObj("Reduce Property", "R P", "Testing")]
     public void ReduceValue(int value)
     {
         FirstValue -= value;

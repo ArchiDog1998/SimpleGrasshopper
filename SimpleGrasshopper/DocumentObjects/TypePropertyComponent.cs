@@ -15,7 +15,6 @@ public abstract class TypePropertyComponent<T>()
          typeof(T).GetDocObjDescription(),
          typeof(T).GetAssemblyName(),
          GetSubCate(typeof(T)))
-    where T : new()
 {
     private readonly List<PropertyParam> _setProps = [], _getProps = [];
     private readonly Guid _guid = typeof(T).GetDocObjGuid();
@@ -106,7 +105,8 @@ public abstract class TypePropertyComponent<T>()
         T obj = default!;
         if (!DA.GetData(0, ref obj))
         {
-            obj = new T();
+            if (typeof(T).IsInterface) return;
+            obj = Activator.CreateInstance<T>();
         }
 
         object o = obj!;

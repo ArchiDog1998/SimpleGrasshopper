@@ -18,7 +18,6 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
 
             var classSyntax = AssemblyPriorityGenerator.GetParent<TypeDeclarationSyntax>(syntax);
 
-
             if (classSyntax?.AttributeLists.Any(attrs => attrs.Attributes.Any(a => model.GetSymbolInfo(a).Symbol?.GetFullMetadataName() == "SimpleGrasshopper.Attributes.TypeComponentAttribute")) ?? false)
             {
                 continue;

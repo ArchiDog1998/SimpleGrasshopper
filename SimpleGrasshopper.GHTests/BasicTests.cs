@@ -56,11 +56,17 @@ internal static class BasicTests
 
     [DocObj("Type Testing", "T", "Testing for my type")]
     private static void MyTypeTest(
-        GH_Structure<SimpleGoo<TypeTest>> type, 
+        GH_Structure<SimpleGoo<ITypeTest>> type, 
         GH_Structure<GH_Boolean> bools,
-        out TypeTest typeTest)
+        out ITypeTest typeTest)
     {
         typeTest = new SubTypeTest();
+    }
+
+    [DocObj("Create Type", "C T", "Create a new type")]
+    private static ITypeTest CreateTest()
+    {
+        return new TypeTest();
     }
 }
 

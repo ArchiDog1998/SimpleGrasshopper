@@ -233,9 +233,18 @@ public abstract class MethodComponent(
         return true;
     }
 
-    private object?[] GetParameters(IGH_DataAccess DA, out object? obj)
+    private object?[] GetParameters(IGH_DataAccess DA, out object obj)
     {
-        var result = new object?[_inputParams.Concat(_outputParams).Max(p => p.MethodParamIndex) + 1];
+        var count = -1;
+        if (_inputParams.Count > 0)
+        {
+            count = Math.Max(count, _inputParams.Max(p => p.MethodParamIndex));
+        }
+        if (_outputParams.Count > 0)
+        {
+            count = Math.Max(count, _outputParams.Max(p => p.MethodParamIndex));
+        }
+        var result = new object?[count + 1];
 
         foreach (var param in _outputParams)
         {
@@ -248,12 +257,12 @@ public abstract class MethodComponent(
                 ? value : param.Param.Type.CreateInstance();
         }
 
-        if (!_declarationParam.HasValue || !_declarationParam.Value.GetValue(DA, out obj)) obj = null;
+        if (!_declarationParam.HasValue || !_declarationParam.Value.GetValue(DA, out obj)) obj = null!;
 
         return result;
     }
 
-    private void SetParameters(IGH_DataAccess DA, object? obj, object? result, object?[] parameters)
+    private void SetParameters(IGH_DataAccess DA, object obj, object result, object?[] parameters)
     {
         if (_declarationParam.HasValue)
         {
@@ -267,7 +276,7 @@ public abstract class MethodComponent(
 
         foreach (var param in _outputParams)
         {
-            param.SetValue(DA, parameters[param.MethodParamIndex]);
+            param.SetValue(DA, parameters[param.MethodParamIndex]!);
         }
     }
 

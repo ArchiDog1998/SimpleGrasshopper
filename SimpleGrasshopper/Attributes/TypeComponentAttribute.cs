@@ -9,7 +9,7 @@
 /// <param name="subCategory"></param>
 /// <param name="iconPath"></param>
 /// <param name="exposure"></param>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
 public class TypeComponentAttribute(string? name = null,
         string? nickName = null,
         string? description = null,

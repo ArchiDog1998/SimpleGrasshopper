@@ -83,5 +83,5 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
         return true;
     }
 
-    public bool SetValue(IGH_DataAccess DA, object? value) => Param.SetValue(DA, value);
+    public bool SetValue(IGH_DataAccess DA, object value) => Param.SetValue(DA, value);
 }
