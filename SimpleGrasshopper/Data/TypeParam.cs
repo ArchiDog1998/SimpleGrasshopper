@@ -104,7 +104,7 @@ internal readonly struct TypeParam
             _ => GetDaMethod(DA, nameof(DA.GetData)),
         }).MakeGenericMethod(CreateInnerType);
 
-        object[] pms = [ParamIndex!, Activator.CreateInstance(CreateType)];
+        object[] pms = [ParamIndex!, CreateType.CreateInstance()];
 
         if (!(bool)method.Invoke(DA, pms)) return false;
 

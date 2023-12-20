@@ -213,7 +213,16 @@ internal static class Utils
 
     public static object CreateInstance(this Type type)
     {
-        return type.IsEnum || type.IsValueType ? Activator.CreateInstance(type)! : null!;
+        if (type.IsEnum || type.IsValueType) return Activator.CreateInstance(type)!;
+        if (type == typeof(string)) return "";
+        try
+        {
+            return Activator.CreateInstance(type)!;
+        }
+        catch
+        {
+            return null!;
+        }
     }
 
     public static Bitmap? GetBitmap(this Assembly assembly, string path)
