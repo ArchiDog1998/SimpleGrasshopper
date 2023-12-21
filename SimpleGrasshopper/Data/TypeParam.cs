@@ -144,7 +144,7 @@ internal readonly struct TypeParam
 
     public bool SetValue(IGH_DataAccess DA, object value)
     {
-        ChangeTypeListOrTree(ref value, InnerType, CreateType);
+        ChangeTypeListOrTree(ref value, InnerType, CreateInnerType);
 
         return Access switch
         {
