@@ -53,7 +53,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
              namespace {{nameSpace}}
              {
                 public partial class {{codeClassName}}()
-                    : MethodComponent(typeof({{className}}).GetRuntimeMethods()
+                    : {{BaseComponentGenerator.MethodComponentName}}(typeof({{className}}).GetRuntimeMethods()
                     .Where(m => m.Name == "{{methodName}}" && m.GetCustomAttribute<IgnoreAttribute>() == null).ToArray())
                 {
                     public override Guid ComponentGuid => new ("{{guidStr}}");

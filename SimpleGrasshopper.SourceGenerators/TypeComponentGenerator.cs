@@ -17,7 +17,7 @@ public class TypeMethodComponentGenerator : TypeComponentGenerator
 {
     protected override string AttrName => "TypeComponent";
 
-    protected override string ComponentParent => "TypeMethodComponent(typeof({0}))";
+    protected override string ComponentParent => $"{BaseComponentGenerator.TypeMethodComponentName}(typeof({{0}}))";
 }
 
 public abstract class TypeComponentGenerator : IIncrementalGenerator
