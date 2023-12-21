@@ -25,7 +25,6 @@ public class BaseComponentGenerator : IIncrementalGenerator
 
     private void Execute(SourceProductionContext context, ImmutableArray<(ClassDeclarationSyntax, SemanticModel SemanticModel)> syntaxes)
     {
-        _methodComponentName = _typeMethodComponentName = null;
         foreach (var (classSyntax, model) in syntaxes)
         {
             var classSymbol = model.GetDeclaredSymbol(classSyntax) as ITypeSymbol;
