@@ -123,7 +123,7 @@ public abstract class MethodComponent(
         }
     }
     /// <inheritdoc/>
-    protected sealed override void RegisterInputParams(GH_InputParamManager pManager)
+    protected override void RegisterInputParams(GH_InputParamManager pManager)
     {
         var paramIndex = 0;
         if (CanCreateDeclaringType(out var param))
@@ -173,7 +173,7 @@ public abstract class MethodComponent(
     }
 
     /// <inheritdoc/>
-    protected sealed override void RegisterOutputParams(GH_OutputParamManager pManager)
+    protected override void RegisterOutputParams(GH_OutputParamManager pManager)
     {
         var paramIndex = 0;
         if (CanCreateDeclaringType(out var tp))
@@ -294,7 +294,7 @@ public abstract class MethodComponent(
     }
 
     /// <inheritdoc/>
-    protected sealed override void SolveInstance(IGH_DataAccess DA)
+    protected override void SolveInstance(IGH_DataAccess DA)
     {
         try
         {
