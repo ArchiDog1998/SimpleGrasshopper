@@ -29,6 +29,7 @@ public abstract class MethodComponent(
 {
     private TypeParam? _declarationParam = null;
     private readonly List<ParameterParam> _inputParams = [], _outputParams = [];
+    private readonly List<MemberParam> _memberParams = [];
     private ParameterParam? _resultParam = null;
 
     private int _methodIndex = 0;
@@ -124,8 +125,6 @@ public abstract class MethodComponent(
     /// <inheritdoc/>
     protected sealed override void RegisterInputParams(GH_InputParamManager pManager)
     {
-        _inputParams.Clear();
-
         var paramIndex = 0;
         if (CanCreateDeclaringType(out var param))
         {
@@ -138,12 +137,22 @@ public abstract class MethodComponent(
             paramIndex++;
         }
 
+        _inputParams.Clear();
+        _memberParams.Clear();
         var parameters = MethodInfo.GetParameters();
         for (int i = 0; i < parameters.Length; i++)
         {
-            if (!IsIn(parameters[i])) continue;
+            var parameter = parameters[i];
 
-            var p = new ParameterParam(parameters[i], paramIndex++, i);
+            if (MemberParam.IsMemberParam(parameter))
+            {
+                _memberParams.Add(new MemberParam(parameter.Name.Substring(2), this.GetType(), i, parameter.IsIn(), parameter.IsOut()));
+                continue;
+            }
+
+            if (!parameter.IsIn()) continue;
+
+            var p = new ParameterParam(parameter, paramIndex++, i);
 
             _inputParams.Add(p);
             p.GetNames("Input", "I",
@@ -154,11 +163,6 @@ public abstract class MethodComponent(
 
         this.Message = message ?? MethodInfo.GetCustomAttribute<MessageAttribute>()?.Message;
         this.UseTasks = isParallel || MethodInfo.GetCustomAttribute<ParallelAttribute>() != null;
-
-        static bool IsIn(ParameterInfo info)
-        {
-            return !(info.ParameterType.IsByRef && info.IsOut);
-        }
     }
 
     /// <inheritdoc/>
@@ -205,7 +209,10 @@ public abstract class MethodComponent(
         var parameters = MethodInfo.GetParameters();
         for (int i = 0; i < parameters.Length; i++)
         {
-            if (!IsOut(parameters[i])) continue;
+            var parameter = parameters[i];
+
+            if (MemberParam.IsMemberParam(parameter)) continue;
+            if (!parameters[i].IsOut()) continue;
 
             var p = new ParameterParam(parameters[i], paramIndex++, i);
 
@@ -215,11 +222,6 @@ public abstract class MethodComponent(
                 out var name, out var nickName, out var description);
 
             pManager.AddParameter(p.CreateParam(), name, nickName, description, p.Access);
-        }
-
-        static bool IsOut(ParameterInfo info)
-        {
-            return info.ParameterType.IsByRef;
         }
     }
 
@@ -243,6 +245,10 @@ public abstract class MethodComponent(
         {
             count = Math.Max(count, _outputParams.Max(p => p.MethodParamIndex));
         }
+        if (_memberParams.Count > 0)
+        {
+            count = Math.Max(count, _memberParams.Max(p => p.MethodParamIndex));
+        }
         var result = new object?[count + 1];
 
         foreach (var param in _outputParams)
@@ -254,6 +260,10 @@ public abstract class MethodComponent(
             var ghParam = Params.Input[param.Param.ParamIndex];
             result[param.MethodParamIndex] = param.GetValue(DA, out var value, ghParam)
                 ? value : param.Param.Type.CreateInstance();
+        }
+        foreach(var param in _memberParams)
+        {
+            result[param.MethodParamIndex] = param.GetValue(this);
         }
 
         if (!_declarationParam.HasValue || !_declarationParam.Value.GetValue(DA, out obj)) obj = null!;
@@ -272,10 +282,14 @@ public abstract class MethodComponent(
         {
             _resultParam.Value.SetValue(DA, result);
         }
-
+        
         foreach (var param in _outputParams)
         {
             param.SetValue(DA, parameters[param.MethodParamIndex]!);
+        }
+        foreach (var param in _memberParams)
+        {
+            param.SetValue(this, parameters[param.MethodParamIndex]!);
         }
     }
 

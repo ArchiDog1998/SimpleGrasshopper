@@ -493,4 +493,14 @@ internal static class Utils
             previewObject.Hidden = true;
         }
     }
+
+    public static bool IsIn(this ParameterInfo info)
+    {
+        return !(info.ParameterType.IsByRef && info.IsOut);
+    }
+
+    public static bool IsOut(this ParameterInfo info)
+    {
+        return info.ParameterType.IsByRef;
+    }
 }

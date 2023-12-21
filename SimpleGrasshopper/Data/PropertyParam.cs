@@ -59,25 +59,7 @@ internal readonly struct PropertyParam(PropertyInfo info, int index)
 
     public bool SetValue(IGH_DataAccess DA, object obj)
     {
-        object? value = null;
-        //if (PropInfo.DeclaringType.IsInterface)
-        //{
-        //    var t = obj.GetType();
-        //    var interfaces = obj.GetType().GetInterfaces();
-        //    var map = obj.GetType().GetInterfaceMap(PropInfo.DeclaringType);
-        //    for (int i = 0; i < map.InterfaceMethods.Length; i++)
-        //    {
-        //        if (map.InterfaceMethods[i] == PropInfo.GetMethod)
-        //        {
-        //            value = map.TargetMethods[i].Invoke(obj, null);
-        //            break;
-        //        }
-        //    }
-        //}
-        //else
-        {
-            value = PropInfo.GetValue(obj);
-        }
+        var value = PropInfo.GetValue(obj);
         return Param.SetValue(DA, value!);
     }
 }

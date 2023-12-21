@@ -64,8 +64,9 @@ internal static class BasicTests
     }
 
     [DocObj("Create Type", "C T", "Create a new type")]
-    private static ITypeTest CreateTest()
+    private static ITypeTest CreateTest(ref string __Message)
     {
+        __Message = "123";
         return new TypeTest();
     }
 
