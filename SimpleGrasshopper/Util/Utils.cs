@@ -5,6 +5,7 @@ using Grasshopper.Kernel.Types;
 using Rhino;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
+using System.Linq;
 using System.Net;
 
 namespace SimpleGrasshopper.Util;
@@ -502,5 +503,17 @@ internal static class Utils
     public static bool IsOut(this ParameterInfo info)
     {
         return info.ParameterType.IsByRef;
+    }
+
+    public static IEnumerable<FieldInfo> GetAllRuntimeFields(this Type type)
+    {
+        if (type == null) return [];
+        return type.GetRuntimeFields().Concat(GetAllRuntimeFields(type.BaseType));
+    }
+
+    public static IEnumerable<PropertyInfo> GetAllRuntimeProperties(this Type type)
+    {
+        if (type == null) return [];
+        return type.GetRuntimeProperties().Concat(GetAllRuntimeProperties(type.BaseType));
     }
 }
