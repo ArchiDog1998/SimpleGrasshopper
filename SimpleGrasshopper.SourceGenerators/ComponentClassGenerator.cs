@@ -43,6 +43,22 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
                 codeClassName += "_Obsolete";
             }
 
+            var componentName = "MethodComponent";
+            foreach (var attrs in syntax.AttributeLists)
+            {
+                foreach (var a in attrs.Attributes)
+                {
+                    var attrSymbol = model.GetSymbolInfo(a).Symbol;
+                    if (attrSymbol?.GetFullMetadataName() != "SimpleGrasshopper.Attributes.BaseComponentAttribute") continue;
+
+                    var strs = a.ToString().Split('"');
+                    if (strs.Length > 3) continue;
+
+                    componentName = strs[1];
+                    break;
+                }
+            }
+
             var code = $$"""
              using SimpleGrasshopper.Attributes;
              using SimpleGrasshopper.DocumentObjects;
@@ -53,7 +69,7 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
              namespace {{nameSpace}}
              {
                 public partial class {{codeClassName}}()
-                    : {{BaseComponentGenerator.MethodComponentName}}(typeof({{className}}).GetRuntimeMethods()
+                    : {{componentName}}(typeof({{className}}).GetRuntimeMethods()
                     .Where(m => m.Name == "{{methodName}}" && m.GetCustomAttribute<IgnoreAttribute>() == null).ToArray())
                 {
                     public override Guid ComponentGuid => new ("{{guidStr}}");

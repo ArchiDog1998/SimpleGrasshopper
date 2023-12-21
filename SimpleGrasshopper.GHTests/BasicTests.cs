@@ -71,6 +71,7 @@ internal static class BasicTests
         return new TypeTest();
     }
 
+    [BaseComponent("SimpleGrasshopper.GHTests.TestComponent")]
     [DocObj("Save", "S", "S")]
 
     private static void SaveTest()
