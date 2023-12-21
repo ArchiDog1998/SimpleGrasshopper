@@ -3,6 +3,7 @@ using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
+using SimpleGrasshopper.DocumentObjects;
 
 namespace SimpleGrasshopper.GHTests;
 
@@ -64,7 +65,7 @@ internal static class BasicTests
     }
 
     [DocObj("Create Type", "C T", "Create a new type")]
-    private static ITypeTest CreateTest(ref string __Message)
+    private static ITypeTest CreateTest(ref string __Message, MethodComponent ___instance)
     {
         __Message = "123";
         return new TypeTest();
