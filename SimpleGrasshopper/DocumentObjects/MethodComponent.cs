@@ -125,7 +125,7 @@ public abstract class MethodComponent(
     /// <inheritdoc/>
     protected override void RegisterInputParams(GH_InputParamManager pManager)
     {
-        var paramIndex = 0;
+        var paramIndex = pManager.ParamCount;
         if (CanCreateDeclaringType(out var param))
         {
             _declarationParam = param;
@@ -175,7 +175,7 @@ public abstract class MethodComponent(
     /// <inheritdoc/>
     protected override void RegisterOutputParams(GH_OutputParamManager pManager)
     {
-        var paramIndex = 0;
+        var paramIndex = pManager.ParamCount;
         if (CanCreateDeclaringType(out var tp))
         {
             _declarationParam = tp;
