@@ -83,6 +83,13 @@ internal static class BasicTests
     {
 
     }
+
+    [DocObj("Tag", "T", "T")]
+    private static void TagTest(
+        [ParamTag(true, GH_DataMapping.Flatten, true, true)]int a)
+    {
+
+    }
 }
 
 public enum EnumTest : byte

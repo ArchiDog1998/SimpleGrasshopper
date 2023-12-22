@@ -516,4 +516,10 @@ internal static class Utils
         if (type == null) return [];
         return type.GetRuntimeProperties().Concat(GetAllRuntimeProperties(type.BaseType));
     }
+
+    public static IEnumerable<MethodInfo> GetAllRuntimeMethods(this Type type)
+    {
+        if (type == null) return [];
+        return type.GetRuntimeMethods().Concat(GetAllRuntimeMethods(type.BaseType));
+    }
 }

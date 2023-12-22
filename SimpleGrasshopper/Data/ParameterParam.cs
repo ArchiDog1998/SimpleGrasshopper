@@ -39,6 +39,13 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
             ParamInfo.GetCustomAttribute<AngleAttribute>() != null,
             ParamInfo.GetCustomAttribute<HiddenAttribute>() != null);
 
+        if (ParamInfo.GetCustomAttribute<ParamTagAttribute>() is ParamTagAttribute tag)
+        {
+            SetTags(param, tag);
+        }
+
+        param.CreateAttributes();
+
         return param;
 
         static void SetOptional(ParameterInfo info, IGH_Param param, GH_ParamAccess access)
@@ -61,6 +68,21 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
 
                 if (method == null) return;
                 method.Invoke(param, [new object[] { data }]);
+            }
+        }
+
+        static void SetTags(IGH_Param param, ParamTagAttribute tag)
+        {
+            var props = param.GetType().GetAllRuntimeProperties();
+            props.FirstOrDefault(p => p.Name == "Reverse")?.SetValue(param, tag.Reverse);
+            props.FirstOrDefault(p => p.Name == "Simplify")?.SetValue(param, tag.Simplify);
+            props.FirstOrDefault(p => p.Name == "DataMapping")?.SetValue(param, tag.Mapping);
+
+            var prop = props.FirstOrDefault(p => p.Name == "IsPrincipal");
+            var method = props.GetType().GetAllRuntimeMethods().FirstOrDefault(m => m.Name == "SetPrincipal");
+            if (prop != null && method != null && (GH_PrincipalState)prop.GetValue(param) != GH_PrincipalState.CannotBePrincipal)
+            {
+                method.Invoke(param, [tag.Principal, false, false]);
             }
         }
     }
