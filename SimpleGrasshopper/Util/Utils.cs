@@ -5,6 +5,7 @@ using Grasshopper.Kernel.Types;
 using Rhino;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
+using System.Collections;
 using System.Linq;
 using System.Net;
 
@@ -312,144 +313,108 @@ internal static class Utils
 
         static RuntimeMessage[] ModifyValueTree(ref object value, RangeAttribute range)
         {
-            if (value is GH_Structure<GH_Integer> intTree)
-            {
-                var result = ModifyValue(ref intTree, range);
-                value = intTree;
-                return result;
-            }
-            else if (value is GH_Structure<GH_Number> numTree)
-            {
-                var result = ModifyValue(ref numTree, range);
-                value = numTree;
-                return result;
-            }
-            return [];
+            if (value is not IGH_Structure structure) return [];
 
-            static RuntimeMessage[] ModifyValue<T>(ref GH_Structure<T> structure, RangeAttribute range)
-                where T : IGH_Goo
-            {
-                var messages = new List<RuntimeMessage>();
+            var messages = new List<RuntimeMessage>();
 
-                structure = structure.DuplicateCast(item =>
-                {
-                    var i = (object)item;
-                    var message = ModifyValueItem(ref i, range);
-                    if (message.HasValue) messages.Add(message.Value);
-                    return (T)i;
-                });
-                return [.. messages];
+            foreach (var path in structure.Paths)
+            {
+                object list = structure.get_Branch(path);
+                messages.AddRange(ModifyValueList(ref list, range));
             }
+            return [.. messages];
         }
 
         static RuntimeMessage[] ModifyValueList(ref object value, RangeAttribute range)
         {
             var messages = new List<RuntimeMessage>();
 
-            if (value is List<int> intList)
+            if (value is not IList list) return [];
+
+            var lt = new List<object>();
+            foreach (var item in list)
             {
-                messages.AddRange(ModifyValuesLoc(ref intList, range));
-                value = intList;
-            }
-            else if (value is int[] intArray)
-            {
-                var input = intArray.ToList();
-                messages.AddRange(ModifyValuesLoc(ref input, range));
-                value = input;
-            }
-            else if (value is List<double> doubleList)
-            {
-                messages.AddRange(ModifyValuesLoc(ref doubleList, range));
-                value = doubleList;
-            }
-            else if (value is double[] doubleArray)
-            {
-                var input = doubleArray.ToList();
-                messages.AddRange(ModifyValuesLoc(ref input, range));
-                value = input;
-            }
-            else if (value is List<GH_Integer> ghIntList)
-            {
-                messages.AddRange(ModifyValuesLoc(ref ghIntList, range));
-                value = ghIntList;
-            }
-            else if (value is GH_Integer[] ghIntArray)
-            {
-                var input = ghIntArray.ToList();
-                messages.AddRange(ModifyValuesLoc(ref input, range));
-                value = input;
-            }
-            else if (value is List<GH_Number> ghNumList)
-            {
-                messages.AddRange(ModifyValuesLoc(ref ghNumList, range));
-                value = ghNumList;
-            }
-            else if (value is GH_Number[] ghNumArray)
-            {
-                var input = ghNumArray.ToList();
-                messages.AddRange(ModifyValuesLoc(ref input, range));
-                value = input;
+                var i = item;
+                var message = ModifyValueItem(ref i, range);
+                lt.Add(i);
+                if(message != null) messages.Add(message.Value);
             }
 
-            return [.. messages];
-
-            static RuntimeMessage[] ModifyValuesLoc<T>(ref List<T> values, RangeAttribute range)
+            list.Clear();
+            foreach (var item in lt)
             {
-                var messages = new List<RuntimeMessage>(values.Count);
-                for (int i = 0; i < values.Count; i++)
-                {
-                    object item = values[i]!;
-                    var message = ModifyValueItem(ref item, range);
-                    if (message.HasValue) messages.Add(message.Value);
-                    values[i] = (T)item;
-                }
-                return [.. messages];
+                list.Add(item);
             }
+
+            return [..messages];
         }
 
         static RuntimeMessage? ModifyValueItem(ref object value, RangeAttribute range)
         {
-            var min = range.MinD;
-            var max = range.MaxD;
-            var warning = $"The value {value} is out of range {min} to {max}, it was set to {{0}}.";
-            if (value is int)
+            if (value is IGH_Goo && value.GetType().GetRuntimeProperty("Value") is PropertyInfo property)
             {
-                return ChangeValue(ref value, min, max, warning, Convert.ToDouble, Convert.ToInt32);
-            }
-            else if (value is double)
-            {
-                return ChangeValue(ref value, min, max, warning, Convert.ToDouble, Convert.ToDouble);
-            }
-            else if (value is GH_Integer integer)
-            {
-                return ChangeValue(ref value, min, max, warning, i => Convert.ToDouble(i.Value),
-                    i => new GH_Integer(Convert.ToInt32(i)));
-            }
-            else if (value is GH_Number number)
-            {
-                return ChangeValue(ref value, min, max, warning, i => Convert.ToDouble(i.Value),
-                    i => new GH_Number(Convert.ToDouble(i)));
+                var v = property.GetValue(value);
+                var message = ModifyValueItemRaw(ref v, range);
+                property.SetValue(value, v);
+                return message;
             }
 
-            return null;
-
-            static RuntimeMessage? ChangeValue<T>(ref object value, double min, double max, in string warning,
-            Converter<T, double> getValue, Converter<double, T> setvalue)
+            var field = value.GetType().GetAllRuntimeFields().FirstOrDefault(f => f.GetCustomAttribute<RangeValueAttribute>() != null);
+            var prop = value.GetType().GetAllRuntimeProperties().FirstOrDefault(f => f.GetCustomAttribute<RangeValueAttribute>() != null);
+            if (field != null)
             {
-                var v = getValue((T)value);
-                if (v < min)
+                var v = field.GetValue(value);
+                var message = ModifyValueItemRaw(ref v, range);
+                field.SetValue(value, v);
+                return message;
+            }
+            else if (prop != null)
+            {
+                var v = prop.GetValue(value);
+                var message = ModifyValueItemRaw(ref v, range);
+                prop.SetValue(value, v);
+                return message;
+            }
+            else
+            {
+                return ModifyValueItemRaw(ref value, range);
+            }
+
+            static RuntimeMessage? ModifyValueItemRaw(ref object value, RangeAttribute range)
+            {
+                var min = range.MinD;
+                var max = range.MaxD;
+                var warning = $"The value {value} is out of range {min} to {max}, it was set to {{0}}.";
+
+                if (value is int)
                 {
-                    value = setvalue(min)!;
-                    return new RuntimeMessage(GH_RuntimeMessageLevel.Warning, string.Format(warning, value));
+                    return ChangeValue(ref value, min, max, warning, Convert.ToDouble, Convert.ToInt32);
                 }
-                else if (v > max)
+                else if (value is double)
                 {
-                    value = setvalue(max)!;
-                    return new RuntimeMessage(GH_RuntimeMessageLevel.Warning, string.Format(warning, value));
+                    return ChangeValue(ref value, min, max, warning, Convert.ToDouble, Convert.ToDouble);
                 }
-                else
+
+                return new RuntimeMessage(GH_RuntimeMessageLevel.Error, "This value can't be used with range! please contact with the author!");
+
+                static RuntimeMessage? ChangeValue<T>(ref object value, double min, double max, in string warning,
+                Converter<T, double> getValue, Converter<double, T> setvalue)
                 {
-                    return null;
+                    var v = getValue((T)value);
+                    if (v < min)
+                    {
+                        value = setvalue(min)!;
+                        return new RuntimeMessage(GH_RuntimeMessageLevel.Warning, string.Format(warning, value));
+                    }
+                    else if (v > max)
+                    {
+                        value = setvalue(max)!;
+                        return new RuntimeMessage(GH_RuntimeMessageLevel.Warning, string.Format(warning, value));
+                    }
+                    else
+                    {
+                        return null;
+                    }
                 }
             }
         }
@@ -521,5 +486,22 @@ internal static class Utils
     {
         if (type == null) return [];
         return type.GetRuntimeMethods().Concat(GetAllRuntimeMethods(type.BaseType));
+    }
+
+    public static MethodInfo? GetOperatorCast(Type type, Type returnType, Type paramType)
+    {
+        return type.GetRuntimeMethods().FirstOrDefault(m =>
+        {
+            if (!m.IsSpecialName) return false;
+            if (m.Name is not "op_Explicit" and not "op_Implicit") return false;
+
+            if (m.ReturnType != returnType) return false;
+
+            var parameters = m.GetParameters();
+
+            if (parameters.Length != 1) return false;
+
+            return parameters[0].ParameterType.GetRawType() == paramType;
+        });
     }
 }

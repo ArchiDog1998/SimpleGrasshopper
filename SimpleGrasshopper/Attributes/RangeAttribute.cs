@@ -22,13 +22,38 @@ public class RangeAttribute(double min, double max, int place = 2) : Attribute
     /// <summary>
     /// 
     /// </summary>
-    public decimal Min => Convert.ToDecimal(min);
+    public decimal Min
+    {
+        get
+        {
+            try
+            {
+                return Convert.ToDecimal(min);
+            }
+            catch
+            {
+                return decimal.MinValue;
+            }
+        }
+    }
 
     /// <summary>
     /// 
     /// </summary>
-    public decimal Max => Convert.ToDecimal(max);
-
+    public decimal Max
+    {
+        get
+        {
+            try
+            {
+                return Convert.ToDecimal(max);
+            }
+            catch
+            {
+                return decimal.MaxValue;
+            }
+        }
+    }
     /// <summary>
     /// 
     /// </summary>

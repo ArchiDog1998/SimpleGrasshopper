@@ -22,6 +22,10 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
         name = attr?.Name ?? defaultName;
         nickName = attr?.NickName ?? defaultNickName;
         description = attr?.Description ?? defaultName;
+        if(ParamInfo.GetCustomAttribute<RangeAttribute>() is RangeAttribute range)
+        {
+            description += $"\nFrom {range.Min} To {range.Max}";
+        }
     }
 
     public IGH_Param CreateParam()

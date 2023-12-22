@@ -30,7 +30,8 @@ internal static class BasicTests
     public static double Add(double a, double b) => a + b;
 
     [DocObj("DataType test", "Data Type", "A test for data type.")]
-    public static RuntimeData DataTypeTest(int a, 
+    public static RuntimeData DataTypeTest(
+        [Range(0, 5)] int a, 
         [Range(0, 5)] List<int> b,
         [Range(0, 5)] GH_Structure<GH_Integer> c)
     {

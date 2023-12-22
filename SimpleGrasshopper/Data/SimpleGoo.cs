@@ -44,7 +44,7 @@ public class SimpleGoo<T> : GH_Goo<T>
 
         try
         {
-            if (GetOperatorCast(type, type, sType) is MethodInfo method)
+            if (Utils.GetOperatorCast(type, type, sType) is MethodInfo method)
             {
                 Value = (T)method.Invoke(null, [source]);
                 return true;
@@ -52,7 +52,7 @@ public class SimpleGoo<T> : GH_Goo<T>
 
             if (source is IGH_Goo
                 && sType.GetRuntimeProperty("Value") is PropertyInfo property
-                && GetOperatorCast(type, type, property.PropertyType) is MethodInfo method1)
+                && Utils.GetOperatorCast(type, type, property.PropertyType) is MethodInfo method1)
             {
                 var v = property.GetValue(source);
                 Value = (T)method1.Invoke(null, [v]);
@@ -82,7 +82,7 @@ public class SimpleGoo<T> : GH_Goo<T>
 
         try
         {
-            if (GetOperatorCast(type, QType, type) is MethodInfo method)
+            if (Utils.GetOperatorCast(type, QType, type) is MethodInfo method)
             {
                 target = (Q)method.Invoke(null, [Value]);
                 return true;
@@ -90,7 +90,7 @@ public class SimpleGoo<T> : GH_Goo<T>
 
             if (target is IGH_Goo
                 && QType.GetRuntimeProperty("Value") is PropertyInfo property
-                && GetOperatorCast(type, property.PropertyType, type) is MethodInfo method1)
+                && Utils.GetOperatorCast(type, property.PropertyType, type) is MethodInfo method1)
             {
                 var v = method1.Invoke(null, [Value]);
                 property.SetValue(target, v);
@@ -104,22 +104,5 @@ public class SimpleGoo<T> : GH_Goo<T>
         {
             return false;
         }
-    }
-
-    private static MethodInfo? GetOperatorCast(Type type, Type returnType, Type paramType)
-    {
-        return type.GetRuntimeMethods().FirstOrDefault(m =>
-        {
-            if (!m.IsSpecialName) return false;
-            if (m.Name is not "op_Explicit" and not "op_Implicit") return false;
-
-            if (m.ReturnType != returnType) return false;
-
-            var parameters = m.GetParameters();
-
-            if (parameters.Length != 1) return false;
-
-            return parameters[0].ParameterType.GetRawType() == paramType;
-        });
     }
 }
