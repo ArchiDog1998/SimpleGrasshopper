@@ -68,6 +68,8 @@ internal static class BasicTests
     [DocObj("Create Type", "C T", "Create a new type")]
     private static ITypeTest CreateTest(ref string __Message, MethodComponent ___instance)
     {
+        var t = ___instance.GetType();
+
         __Message = "123";
         return new TypeTest();
     }
@@ -75,9 +77,9 @@ internal static class BasicTests
     [BaseComponent("SimpleGrasshopper.GHTests.TestComponent")]
     [DocObj("Save", "S", "S")]
 
-    private static void SaveTest()
+    private static void SaveTest(MethodComponent ___instance)
     {
-
+        var t = ___instance.GetType();
     }
 
     private static void SaveTest(int a, int b)

@@ -10,9 +10,10 @@ public class TypePropertyComponentGenerator : TypeComponentGenerator
 {
     protected override string AttrName => "PropertyComponent";
 
-    protected override string ComponentParent => $"{ComponentName}<{{0}}>()";
-
-    protected override string ComponentName { get; set; } = "TypePropertyComponent";
+    protected override string GetComponentName(TypeDeclarationSyntax syntax, SemanticModel model)
+    {
+        return "TypePropertyComponent<{0}>()";
+    }
 }
 
 [Generator(LanguageNames.CSharp)]
@@ -20,18 +21,32 @@ public class TypeMethodComponentGenerator : TypeComponentGenerator
 {
     protected override string AttrName => "TypeComponent";
 
-    protected override string ComponentParent => $"{ComponentName}(typeof({{0}}))";
+    protected override string GetComponentName(TypeDeclarationSyntax syntax, SemanticModel model)
+    {
+        var name = "TypeMethodComponent";
+        foreach (var attrs in syntax.AttributeLists)
+        {
+            foreach (var a in attrs.Attributes)
+            {
+                var attrSymbol = model.GetSymbolInfo(a).Symbol;
+                if (attrSymbol?.GetFullMetadataName() != "SimpleGrasshopper.Attributes.BaseComponentAttribute") continue;
 
-    protected override string ComponentName { get; set; } = "TypeMethodComponent";
+                var strs = a.ToString().Split('"');
+                if (strs.Length > 3) continue;
+
+                name = strs[1];
+                break;
+            }
+        }
+        return $"{name}(typeof({{0}}))";
+    }
 }
 
 public abstract class TypeComponentGenerator : IIncrementalGenerator
 {
     protected abstract string AttrName { get; }
 
-    protected abstract string ComponentParent { get; }
-
-    protected abstract string ComponentName { get; set; }
+    protected abstract string GetComponentName(TypeDeclarationSyntax syntax, SemanticModel model);
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -61,24 +76,6 @@ public abstract class TypeComponentGenerator : IIncrementalGenerator
                 codeClassName += "_Obsolete";
             }
 
-            if (ComponentName == "TypeMethodComponent")
-            {
-                foreach (var attrs in syntax.AttributeLists)
-                {
-                    foreach (var a in attrs.Attributes)
-                    {
-                        var attrSymbol = model.GetSymbolInfo(a).Symbol;
-                        if (attrSymbol?.GetFullMetadataName() != "SimpleGrasshopper.Attributes.BaseComponentAttribute") continue;
-
-                        var strs = a.ToString().Split('"');
-                        if (strs.Length > 3) continue;
-
-                        ComponentName = strs[1];
-                        break;
-                    }
-                }
-            }
-
 
             var code = $$"""
              using SimpleGrasshopper.DocumentObjects;
@@ -87,7 +84,7 @@ public abstract class TypeComponentGenerator : IIncrementalGenerator
              namespace {{nameSpace}}
              {
                 public partial class {{codeClassName}}()
-                    : {{string.Format(ComponentParent, className)}}
+                    : {{string.Format(GetComponentName(syntax, model), className)}}
                 {
                     public override Guid ComponentGuid => new ("{{guidStr}}");
                 }
