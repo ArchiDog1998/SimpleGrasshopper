@@ -215,12 +215,12 @@ internal static class Utils
         }
     }
 
-    public static object CreateInstance(this Type type)
+    public static object CreateInstance(this Type type, bool nullForClass = false)
     {
         try
         {
             if (type.IsEnum || type.IsValueType
-                || type.GetConstructor(Type.EmptyTypes) != null)
+                || !nullForClass && type.GetConstructor(Type.EmptyTypes) != null)
             {
                 return Activator.CreateInstance(type)!;
             }

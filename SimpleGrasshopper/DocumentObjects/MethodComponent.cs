@@ -259,7 +259,7 @@ public abstract class MethodComponent(
         {
             var ghParam = Params.Input[param.Param.ParamIndex];
             result[param.MethodParamIndex] = param.GetValue(DA, out var value, ghParam)
-                ? value : param.Param.Type.CreateInstance();
+                ? value : param.Param.Type.CreateInstance(true);
         }
         foreach(var param in _memberParams)
         {

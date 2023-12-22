@@ -20,7 +20,7 @@ internal readonly struct PropertyParam(PropertyInfo info, int index)
 
         if (PropInfo.GetCustomAttribute<RangeAttribute>() is RangeAttribute range)
         {
-            description += $"\nFrom {range.Min} To {range.Max}";
+            description += $"\nFrom {range.MinD} To {range.MaxD}";
         }
     }
 

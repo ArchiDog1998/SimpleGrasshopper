@@ -24,7 +24,7 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
         description = attr?.Description ?? defaultName;
         if(ParamInfo.GetCustomAttribute<RangeAttribute>() is RangeAttribute range)
         {
-            description += $"\nFrom {range.Min} To {range.Max}";
+            description += $"\nFrom {range.MinD} To {range.MaxD}";
         }
     }
 
