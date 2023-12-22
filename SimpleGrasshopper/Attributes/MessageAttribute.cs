@@ -7,5 +7,8 @@
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Struct)]
 public class MessageAttribute(string message) : Attribute
 {
-    internal string Message => message;
+    /// <summary>
+    /// 
+    /// </summary>
+    public string Message => message;
 }

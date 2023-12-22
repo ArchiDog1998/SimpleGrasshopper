@@ -8,6 +8,13 @@
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public class ToolButtonAttribute(string icon, string description = "") : Attribute
 {
-    internal string Icon => icon;
-    internal string Description => description;
+    /// <summary>
+    /// 
+    /// </summary>
+    public string Icon => icon;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string Description => description;
 }

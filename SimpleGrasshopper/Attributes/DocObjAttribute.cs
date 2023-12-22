@@ -10,7 +10,18 @@
     AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue)]
 public class DocObjAttribute(string name, string nickName, string description) : Attribute
 {
-    internal string Name => name;
-    internal string NickName => nickName;
-    internal string Description => description;
+    /// <summary>
+    /// 
+    /// </summary>
+    public string Name => name;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string NickName => nickName;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string Description => description;
 }

@@ -9,5 +9,8 @@ namespace SimpleGrasshopper.Attributes;
 [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue)]
 public class ParamAttribute(string guid) : Attribute
 {
-    internal Guid Guid => new(guid);
+    /// <summary>
+    /// 
+    /// </summary>
+    public Guid Guid => new(guid);
 }

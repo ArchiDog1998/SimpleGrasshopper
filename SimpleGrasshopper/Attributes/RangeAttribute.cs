@@ -9,12 +9,30 @@
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Parameter)]
 public class RangeAttribute(double min, double max, int place = 2) : Attribute
 {
-    internal double MinD => min;
-    internal double MaxD => max;
+    /// <summary>
+    /// 
+    /// </summary>
+    public double MinD => min;
 
-    internal decimal Min => Convert.ToDecimal(min);
-    internal decimal Max => Convert.ToDecimal(max);
-    internal int Place => place;
+    /// <summary>
+    /// 
+    /// </summary>
+    public double MaxD => max;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public decimal Min => Convert.ToDecimal(min);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public decimal Max => Convert.ToDecimal(max);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public int Place => place;
 
     /// <inheritdoc/>
     public override string ToString() => $"\n(From {MinD} To {MaxD})";

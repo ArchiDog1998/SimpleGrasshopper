@@ -9,8 +9,19 @@
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
 public class PropertyComponentAttribute(string iconPath = "", GH_Exposure exposure = GH_Exposure.primary, string subCategory = "") : Attribute
 {
-    internal GH_Exposure Exposure => exposure;
-    internal string SubCategory => subCategory;
-    internal string IconPath => iconPath;
+    /// <summary>
+    /// 
+    /// </summary>
+    public GH_Exposure Exposure => exposure;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string SubCategory => subCategory;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string IconPath => iconPath;
 }
 

@@ -7,5 +7,8 @@
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Struct)]
 public class ExposureAttribute(GH_Exposure exposure) : Attribute
 {
-    internal GH_Exposure Exposure => exposure;
+    /// <summary>
+    /// 
+    /// </summary>
+    public GH_Exposure Exposure => exposure;
 }

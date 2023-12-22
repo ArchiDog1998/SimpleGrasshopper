@@ -17,10 +17,33 @@ public class TypeComponentAttribute(string? name = null,
         string? iconPath = null,
         GH_Exposure exposure = GH_Exposure.primary) : Attribute
 {
-    internal string? Name => name;
-    internal string? NickName => nickName;
-    internal string? Description => description;
-    internal string? SubCategory => subCategory;
-    internal string? IconPath => iconPath;
-    internal GH_Exposure Exposure => exposure;
+    /// <summary>
+    /// 
+    /// </summary>
+    public string? Name => name;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string? NickName => nickName;
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    public string? Description => description;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string? SubCategory => subCategory;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string? IconPath => iconPath;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public GH_Exposure Exposure => exposure;
 }

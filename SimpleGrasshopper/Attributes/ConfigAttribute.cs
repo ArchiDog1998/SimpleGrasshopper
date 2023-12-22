@@ -12,10 +12,33 @@
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public class ConfigAttribute(string name, string description = "", string icon = "", string parent = "", byte section = 0, ushort order = 0) : Attribute
 {
-    internal string Name => name;
-    internal string Description => description;
-    internal string Icon => icon;
-    internal string Parent => parent;
-    internal byte Section => section;
-    internal ushort Order => order;
+    /// <summary>
+    /// 
+    /// </summary>
+    public string Name => name;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string Description => description;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string Icon => icon;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public string Parent => parent;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public byte Section => section;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public ushort Order => order;
 }

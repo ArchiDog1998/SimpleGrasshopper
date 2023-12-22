@@ -7,5 +7,8 @@
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method | AttributeTargets.Interface)]
 public class BaseComponentAttribute(string fullName) : Attribute
 {
-    internal string FullName => fullName;
+    /// <summary>
+    /// 
+    /// </summary>
+    public string FullName => fullName;
 }

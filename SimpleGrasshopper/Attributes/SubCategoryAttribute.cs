@@ -7,5 +7,8 @@
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
 public class SubCategoryAttribute(string subCategory) : Attribute
 {
-    internal string SubCategory => subCategory;
+    /// <summary>
+    /// 
+    /// </summary>
+    public string SubCategory => subCategory;
 }

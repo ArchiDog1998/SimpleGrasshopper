@@ -9,5 +9,8 @@
 
 public class IconAttribute(string iconPath) : Attribute
 {
-    internal string IconPath => iconPath;
+    /// <summary>
+    /// 
+    /// </summary>
+    public string IconPath => iconPath;
 }

@@ -313,6 +313,7 @@ public abstract class MethodComponent(
             {
                 resultParams = (MethodInfo.Invoke(obj, parameters), parameters);
             }
+
             if (resultParams.Item1 is RuntimeData data)
             {
                 if (data.Message != null)
