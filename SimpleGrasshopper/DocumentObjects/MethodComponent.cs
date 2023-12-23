@@ -332,6 +332,10 @@ public abstract class MethodComponent(
         {
             AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.InnerException.InnerException.Message);
         }
+        catch (TargetInvocationException ex)
+        {
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.InnerException.Message);
+        }
         catch (Exception? ex)
         {
             var messageString = GetMessage(ex);
