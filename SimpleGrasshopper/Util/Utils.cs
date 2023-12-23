@@ -369,19 +369,34 @@ internal static class Utils
             }
 
             var field = value.GetType().GetAllRuntimeFields().FirstOrDefault(f => f.GetCustomAttribute<RangeValueAttribute>() != null);
-            var prop = value.GetType().GetAllRuntimeProperties().FirstOrDefault(f => f.GetCustomAttribute<RangeValueAttribute>() != null);
-            if (field != null)
-            {
-                var v = field.GetValue(value);
-                var message = ModifyValueItemRaw(ref v, range);
-                field.SetValue(value, v);
-                return message;
-            }
-            else if (prop != null)
+            var prop = value is IGH_Goo ? value.GetType().GetRuntimeProperty("Value")
+                :  value.GetType().GetAllRuntimeProperties().FirstOrDefault(f => f.GetCustomAttribute<RangeValueAttribute>() != null);
+
+            if (prop != null)
             {
                 var v = prop.GetValue(value);
                 var message = ModifyValueItemRaw(ref v, range);
-                prop.SetValue(value, v);
+                if (message.HasValue)
+                {
+                    if (prop.SetMethod != null)
+                    {
+                        prop.SetValue(value, v);
+                    }
+                    else
+                    {
+                        throw new Exception($"%SimpleGrasshopper_RangeSettingThe value {value} is out of range {range.MinD} to {range.MaxD}. And, it can't be set!");
+                    }
+                }
+                return message;
+            }
+            else if (field != null)
+            {
+                var v = field.GetValue(value);
+                var message = ModifyValueItemRaw(ref v, range);
+                if (message.HasValue)
+                {
+                    field.SetValue(value, v);
+                }
                 return message;
             }
             else
@@ -393,7 +408,7 @@ internal static class Utils
             {
                 var min = range.MinD;
                 var max = range.MaxD;
-                var warning = $"The value {value} is out of range {min} to {max}, it was set to {{0}}.";
+                var warning = $"The value {value} is out of range {min} to {max}. It was set to {{0}}.";
 
                 if (value is int)
                 {

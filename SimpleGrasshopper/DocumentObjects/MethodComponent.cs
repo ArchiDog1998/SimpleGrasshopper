@@ -336,6 +336,10 @@ public abstract class MethodComponent(
         {
             AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.InnerException.Message);
         }
+        catch (Exception ex) when(ex.Message.StartsWith("%SimpleGrasshopper_RangeSetting"))
+        {
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message.Substring(31));
+        }
         catch (Exception? ex)
         {
             var messageString = GetMessage(ex);
