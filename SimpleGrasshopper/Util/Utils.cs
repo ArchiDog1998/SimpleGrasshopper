@@ -519,6 +519,8 @@ internal static class Utils
             if (!m.IsSpecialName) return false;
             if (m.Name is not "op_Explicit" and not "op_Implicit") return false;
 
+            if (m.GetCustomAttribute<IgnoreAttribute>() != null) return false;
+
             if (m.ReturnType != returnType) return false;
 
             var parameters = m.GetParameters();
