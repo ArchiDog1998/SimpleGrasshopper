@@ -4,7 +4,7 @@ Hi, this is a repo to simplify your plugin development in Grasshopper.
 
 With this repo, you don't need to understand what a `GH_Component` is and what a `GH_Param` is. All you need to do is add attributes!
 
-NOTICE: For some reason, the `SimpleGrasshopper.dll` won't copy to the output directory automatically. If there is any way to make the nuget pacakge only copy this file, please tell me.
+NOTICE: For some reason, the `SimpleGrasshopper.dll` and `Newtonsoft.Json` won't copy to the output directory automatically. If there is any way to make the nuget package only copy this file, please tell me.
 
 ## Quick Start
 

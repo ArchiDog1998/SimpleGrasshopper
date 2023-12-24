@@ -38,7 +38,7 @@ internal static class Utils
 
         if (type != null)
         {
-            if (typeof(GH_AssemblyInfo).GetRuntimeProperty(propertyName)?.GetValue(Activator.CreateInstance(type)) is string str) return str;
+            if (typeof(GH_AssemblyInfo).GetRuntimeProperty(propertyName)?.GetValue(type.CreateInstance()) is string str) return str;
         }
 
         return assembly.GetName().Name ?? string.Empty;
@@ -50,7 +50,7 @@ internal static class Utils
 
         if (type != null)
         {
-            if (typeof(GH_AssemblyInfo).GetRuntimeProperty("Icon")?.GetValue(Activator.CreateInstance(type)) is Bitmap icon) return icon;
+            if (typeof(GH_AssemblyInfo).GetRuntimeProperty("Icon")?.GetValue(type.CreateInstance()) is Bitmap icon) return icon;
         }
 
         return null;
@@ -146,7 +146,7 @@ internal static class Utils
         {
             if (type == null) return null;
 
-            if (Activator.CreateInstance(paramType) is not IGH_Param param) return null;
+            if (paramType.CreateInstance() is not IGH_Param param) return null;
 
             var gooType = param.Type;
             if (type == gooType) return param.ComponentGuid;

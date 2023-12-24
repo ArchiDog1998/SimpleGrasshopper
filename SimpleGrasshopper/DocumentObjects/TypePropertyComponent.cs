@@ -106,7 +106,7 @@ public abstract class TypePropertyComponent<T>()
         if (!DA.GetData(0, ref obj))
         {
             if (typeof(T).IsInterface) return;
-            obj = Activator.CreateInstance<T>();
+            obj = (T)typeof(T).CreateInstance();
         }
 
         object o = obj!;

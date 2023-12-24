@@ -178,7 +178,7 @@ internal readonly struct TypeParam
                 var values = (valuesInfo.GetValue(data) as IList)!;
 
                 var treeType = typeof(GH_Structure<>).MakeGenericType(targetType);
-                var result = Activator.CreateInstance(treeType);
+                var result = treeType.CreateInstance();
 
                 var addMethod = treeType.GetRuntimeMethods().FirstOrDefault(m => m.Name == "AppendRange" && m.GetParameters().Length == 2);
 
@@ -214,7 +214,7 @@ internal readonly struct TypeParam
             var getProp = typeof(TS).GetRuntimeProperties().FirstOrDefault(p => p.Name == "Value");
             var setProp = typeof(TR).GetRuntimeProperties().FirstOrDefault(p => p.Name == "Value");
 
-            var result = Activator.CreateInstance<TR>();
+            var result = (TR)typeof(TR).CreateInstance();
 
             var v = getProp.GetValue(source).ChangeType(setProp.PropertyType);
             setProp.SetValue(result, v);

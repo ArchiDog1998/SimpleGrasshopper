@@ -1,4 +1,6 @@
-﻿using Grasshopper.Kernel.Types;
+﻿using GH_IO.Serialization;
+using Grasshopper.Kernel.Types;
+using Newtonsoft.Json;
 using SimpleGrasshopper.Util;
 
 namespace SimpleGrasshopper.Data;
@@ -104,5 +106,30 @@ public class SimpleGoo<T> : GH_Goo<T>
         {
             return false;
         }
+    }
+
+    /// <inheritdoc/>
+    public override bool Read(GH_IReader reader)
+    {
+        string str = string.Empty;
+        if (reader.TryGetString(nameof(m_value), ref str))
+        {
+            try
+            {
+                m_value = JsonConvert.DeserializeObject<T>(str)!;
+            }
+            catch
+            {
+
+            }
+        }
+        return base.Read(reader);
+    }
+
+    /// <inheritdoc/>
+    public override bool Write(GH_IWriter writer)
+    {
+        writer.SetString(nameof(m_value), JsonConvert.SerializeObject(m_value));
+        return base.Write(writer);
     }
 }

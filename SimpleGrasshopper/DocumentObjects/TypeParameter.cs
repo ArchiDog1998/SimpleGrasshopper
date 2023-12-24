@@ -38,7 +38,7 @@ public abstract class TypeParameter<T>()
         try
         {
             values ??= [];
-            values.Add(new SimpleGoo<T>(Activator.CreateInstance<T>()));
+            values.Add(new SimpleGoo<T>((T)typeof(T).CreateInstance()));
             return GH_GetterResult.success;
         }
         catch
@@ -52,7 +52,7 @@ public abstract class TypeParameter<T>()
     {
         try
         {
-            value = new SimpleGoo<T>(Activator.CreateInstance<T>());
+            value = new SimpleGoo<T>((T)typeof(T).CreateInstance());
             return GH_GetterResult.success;
         }
         catch
