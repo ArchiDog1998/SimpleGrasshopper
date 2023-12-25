@@ -12,19 +12,34 @@ namespace SimpleGrasshopper.Data;
 public class SimpleGoo<T> : GH_Goo<T>
 {
     /// <inheritdoc/>
-    public override bool IsValid => true;
+    public override bool IsValid => !GetValue(nameof(IsValid), out bool v) || v;
 
     /// <inheritdoc/>
-    public override string TypeName => typeof(T).Name;
+    public override string IsValidWhyNot => GetValue(nameof(IsValidWhyNot), out string v) ? v : base.IsValidWhyNot;
 
     /// <inheritdoc/>
-    public override string TypeDescription => TypeName;
+    public override string TypeName => GetValue(nameof(TypeName), out string v) ? v : typeof(T).Name;
+
+    /// <inheritdoc/>
+    public override string TypeDescription => GetValue(nameof(TypeDescription), out string v) ? v : TypeName;
 
     /// <inheritdoc/>
     public SimpleGoo(T value) : base(value) { }
 
     /// <inheritdoc/>
     public SimpleGoo() : base() { }
+
+    private bool GetValue<TP>(in string propertyName, out TP value)
+    {
+        var property = typeof(T).GetRuntimeProperty(propertyName);
+        if (property == null || !property.CanRead)
+        {
+            value = default!;
+            return false;
+        }
+        value = (TP)property.GetValue(this);
+        return true;
+    }
 
     /// <inheritdoc/>
     public override IGH_Goo Duplicate() => new SimpleGoo<T>(Value);
