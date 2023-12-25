@@ -37,7 +37,7 @@ internal class ParameterClassGenerator : ClassGenerator<TypeDeclarationSyntax>
                 #region IGH_PreviewObject
                         public bool Hidden { get; set; }
     
-                        public bool IsPreviewCapable => true;
+                        public bool IsPreviewCapable => !m_data.IsEmpty;
                     
                         private readonly static FieldInfo _field = typeof(GH_Param<SimpleGoo<{{className}}>>).GetRuntimeFields().First(f => f.Name == "m_clippingBox");
                     
