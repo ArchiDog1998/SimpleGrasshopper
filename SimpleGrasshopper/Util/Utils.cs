@@ -6,8 +6,10 @@ using Rhino;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using System.Collections;
+using System.ComponentModel;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 
 namespace SimpleGrasshopper.Util;
 
@@ -471,7 +473,14 @@ internal static class Utils
             foreach (object obj in Enum.GetValues(rawInnerType))
             {
                 var v = Convert.ToInt32(Convert.ChangeType(obj, underType));
-                integerParam.AddNamedValue(names[index++], v);
+                var name = names[index++];
+                var members = rawInnerType.GetMember(name);
+                if (members != null && members.Length > 0
+                    && members[0].GetCustomAttribute<DescriptionAttribute>() is DescriptionAttribute attr)
+                {
+                    name = attr.Description;
+                }
+                integerParam.AddNamedValue(name, v);
             }
         }
         else if (param is Param_Number numberParam && hasAngle)
