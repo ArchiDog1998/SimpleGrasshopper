@@ -10,14 +10,43 @@ namespace SimpleGrasshopper.DocumentObjects;
 /// <typeparam name="T">the type that it wants to modify.</typeparam>
 public abstract class TypePropertyComponent<T>()
     : GH_Component
-        (typeof(T).GetDocObjName() + " Property",
-         typeof(T).GetDocObjNickName() + " Prop",
-         typeof(T).GetDocObjDescription(),
+        (GetName(typeof(T)),
+         GetNickName(typeof(T)),
+         typeof(T).GetCustomAttribute<PropertyComponentAttribute>()?.Description ?? typeof(T).GetDocObjDescription(),
          typeof(T).GetAssemblyName(),
          GetSubCate(typeof(T)))
 {
     private readonly List<PropertyParam> _setProps = [], _getProps = [];
     private readonly Guid _guid = typeof(T).GetDocObjGuid();
+    private readonly TypePropertyType _type = typeof(T).GetCustomAttribute<PropertyComponentAttribute>()?.Type ?? TypePropertyType.Property;
+
+    private static string GetName(Type type)
+    {
+        var attr = type.GetCustomAttribute<PropertyComponentAttribute>();
+        if (attr == null) return type.GetDocObjName() + " Property";
+        if (attr.Name != null) return attr.Name;
+
+        return type.GetDocObjName() + attr.Type switch
+        {
+            TypePropertyType.Ctor => " Constructor",
+            TypePropertyType.Dtor => " Deconstructor",
+            _ => " Property",
+        };
+    }
+
+    private static string GetNickName(Type type)
+    {
+        var attr = type.GetCustomAttribute<PropertyComponentAttribute>();
+        if (attr == null) return type.GetDocObjNickName() + " Prop";
+        if (attr.NickName != null) return attr.NickName;
+
+        return type.GetDocObjNickName() + attr.Type switch
+        {
+            TypePropertyType.Ctor => " Ctor",
+            TypePropertyType.Dtor => " Dtor",
+            _ => " Prop",
+        };
+    }
 
     private static string GetSubCate(Type type)
     {
@@ -43,6 +72,7 @@ public abstract class TypePropertyComponent<T>()
         }
     }
 
+
     private IGH_Param CreateTypeParam()
     {
         if (Instances.ComponentServer.EmitObjectProxy(_guid).CreateInstance()
@@ -51,7 +81,10 @@ public abstract class TypePropertyComponent<T>()
             throw new Exception("The type of this document object is not param!");
         }
 
-        param.Optional = true;
+        if (_type != TypePropertyType.Dtor)
+        {
+            param.Optional = true;
+        }
         return param;
     }
 
@@ -60,42 +93,61 @@ public abstract class TypePropertyComponent<T>()
     /// <inheritdoc/>
     protected sealed override void RegisterInputParams(GH_InputParamManager pManager)
     {
-        var keyParam = CreateTypeParam();
-        pManager.AddParameter(keyParam, keyParam.Name, keyParam.NickName, keyParam.Description, GH_ParamAccess.item);
+        int start = 0;
+        _setProps.Clear();
 
-        var setProperties = AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic).ToArray();
-
-        for (int i = 0; i < setProperties.Length; i++)
+        if (_type != TypePropertyType.Ctor)
         {
-            var param = new PropertyParam(setProperties[i], i + 1);
+            var keyParam = CreateTypeParam();
+            pManager.AddParameter(keyParam, keyParam.Name, keyParam.NickName, keyParam.Description, GH_ParamAccess.item);
+            start++;
+        }
 
-            _setProps.Add(param);
+        if (_type != TypePropertyType.Dtor)
+        {
+            var setProperties = AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic).ToArray();
 
-            param.GetNames($"Prop {i}", $"P {i}",
-                out var name, out var nickName, out var description);
+            for (int i = 0; i < setProperties.Length; i++)
+            {
+                var param = new PropertyParam(setProperties[i], i + start);
 
-            pManager.AddParameter(param.CreateParam(), name, nickName, description, param.Access);
+                _setProps.Add(param);
+
+                param.GetNames($"Prop {i}", $"P {i}",
+                    out var name, out var nickName, out var description);
+
+                pManager.AddParameter(param.CreateParam(), name, nickName, description, param.Access);
+            }
         }
     }
 
     /// <inheritdoc/>
     protected sealed override void RegisterOutputParams(GH_OutputParamManager pManager)
     {
-        var keyParam = CreateTypeParam();
-        pManager.AddParameter(keyParam, keyParam.Name, keyParam.NickName, keyParam.Description, GH_ParamAccess.item);
+        int start = 0;
+        _getProps.Clear();
 
-        var getProperties = AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic).ToArray();
-
-        for (int i = 0; i < getProperties.Length; i++)
+        if (_type != TypePropertyType.Dtor)
         {
-            var param = new PropertyParam(getProperties[i], i + 1);
+            var keyParam = CreateTypeParam();
+            pManager.AddParameter(keyParam, keyParam.Name, keyParam.NickName, keyParam.Description, GH_ParamAccess.item);
+        }
 
-            _getProps.Add(param);
+        if (_type != TypePropertyType.Ctor)
+        {
+            var getProperties = AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic).ToArray();
 
-            param.GetNames($"Prop {i}", $"P {i}",
-                out var name, out var nickName, out var description);
+            for (int i = 0; i < getProperties.Length; i++)
+            {
+                var param = new PropertyParam(getProperties[i], i + start);
 
-            pManager.AddParameter(param.CreateParam(), name, nickName, description, param.Access);
+                _getProps.Add(param);
+
+                param.GetNames($"Prop {i}", $"P {i}",
+                    out var name, out var nickName, out var description);
+
+                pManager.AddParameter(param.CreateParam(), name, nickName, description, param.Access);
+            }
         }
     }
 
@@ -103,7 +155,7 @@ public abstract class TypePropertyComponent<T>()
     protected sealed override void SolveInstance(IGH_DataAccess DA)
     {
         T obj = default!;
-        if (!DA.GetData(0, ref obj))
+        if (_type != TypePropertyType.Ctor || !DA.GetData(0, ref obj))
         {
             if (typeof(T).IsInterface) return;
             obj = (T)typeof(T).CreateInstance();
@@ -120,6 +172,9 @@ public abstract class TypePropertyComponent<T>()
             prop.SetValue(DA, o);
         }
 
-        DA.SetData(0, o);
+        if (_type != TypePropertyType.Dtor)
+        {
+            DA.SetData(0, o);
+        }
     }
 }
