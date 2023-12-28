@@ -1,5 +1,6 @@
 ﻿using Eto.Forms;
 using SimpleGrasshopper.Attributes;
+using System.ComponentModel;
 using System.Drawing;
 
 namespace SimpleGrasshopper.GHTests;
@@ -54,6 +55,7 @@ internal partial class SettingClass
 
 public enum EnumTesting : byte
 {
+    [Description("No. 1")]
     What,
     Why,
     How,

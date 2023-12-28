@@ -3,6 +3,7 @@ using Grasshopper.GUI.Canvas;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
 using SimpleGrasshopper.Attributes;
+using System.ComponentModel;
 using System.Drawing.Imaging;
 using GH_DigitScroller = Grasshopper.GUI.GH_DigitScroller;
 
@@ -439,29 +440,41 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             FlatStyle = FlatStyle.System,
         };
+        ;
         var array = Enum.GetValues(type);
         var objs = new List<object>(array.Length);
         foreach (var enumItem in array)
         {
-            objs.Add(enumItem);
+            objs.Add(new EnumRelay()
+            {
+                Value = enumItem,
+                Name = ((Enum)enumItem).GetDescription(),
+            });
         }
         box.Items.AddRange([.. objs]);
-        box.SelectedItem = e;
+        box.SelectedIndex = Array.IndexOf(array, e);
 
         box.SelectedIndexChanged += (sender, e) =>
         {
             if (sender is not ToolStripComboBox b) return;
-            propertyInfo.SetValue(null, b.SelectedItem);
+            propertyInfo.SetValue(null, ((EnumRelay)b.SelectedItem).Value);
         };
 
         AddPropertyChangedEvent(propertyInfo, (object b) =>
         {
-            box.SelectedItem = b;
+            box.SelectedIndex = Array.IndexOf(array, b);
         });
 
         item.DropDownItems.Add(box);
         AddResetItem(item.DropDownItems, propertyInfo);
         return item;
+    }
+
+    private struct EnumRelay
+    {
+        public string Name;
+        public object Value;
+        public readonly override string ToString() => Name;
     }
 
     private ToolStripItem? CreateIntegerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max)

@@ -467,19 +467,11 @@ internal static class Utils
     {
         if (param is Param_Integer integerParam && rawInnerType.IsEnum)
         {
-            var names = Enum.GetNames(rawInnerType);
-            int index = 0;
             var underType = Enum.GetUnderlyingType(rawInnerType);
             foreach (object obj in Enum.GetValues(rawInnerType))
             {
                 var v = Convert.ToInt32(Convert.ChangeType(obj, underType));
-                var name = names[index++];
-                var members = rawInnerType.GetMember(name);
-                if (members != null && members.Length > 0
-                    && members[0].GetCustomAttribute<DescriptionAttribute>() is DescriptionAttribute attr)
-                {
-                    name = attr.Description;
-                }
+                var name = ((Enum)obj).GetDescription();
                 integerParam.AddNamedValue(name, v);
             }
         }
@@ -491,6 +483,21 @@ internal static class Utils
         {
             previewObject.Hidden = true;
         }
+    }
+
+    public static string GetDescription(this Enum @enum)
+    {
+        return @enum.GetCustomAttribute<DescriptionAttribute>()?.Description ?? @enum.ToString();
+    }
+
+    public static T? GetCustomAttribute<T>(this Enum @enum) where T : Attribute
+    {
+        return @enum.GetMemberInfo()?.GetCustomAttribute<T>();
+    }
+
+    public static MemberInfo? GetMemberInfo(this Enum @enum)
+    {
+        return @enum.GetType().GetMember(@enum.ToString()).FirstOrDefault();
     }
 
     public static bool IsIn(this ParameterInfo info)

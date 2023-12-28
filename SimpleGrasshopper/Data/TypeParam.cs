@@ -15,6 +15,7 @@ internal readonly struct TypeParam
     public Type CreateType { get; }
     public Type InnerType { get; }
     public Type RawInnerType { get; }
+    public Type RawInnerTypeNoGoo { get; }
     public Type CreateInnerType { get; }
 
     public GH_ParamAccess Access { get; }
@@ -32,10 +33,10 @@ internal readonly struct TypeParam
         Access = access;
         RawInnerType = InnerType.GetRawType();
 
-        var rawInnerTypeNoGoo = RawInnerType.IsGeneralType(typeof(GH_Goo<>)) is Type rawType
+        RawInnerTypeNoGoo = RawInnerType.IsGeneralType(typeof(GH_Goo<>)) is Type rawType
             ? rawType.GetRawType() : RawInnerType;
 
-        CreateInnerType = rawInnerTypeNoGoo.IsEnum
+        CreateInnerType = RawInnerTypeNoGoo.IsEnum
             ? (Access == GH_ParamAccess.tree ? typeof(GH_Integer) : typeof(int))
             : InnerType;
 
@@ -46,7 +47,7 @@ internal readonly struct TypeParam
             _ => CreateInnerType,
         };
 
-        ComponentGuid = rawInnerTypeNoGoo.GetDocObjGuid();
+        ComponentGuid = RawInnerTypeNoGoo.GetDocObjGuid();
 
         static Type GetAccessAndType(Type type, out GH_ParamAccess access)
         {

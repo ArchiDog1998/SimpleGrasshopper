@@ -4,6 +4,7 @@ using Grasshopper.Kernel.Types;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.DocumentObjects;
+using System.ComponentModel;
 
 namespace SimpleGrasshopper.GHTests;
 
@@ -97,6 +98,7 @@ internal static class BasicTests
 
 public enum EnumTest : byte
 {
+    [Description("No. 1")]
     First,
     Second,
 }

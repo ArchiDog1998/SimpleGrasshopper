@@ -39,7 +39,7 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
         }
 
         SetOptional(ParamInfo, param, Access);
-        Utils.SetSpecial(ref param, Param.RawInnerType,
+        Utils.SetSpecial(ref param, Param.RawInnerTypeNoGoo,
             ParamInfo.GetCustomAttribute<AngleAttribute>() != null,
             ParamInfo.GetCustomAttribute<HiddenAttribute>() != null);
 
