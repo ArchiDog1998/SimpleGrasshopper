@@ -37,7 +37,7 @@ public class SimpleGoo<T> : GH_Goo<T>
             value = default!;
             return false;
         }
-        value = (TP)property.GetValue(this);
+        value = (TP)property.GetValue(Value);
         return true;
     }
 
