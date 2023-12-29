@@ -10,7 +10,6 @@ public class ConfigAttributeWarning : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         InitOneAttribute(context, "Config", null, null);
-        InitOneAttribute(context, "Range", null, "Config");
 
         InitOneAttribute(context, "ToolButton",
             [
