@@ -10,20 +10,7 @@ public class ConfigAttributeWarning : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         InitOneAttribute(context, "Config", null, null);
-        InitOneAttribute(context, "Range",
-            [
-                "System.Int32",
-                "System.UInt32",
-                "System.Double",
-                "System.Byte",
-                "System.SByte",
-                "System.Int16",
-                "System.UInt16",
-                "System.Int64",
-                "System.UInt64",
-                "System.Single",
-                "System.Decimal",
-            ], "Config");
+        InitOneAttribute(context, "Range", null, "Config");
 
         InitOneAttribute(context, "ToolButton",
             [
