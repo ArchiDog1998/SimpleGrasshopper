@@ -2,9 +2,11 @@
 using Grasshopper.GUI.Canvas;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
+using Rhino.Commands;
 using SimpleGrasshopper.Attributes;
 using System.ComponentModel;
 using System.Drawing.Imaging;
+using static System.Collections.Specialized.BitVector32;
 using GH_DigitScroller = Grasshopper.GUI.GH_DigitScroller;
 
 namespace SimpleGrasshopper.Util;
@@ -237,12 +239,23 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             major = ToBoolItem(major, majorProperty);
         }
 
-        major.DropDownItems.AddRange(items);
+
+        foreach (var grp in items.GroupBy(c => c.Item2).OrderBy(g => g.Key))
+        {
+            if (major.HasDropDownItems)
+            {
+                GH_Component.Menu_AppendSeparator(major.DropDown);
+            }
+            foreach (var item in grp.OrderBy(c => c.Item3))
+            {
+                major.DropDownItems.Add(item.Item1);
+            }
+        }
 
         return major;
     }
 
-    private ToolStripItem[] GetAllItems(List<PropertyInfo?> propertyInfos)
+    private (ToolStripItem, byte, ushort)[] GetAllItems(List<PropertyInfo?> propertyInfos)
     {
         var parentList = new List<ToolStripMenuItem>(propertyInfos.Count);
         var flattenList = new List<(ToolStripItem, string, byte, ushort)>(propertyInfos.Count);
@@ -265,7 +278,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             }
         }
 
-        var result = new List<ToolStripItem>(flattenList.Count);
+        var result = new List<(ToolStripItem, byte, ushort)>(flattenList.Count);
         var sectionDict = new Dictionary<ToolStripMenuItem, List<(ToolStripItem, byte, ushort)>>();
         foreach (var (item, parent, section, order) in flattenList)
         {
@@ -280,7 +293,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
                     continue;
                 }
             }
-            result.Add(item);
+            result.Add((item, section, order));
         }
 
         foreach (var pair in sectionDict)
