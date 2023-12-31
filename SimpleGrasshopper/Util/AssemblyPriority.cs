@@ -239,6 +239,10 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             major = ToBoolItem(major, majorProperty);
         }
 
+        major.DropDown.Closing += (sender, e) =>
+        {
+            e.Cancel = e.CloseReason is ToolStripDropDownCloseReason.ItemClicked;
+        };
 
         foreach (var grp in items.GroupBy(c => c.Item2).OrderBy(g => g.Key))
         {
