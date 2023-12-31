@@ -44,7 +44,7 @@ internal partial class SettingClass
     }
 
     #region For the case you want your property can be reset. not suggested.
-    public static event Action<object>? OnTestChanged;
+    public static event Action<EnumTesting>? OnTestChanged;
     public static void ResetTest()
     {
         Test = EnumTesting.What;

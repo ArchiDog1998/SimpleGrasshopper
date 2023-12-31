@@ -263,7 +263,7 @@ internal static class Utils
         catch
         {
 #if DEBUG
-            throw;
+            //throw;
 #endif
         }
 

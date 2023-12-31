@@ -460,14 +460,26 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             propertyInfo.SetValue(null, ((EnumRelay)b.SelectedItem).Value);
         };
 
-        AddPropertyChangedEvent(propertyInfo, (object b) =>
-        {
-            box.SelectedIndex = Array.IndexOf(array, b);
-        });
+        var method = typeof(AssemblyPriority).GetAllRuntimeMethods()
+            .First(m => m.Name == nameof(GetSettingDelegate))
+            .MakeGenericMethod(type);
+
+        var dele = method.Invoke(null, [array, box]);
+
+        method = typeof(AssemblyPriority).GetAllRuntimeMethods()
+            .First(m => m.Name == nameof(AddPropertyChangedEvent))
+            .MakeGenericMethod(type);
+
+        method.Invoke(null, [propertyInfo, dele]);
 
         item.DropDownItems.Add(box);
         AddResetItem(item.DropDownItems, propertyInfo);
         return item;
+    }
+
+    private static Action<T> GetSettingDelegate<T>(Array array, ToolStripComboBox box)
+    {
+        return (b) => box.SelectedIndex = Array.IndexOf(array, b);
     }
 
     private struct EnumRelay
