@@ -157,6 +157,10 @@ internal static class Utils
             {
                 if (type == rawType) return param.ComponentGuid;
             }
+            foreach (var info in gooType.GetRuntimeProperties().Where(p => p.Name == "Value"))
+            {
+                if (type == info.PropertyType) return param.ComponentGuid;
+            }
 
             return null;
         }
