@@ -155,7 +155,7 @@ public abstract class TypePropertyComponent<T>()
     protected sealed override void SolveInstance(IGH_DataAccess DA)
     {
         T obj = default!;
-        if (_type != TypePropertyType.Ctor || !DA.GetData(0, ref obj))
+        if (_type != TypePropertyType.Dtor || !DA.GetData(0, ref obj))
         {
             if (typeof(T).IsInterface) return;
             obj = (T)typeof(T).CreateInstance();
