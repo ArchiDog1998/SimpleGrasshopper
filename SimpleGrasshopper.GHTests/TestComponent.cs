@@ -1,5 +1,4 @@
 ﻿using Grasshopper.Kernel;
-using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.DocumentObjects;
 using System.Reflection;
 

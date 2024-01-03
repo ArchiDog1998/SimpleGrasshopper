@@ -1,6 +1,5 @@
 ﻿using GH_IO.Serialization;
 using Grasshopper.Kernel.Types;
-using Newtonsoft.Json;
 using SimpleGrasshopper.Util;
 
 namespace SimpleGrasshopper.Data;
@@ -61,7 +60,7 @@ public class SimpleGoo<T> : GH_Goo<T>
 
         try
         {
-            if (Utils.GetOperatorCast(type, type, sType) is MethodInfo method)
+            if (SimpleUtils.GetOperatorCast(type, type, sType) is MethodInfo method)
             {
                 Value = (T)method.Invoke(null, [source]);
                 return true;
@@ -69,7 +68,7 @@ public class SimpleGoo<T> : GH_Goo<T>
 
             if (source is IGH_Goo
                 && sType.GetRuntimeProperty("Value") is PropertyInfo property
-                && Utils.GetOperatorCast(type, type, property.PropertyType) is MethodInfo method1)
+                && SimpleUtils.GetOperatorCast(type, type, property.PropertyType) is MethodInfo method1)
             {
                 var v = property.GetValue(source);
                 Value = (T)method1.Invoke(null, [v]);
@@ -99,7 +98,7 @@ public class SimpleGoo<T> : GH_Goo<T>
 
         try
         {
-            if (Utils.GetOperatorCast(type, QType, type) is MethodInfo method)
+            if (SimpleUtils.GetOperatorCast(type, QType, type) is MethodInfo method)
             {
                 target = (Q)method.Invoke(null, [Value]);
                 return true;
@@ -107,7 +106,7 @@ public class SimpleGoo<T> : GH_Goo<T>
 
             if (target is IGH_Goo
                 && QType.GetRuntimeProperty("Value") is PropertyInfo property
-                && Utils.GetOperatorCast(type, property.PropertyType, type) is MethodInfo method1)
+                && SimpleUtils.GetOperatorCast(type, property.PropertyType, type) is MethodInfo method1)
             {
                 var v = method1.Invoke(null, [Value]);
                 property.SetValue(target, v);
@@ -126,17 +125,9 @@ public class SimpleGoo<T> : GH_Goo<T>
     /// <inheritdoc/>
     public override bool Read(GH_IReader reader)
     {
-        string str = string.Empty;
-        if (reader.TryGetString(nameof(m_value), ref str))
+        if (reader.Read<T>("Value", out var value))
         {
-            try
-            {
-                m_value = JsonConvert.DeserializeObject<T>(str)!;
-            }
-            catch
-            {
-
-            }
+            m_value = value;
         }
         return base.Read(reader);
     }
@@ -144,7 +135,10 @@ public class SimpleGoo<T> : GH_Goo<T>
     /// <inheritdoc/>
     public override bool Write(GH_IWriter writer)
     {
-        writer.SetString(nameof(m_value), JsonConvert.SerializeObject(m_value));
+        if(m_value != null)
+        {
+            writer.Write("Value", m_value);
+        }
         return base.Write(writer);
     }
 }

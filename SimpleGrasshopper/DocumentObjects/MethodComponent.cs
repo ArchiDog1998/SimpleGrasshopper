@@ -33,6 +33,8 @@ public abstract class MethodComponent(
     private ParameterParam? _resultParam = null;
 
     private int _methodIndex = 0;
+
+    [DocData]
     private int MethodIndex
     {
         get => _methodIndex;
@@ -368,18 +370,14 @@ public abstract class MethodComponent(
     /// <inheritdoc/>
     public override bool Read(GH_IReader reader)
     {
-        int index = 0;
-        if(reader.TryGetInt32(nameof(_methodIndex), ref index))
-        {
-            MethodIndex = index;
-        }
+        reader.Read(this);
         return base.Read(reader);
     }
 
     /// <inheritdoc/>
     public override bool Write(GH_IWriter writer)
     {
-        writer.SetInt32(nameof(_methodIndex), MethodIndex);
+        writer.Write(this);
         return base.Write(writer);
     }
 

@@ -9,10 +9,6 @@ using System.Reflection;
 
 namespace SimpleGrasshopper.GHTests;
 
-[TypeComponent("Type Methods", "methods", null, "Methods")]
-[PropertyComponent]
-[Icon("CurveRenderAttributeParameter_24-24.png")]
-[DocObj("My type", "just a type", "Testing type.")]
 public interface ITypeTest : IPreviewData, IGH_BakeAwareData
 {
     [DocObj("Value", "V", "")]
@@ -24,6 +20,12 @@ public interface ITypeTest : IPreviewData, IGH_BakeAwareData
     [DocObj("Reduce Property", "R P", "Testing")]
     void ReduceValue(int value);
 }
+
+[Serializable]
+[TypeComponent("Type Methods", "methods", null, "Methods")]
+[PropertyComponent]
+[Icon("CurveRenderAttributeParameter_24-24.png")]
+[DocObj("My type", "just a type", "Testing type.")]
 
 public class TypeTest : ITypeTest
 {

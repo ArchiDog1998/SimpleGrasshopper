@@ -36,7 +36,7 @@ internal readonly struct PropertyParam(PropertyInfo info, int index)
 
         param.Optional = true;
 
-        Utils.SetSpecial(ref param, Param.RawInnerTypeNoGoo,
+        SimpleUtils.SetSpecial(ref param, Param.RawInnerTypeNoGoo,
             PropInfo.GetCustomAttribute<AngleAttribute>() != null,
             PropInfo.GetCustomAttribute<HiddenAttribute>() != null);
         return param;
@@ -51,9 +51,9 @@ internal readonly struct PropertyParam(PropertyInfo info, int index)
 
         //Modify range
         var messages = PropInfo.GetCustomAttribute<RangeAttribute>() is RangeAttribute range
-            ? Utils.ModifyRange(ref value, range, Access) : [];
+            ? SimpleUtils.ModifyRange(ref value, range, Access) : [];
 
-        Utils.ModifyAngle(ref value, param);
+        SimpleUtils.ModifyAngle(ref value, param);
 
         PropInfo.SetValue(obj, value);
 

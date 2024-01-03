@@ -58,13 +58,8 @@ public class SettingClassGenerator : IIncrementalGenerator
 
                 var fieldTypeStr = field.Declaration.Type;
                 var fieldType = model.GetTypeInfo(fieldTypeStr).Type!;
+                var fieldStr = fieldTypeStr.ToString();
 
-                if (!IsFieldTypeValid(fieldType))
-                {
-                    context.DiagnosticWrongType(fieldTypeStr.GetLocation(),
-                        "This type can't be a grasshopper setting type!");
-                    continue;
-                }
 
                 var names = new List<string>();
                 foreach (var attrSet in field.AttributeLists)
@@ -83,9 +78,17 @@ public class SettingClassGenerator : IIncrementalGenerator
                 }
 
                 string getValueStr, setValueStr;
-                if (fieldType.TypeKind == TypeKind.Enum)
+
+                if (!IsFieldTypeValid(fieldType))
                 {
-                    getValueStr = $"({fieldTypeStr})Enum.ToObject(typeof({fieldTypeStr}), Instances.Settings.GetValue(\"{key}\", Convert.ToInt32({variableName})))";
+                    fieldStr = fieldType.GetFullMetadataName();
+                    getValueStr = $"IOHelper.DeserializeObject<{fieldStr}>(Instances.Settings.GetValue(\"{key}\", string.Empty))";
+                    setValueStr = $"Instances.Settings.SetValue(\"{key}\", IOHelper.SerializeObjectStr(value))";
+                }
+                else if (fieldType.TypeKind == TypeKind.Enum)
+                {
+                    fieldStr = fieldType.GetFullMetadataName();
+                    getValueStr = $"({fieldStr})Enum.ToObject(typeof({fieldStr}), Instances.Settings.GetValue(\"{key}\", Convert.ToInt32({variableName})))";
                     setValueStr = $"Instances.Settings.SetValue(\"{key}\", Convert.ToInt32(value))";
                 }
                 else
@@ -97,7 +100,7 @@ public class SettingClassGenerator : IIncrementalGenerator
                 var attributeStr = names.Count == 0 ? "" : $"[{string.Join(", ", names)}]";
                 var propertyCode = $$"""
                         {{attributeStr}}
-                        public static {{fieldTypeStr}} {{propertyName}}
+                        public static {{fieldStr}} {{propertyName}}
                         {
                             get => {{getValueStr}};
                             set
@@ -110,7 +113,7 @@ public class SettingClassGenerator : IIncrementalGenerator
                             }
                         }
 
-                        public static event Action<{{fieldTypeStr}}> On{{propertyName}}Changed;
+                        public static event Action<{{fieldStr}}> On{{propertyName}}Changed;
 
                         public static void Reset{{propertyName}}()
                         {
@@ -127,6 +130,7 @@ public class SettingClassGenerator : IIncrementalGenerator
              using System.Drawing;
              using SimpleGrasshopper.Attributes;
              using SimpleGrasshopper.Data;
+             using SimpleGrasshopper.Util;
 
              namespace {{nameSpace}}
              {

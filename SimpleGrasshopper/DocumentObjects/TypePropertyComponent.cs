@@ -1,4 +1,5 @@
-﻿using SimpleGrasshopper.Attributes;
+﻿using GH_IO.Serialization;
+using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
 
@@ -131,6 +132,7 @@ public abstract class TypePropertyComponent<T>()
         {
             var keyParam = CreateTypeParam();
             pManager.AddParameter(keyParam, keyParam.Name, keyParam.NickName, keyParam.Description, GH_ParamAccess.item);
+            start++;
         }
 
         if (_type != TypePropertyType.Ctor)
@@ -155,7 +157,7 @@ public abstract class TypePropertyComponent<T>()
     protected sealed override void SolveInstance(IGH_DataAccess DA)
     {
         T obj = default!;
-        if (_type != TypePropertyType.Dtor || !DA.GetData(0, ref obj))
+        if (_type == TypePropertyType.Ctor || !DA.GetData(0, ref obj))
         {
             if (typeof(T).IsInterface) return;
             obj = (T)typeof(T).CreateInstance();
@@ -176,5 +178,19 @@ public abstract class TypePropertyComponent<T>()
         {
             DA.SetData(0, o);
         }
+    }
+
+    /// <inheritdoc/>
+    public override bool Read(GH_IReader reader)
+    {
+        reader.Read(this);
+        return base.Read(reader);
+    }
+
+    /// <inheritdoc/>
+    public override bool Write(GH_IWriter writer)
+    {
+        writer.Write(this);
+        return base.Write(writer);
     }
 }

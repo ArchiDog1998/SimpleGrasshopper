@@ -39,7 +39,7 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
         }
 
         SetOptional(ParamInfo, param, Access);
-        Utils.SetSpecial(ref param, Param.RawInnerTypeNoGoo,
+        SimpleUtils.SetSpecial(ref param, Param.RawInnerTypeNoGoo,
             ParamInfo.GetCustomAttribute<AngleAttribute>() != null,
             ParamInfo.GetCustomAttribute<HiddenAttribute>() != null);
 
@@ -100,9 +100,9 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
 
         //Modify range
         var messages = ParamInfo.GetCustomAttribute<RangeAttribute>() is RangeAttribute range
-            ? Utils.ModifyRange(ref value, range, Access) : [];
+            ? SimpleUtils.ModifyRange(ref value, range, Access) : [];
 
-        Utils.ModifyAngle(ref value, param);
+        SimpleUtils.ModifyAngle(ref value, param);
 
         param.AddRuntimeMessages(messages);
 
