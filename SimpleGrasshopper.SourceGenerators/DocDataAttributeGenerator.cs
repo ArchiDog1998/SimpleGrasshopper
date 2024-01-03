@@ -36,6 +36,14 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
             var propertyCodes = new List<string>();
             foreach (var (variableInfo, model) in grp)
             {
+                var typeSymbol = model.GetDeclaredSymbol(type) as ITypeSymbol;
+
+                //GH_ISerializable
+                if (typeSymbol?.AllInterfaces.Any(i => i.GetFullMetadataName() == "GH_IO.GH_ISerializable") ?? false)
+                {
+                    continue;
+                }
+
                 var field = (FieldDeclarationSyntax)variableInfo.Parent!.Parent!;
 
                 var variableName = variableInfo.Identifier.ToString();
@@ -65,19 +73,19 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
                 if (!SettingClassGenerator.IsFieldTypeValid(fieldType))
                 {
                     fieldStr = fieldType.GetFullMetadataName();
-                    getValueStr = $"IOHelper.DeserializeObject<{fieldStr}>(GetDocument()?.ValueTable.GetValue(\"{key}\", string.Empty) ?? string.Empty)";
-                    setValueStr = $"GetDocument()?.ValueTable.SetValue(\"{key}\", IOHelper.SerializeObjectStr(value))";
+                    getValueStr = $"IOHelper.DeserializeObject<{fieldStr}>(AssemblyPriority.GetDocument()?.ValueTable.GetValue(\"{key}\", string.Empty) ?? string.Empty)";
+                    setValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.SetValue(\"{key}\", IOHelper.SerializeObjectStr(value))";
                 }
                 else if (fieldType.TypeKind == TypeKind.Enum)
                 {
                     fieldStr = fieldType.GetFullMetadataName();
-                    getValueStr = $"({fieldStr})Enum.ToObject(typeof({fieldStr}), GetDocument()?.ValueTable.GetValue(\"{key}\", Convert.ToInt32({variableName})) ?? default!)";
-                    setValueStr = $"GetDocument()?.ValueTable.SetValue(\"{key}\", Convert.ToInt32(value))";
+                    getValueStr = $"({fieldStr})Enum.ToObject(typeof({fieldStr}), AssemblyPriority.GetDocument()?.ValueTable.GetValue(\"{key}\", Convert.ToInt32({variableName})) ?? default!)";
+                    setValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.SetValue(\"{key}\", Convert.ToInt32(value))";
                 }
                 else
                 {
-                    getValueStr = $"GetDocument()?.ValueTable.GetValue(\"{key}\", {variableName}) ?? default!";
-                    setValueStr = $"GetDocument()?.ValueTable.SetValue(\"{key}\", value)";
+                    getValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.GetValue(\"{key}\", {variableName}) ?? default!";
+                    setValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.SetValue(\"{key}\", value)";
                 }
 
                 var propertyCode = $$"""
@@ -105,6 +113,8 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
                 propertyCodes.Add(propertyCode);
             }
 
+            if (propertyCodes.Count == 0) continue;
+
             var code = $$"""
              using Grasshopper;
              using Grasshopper.Kernel;
@@ -118,7 +128,6 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
              {
                  partial {{classType}} {{className}}
                  {
-                     public static Func<GH_Document> GetDocument { get; set; } = () => Instances.ActiveCanvas.Document;
 
              {{string.Join("\n \n", propertyCodes)}}
 

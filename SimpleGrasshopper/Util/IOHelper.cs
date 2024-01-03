@@ -1,4 +1,5 @@
-﻿using GH_IO.Serialization;
+﻿using GH_IO;
+using GH_IO.Serialization;
 using GH_IO.Types;
 using SimpleGrasshopper.Attributes;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -11,7 +12,12 @@ namespace SimpleGrasshopper.Util;
 /// </summary>
 public static class IOHelper
 {
-    internal static void Read(this GH_IReader reader, object obj)
+    /// <summary>
+    /// Read from an obj.
+    /// </summary>
+    /// <param name="reader"></param>
+    /// <param name="obj"></param>
+    public static void Read(this GH_IReader reader, GH_ISerializable obj)
     {
         foreach (var field in obj.GetType().GetAllRuntimeFields())
         {
@@ -317,7 +323,12 @@ public static class IOHelper
         return false;
     }
 
-    internal static void Write(this GH_IWriter writer, object obj)
+    /// <summary>
+    /// Write to an obj.
+    /// </summary>
+    /// <param name="writer"></param>
+    /// <param name="obj"></param>
+    public static void Write(this GH_IWriter writer, GH_ISerializable obj)
     {
         foreach (var field in obj.GetType().GetAllRuntimeFields())
         {

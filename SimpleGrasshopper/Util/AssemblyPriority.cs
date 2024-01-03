@@ -2,11 +2,8 @@
 using Grasshopper.GUI.Canvas;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
-using Rhino.Commands;
 using SimpleGrasshopper.Attributes;
-using System.ComponentModel;
 using System.Drawing.Imaging;
-using static System.Collections.Specialized.BitVector32;
 using GH_DigitScroller = Grasshopper.GUI.GH_DigitScroller;
 
 namespace SimpleGrasshopper.Util;
@@ -16,6 +13,17 @@ namespace SimpleGrasshopper.Util;
 /// </summary>
 public abstract class AssemblyPriority : GH_AssemblyPriority
 {
+    /// <summary>
+    /// The working document.
+    /// </summary>
+    [ThreadStatic]
+    public static Func<GH_Document> GetDocument = () => Instances.ActiveCanvas.Document;
+
+    /// <summary>
+    /// Default way to get the document.
+    /// </summary>
+    public static readonly Func<GH_Document> GetDocumentDefault = () => Instances.ActiveCanvas.Document;
+
     private static Bitmap? _bitmap = null;
     private static Bitmap ResetIcon => _bitmap ??= typeof(AssemblyPriority).Assembly.GetBitmap("ResetIcons_24.png")!;
 

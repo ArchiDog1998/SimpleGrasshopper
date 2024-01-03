@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace SimpleGrasshopper.GHTests;
 
-public  abstract class TestComponent(MethodInfo[] methodInfos, string? name = null, string? nickName = null, string? description = null, string? subCategory = null, string? iconPath = null, GH_Exposure? exposure = null, string? message = null, bool isParallel = false) 
+public abstract class TestComponent(MethodInfo[] methodInfos, string? name = null, string? nickName = null, string? description = null, string? subCategory = null, string? iconPath = null, GH_Exposure? exposure = null, string? message = null, bool isParallel = false) 
     : MethodComponent(methodInfos, name, nickName, description, subCategory, iconPath, exposure, message, isParallel)
 {
 }

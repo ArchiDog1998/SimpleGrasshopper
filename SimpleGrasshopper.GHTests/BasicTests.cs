@@ -83,9 +83,9 @@ internal static class BasicTests
         var t = ___instance.GetType();
     }
 
-    private static void SaveTest(out string output, string input = null!)
+    private static void SaveTest(MethodComponent ___instance, out string output, string input = null!)
     {
-        if(!string.IsNullOrEmpty(input))
+        if (!string.IsNullOrEmpty(input))
         {
             SettingClass.TestingValue = input;
         }

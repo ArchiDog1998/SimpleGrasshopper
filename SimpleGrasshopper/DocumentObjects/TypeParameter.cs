@@ -1,4 +1,5 @@
-﻿using SimpleGrasshopper.Attributes;
+﻿using GH_IO.Serialization;
+using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
 
@@ -59,5 +60,19 @@ public abstract class TypeParameter<T>()
         {
             return GH_GetterResult.cancel;
         }
+    }
+
+    /// <inheritdoc/>
+    public override bool Read(GH_IReader reader)
+    {
+        reader.Read(this);
+        return base.Read(reader);
+    }
+
+    /// <inheritdoc/>
+    public override bool Write(GH_IWriter writer)
+    {
+        writer.Write(this);
+        return base.Write(writer);
     }
 }

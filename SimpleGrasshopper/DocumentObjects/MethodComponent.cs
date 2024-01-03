@@ -509,4 +509,18 @@ public abstract class MethodComponent(
     {
         return new GH_ComponentAttributes(this);
     }
+
+    /// <inheritdoc/>
+    protected override void BeforeSolveInstance()
+    {
+        AssemblyPriority.GetDocument = OnPingDocument;
+        base.BeforeSolveInstance();
+    }
+
+    /// <inheritdoc/>
+    protected override void AfterSolveInstance()
+    {
+        AssemblyPriority.GetDocument = AssemblyPriority.GetDocumentDefault;
+        base.AfterSolveInstance();
+    }
 }
