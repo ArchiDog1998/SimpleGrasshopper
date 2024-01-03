@@ -9,9 +9,9 @@ namespace SimpleGrasshopper.Util;
 /// <summary>
 /// For save and load in Grasshopper.
 /// </summary>
-internal static class IOHelper
+public static class IOHelper
 {
-    public static void Read(this GH_IReader reader, object obj)
+    internal static void Read(this GH_IReader reader, object obj)
     {
         foreach (var field in obj.GetType().GetAllRuntimeFields())
         {
@@ -41,14 +41,14 @@ internal static class IOHelper
         }
     }
 
-    public static bool Read<T>(this GH_IReader reader, string name, out T value)
+    internal static bool Read<T>(this GH_IReader reader, string name, out T value)
     {
         var result = reader.Read(name, typeof(T), out var v);
         value = result ? (T)v : default!;
         return result;
     }
 
-    public static bool Read(this GH_IReader reader, string name, Type type, out object value)
+    internal static bool Read(this GH_IReader reader, string name, Type type, out object value)
     {
         if (type == typeof(bool))
         {
@@ -317,7 +317,7 @@ internal static class IOHelper
         return false;
     }
 
-    public static void Write(this GH_IWriter writer, object obj)
+    internal static void Write(this GH_IWriter writer, object obj)
     {
         foreach (var field in obj.GetType().GetAllRuntimeFields())
         {
@@ -341,7 +341,7 @@ internal static class IOHelper
         Write(writer, info.Name, info.GetValue(obj));
     }
 
-    public static void Write(this GH_IWriter writer, string name, object value)
+    internal static void Write(this GH_IWriter writer, string name, object value)
     {
         var type = value.GetType();
 
@@ -468,7 +468,7 @@ internal static class IOHelper
     }
 
     #region Serialization
-
+    static readonly List<Type> _unserializedTypes = [];
     /// <summary>
     /// Serialize an object.
     /// </summary>
@@ -476,14 +476,20 @@ internal static class IOHelper
     /// <returns></returns>
     public static byte[] SerializeObject(object obj)
     {
-        if (obj.GetType().GetCustomAttribute<SerializableAttribute>() == null)
+        var type = obj.GetType();
+        if (_unserializedTypes.Contains(type)) return [];
+        try
         {
+            BinaryFormatter bf = new BinaryFormatter();
+            using var ms = new MemoryStream();
+            bf.Serialize(ms, obj);
+            return ms.ToArray();
+        }
+        catch
+        {
+            _unserializedTypes.Add(type);
             return [];
         }
-        BinaryFormatter bf = new BinaryFormatter();
-        using var ms = new MemoryStream();
-        bf.Serialize(ms, obj);
-        return ms.ToArray();
     }
 
     /// <summary>

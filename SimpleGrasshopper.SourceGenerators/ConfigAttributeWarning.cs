@@ -13,8 +13,6 @@ public class ConfigAttributeWarning : IIncrementalGenerator
 
         InitOneAttribute(context, "ToolButton",
             [
-                "bool",
-                "Boolean",
                 "System.Boolean",
             ], null);
     }

@@ -6,15 +6,16 @@ using System.Collections.Immutable;
 namespace SimpleGrasshopper.SourceGenerators;
 
 [Generator(LanguageNames.CSharp)]
-public class SettingClassGenerator : IIncrementalGenerator
+
+public class DocDataAttributeGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var provider = context.SyntaxProvider.ForAttributeWithMetadataName
-("SimpleGrasshopper.Attributes.SettingAttribute",
-    static (node, _) => node is VariableDeclaratorSyntax { Parent: VariableDeclarationSyntax { Parent: FieldDeclarationSyntax { Parent: ClassDeclarationSyntax or StructDeclarationSyntax } } },
-    static (n, ct) => ((VariableDeclaratorSyntax)n.TargetNode, n.SemanticModel))
-    .Where(m => m.Item1 != null);
+            ("SimpleGrasshopper.Attributes.DocDataAttribute",
+            static (node, _) => node is VariableDeclaratorSyntax { Parent: VariableDeclarationSyntax { Parent: FieldDeclarationSyntax { Parent: ClassDeclarationSyntax or StructDeclarationSyntax } } },
+            static (n, ct) => ((VariableDeclaratorSyntax)n.TargetNode, n.SemanticModel))
+            .Where(m => m.Item1 != null);
         context.RegisterSourceOutput(provider.Collect(), Execute);
     }
 
@@ -59,46 +60,27 @@ public class SettingClassGenerator : IIncrementalGenerator
                 var fieldType = model.GetTypeInfo(fieldTypeStr).Type!;
                 var fieldStr = fieldTypeStr.ToString();
 
-
-                var names = new List<string>();
-                foreach (var attrSet in field.AttributeLists)
-                {
-                    if (attrSet == null) continue;
-                    foreach (var attr in attrSet.Attributes)
-                    {
-                        if (model.GetSymbolInfo(attr).Symbol?.GetFullMetadataName()
-                            is "SimpleGrasshopper.Attributes.ConfigAttribute"
-                            or "SimpleGrasshopper.Attributes.RangeAttribute"
-                            or "SimpleGrasshopper.Attributes.ToolButtonAttribute")
-                        {
-                            names.Add(attr.ToString());
-                        }
-                    }
-                }
-
                 string getValueStr, setValueStr;
 
-                if (!IsFieldTypeValid(fieldType))
+                if (!SettingClassGenerator.IsFieldTypeValid(fieldType))
                 {
                     fieldStr = fieldType.GetFullMetadataName();
-                    getValueStr = $"IOHelper.DeserializeObject<{fieldStr}>(Instances.Settings.GetValue(\"{key}\", string.Empty))";
-                    setValueStr = $"Instances.Settings.SetValue(\"{key}\", IOHelper.SerializeObjectStr(value))";
+                    getValueStr = $"IOHelper.DeserializeObject<{fieldStr}>(GetDocument()?.ValueTable.GetValue(\"{key}\", string.Empty) ?? string.Empty)";
+                    setValueStr = $"GetDocument()?.ValueTable.SetValue(\"{key}\", IOHelper.SerializeObjectStr(value))";
                 }
                 else if (fieldType.TypeKind == TypeKind.Enum)
                 {
                     fieldStr = fieldType.GetFullMetadataName();
-                    getValueStr = $"({fieldStr})Enum.ToObject(typeof({fieldStr}), Instances.Settings.GetValue(\"{key}\", Convert.ToInt32({variableName})))";
-                    setValueStr = $"Instances.Settings.SetValue(\"{key}\", Convert.ToInt32(value))";
+                    getValueStr = $"({fieldStr})Enum.ToObject(typeof({fieldStr}), GetDocument()?.ValueTable.GetValue(\"{key}\", Convert.ToInt32({variableName})) ?? default!)";
+                    setValueStr = $"GetDocument()?.ValueTable.SetValue(\"{key}\", Convert.ToInt32(value))";
                 }
                 else
                 {
-                    getValueStr = $"Instances.Settings.GetValue(\"{key}\", {variableName})";
-                    setValueStr = $"Instances.Settings.SetValue(\"{key}\", value)";
+                    getValueStr = $"GetDocument()?.ValueTable.GetValue(\"{key}\", {variableName}) ?? default!";
+                    setValueStr = $"GetDocument()?.ValueTable.SetValue(\"{key}\", value)";
                 }
 
-                var attributeStr = names.Count == 0 ? "" : $"[{string.Join(", ", names)}]";
                 var propertyCode = $$"""
-                        {{attributeStr}}
                         public static {{fieldStr}} {{propertyName}}
                         {
                             get => {{getValueStr}};
@@ -108,7 +90,7 @@ public class SettingClassGenerator : IIncrementalGenerator
                                 {{setValueStr}};
 
                                 On{{propertyName}}Changed?.Invoke(value);
-                                OnPropertyChanged?.Invoke("{{propertyName}}", value);
+                                OnDataPropertyChanged?.Invoke("{{propertyName}}", value);
                             }
                         }
 
@@ -125,6 +107,7 @@ public class SettingClassGenerator : IIncrementalGenerator
 
             var code = $$"""
              using Grasshopper;
+             using Grasshopper.Kernel;
              using System;
              using System.Drawing;
              using SimpleGrasshopper.Attributes;
@@ -135,9 +118,11 @@ public class SettingClassGenerator : IIncrementalGenerator
              {
                  partial {{classType}} {{className}}
                  {
+                     public static Func<GH_Document> GetDocument { get; set; } = () => Instances.ActiveCanvas.Document;
+
              {{string.Join("\n \n", propertyCodes)}}
 
-                     public static event Action<string, object> OnPropertyChanged;
+                     public static event Action<string, object> OnDataPropertyChanged;
                  }
              }
              """;
@@ -145,38 +130,4 @@ public class SettingClassGenerator : IIncrementalGenerator
             context.AddSource($"{nameSpace}_{className}.g.cs", code);
         }
     }
-
-    private static readonly string[] _validTypes =
-        [
-            "System.Drawing.Color",
-            "System.Drawing.Point",
-            "System.Drawing.Rectangle",
-            "System.Drawing.Size",
-        ];
-    public static bool IsFieldTypeValid(ITypeSymbol typeSymbol)
-    {
-        if (typeSymbol.TypeKind == TypeKind.Enum) return true;
-
-        var typeName = typeSymbol.GetFullMetadataName();
-        if (typeSymbol.SpecialType
-            is SpecialType.System_Boolean
-            or SpecialType.System_Byte
-            or SpecialType.System_Double
-            or SpecialType.System_DateTime
-            or SpecialType.System_Int32
-            or SpecialType.System_String)
-        {
-            return true;
-        }
-
-        foreach (var validType in _validTypes)
-        {
-            if (typeName == validType)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
 }

@@ -83,9 +83,13 @@ internal static class BasicTests
         var t = ___instance.GetType();
     }
 
-    private static void SaveTest(int a, int b)
+    private static void SaveTest(out string output, string input = null!)
     {
-
+        if(!string.IsNullOrEmpty(input))
+        {
+            SettingClass.TestingValue = input;
+        }
+        output = SettingClass.TestingValue;
     }
 
     [DocObj("Tag", "T", "T")]

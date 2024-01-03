@@ -7,6 +7,15 @@ namespace SimpleGrasshopper.GHTests;
 
 internal partial class SettingClass
 {
+    [DocData]
+    private static readonly string _testingValue = "Hello";
+
+    [DocData]
+    private static readonly EnumTesting _testingEnum = EnumTesting.How;
+
+    [DocData]
+    private static readonly TypeTest _testingData = null!;
+
     [Setting, Config("Major Bool")]
     private static readonly bool firstSetting = true;
 
