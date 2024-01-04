@@ -32,7 +32,7 @@ public abstract class MethodComponent(
     private readonly List<MemberParam> _memberParams = [];
     private ParameterParam? _resultParam = null;
 
-    private int _methodIndex = 0;
+    private int _methodIndex = -1;
 
     [DocData]
     private int MethodIndex
@@ -84,7 +84,7 @@ public abstract class MethodComponent(
     /// <summary>
     /// The method that this component is using.
     /// </summary>
-    public MethodInfo MethodInfo => methodInfos[MethodIndex];
+    public MethodInfo MethodInfo => methodInfos[Math.Max(0, MethodIndex)];
 
     /// <inheritdoc/>
     public override string Category
@@ -118,7 +118,10 @@ public abstract class MethodComponent(
         {
             if (_icons.TryGetValue(MethodIndex, out Bitmap? icon)) return icon;
 
-            var path = MethodInfo.GetCustomAttribute<IconAttribute>()?.IconPath ?? iconPath;
+            var path = MethodIndex < 0
+                ? iconPath ?? MethodInfo.GetCustomAttribute<IconAttribute>()?.IconPath
+                : MethodInfo.GetCustomAttribute<IconAttribute>()?.IconPath ?? iconPath;
+
             if (path == null) return base.Icon;
 
             return _icons[MethodIndex] = GetType().Assembly.GetBitmap(path) ?? base.Icon;
@@ -171,6 +174,10 @@ public abstract class MethodComponent(
     public override void AddedToDocument(GH_Document document)
     {
         this.UseTasks = isParallel || MethodInfo.GetCustomAttribute<ParallelAttribute>() != null;
+        if (MethodIndex < 0)
+        {
+            _methodIndex = 0;
+        }
         base.AddedToDocument(document);
     }
 
