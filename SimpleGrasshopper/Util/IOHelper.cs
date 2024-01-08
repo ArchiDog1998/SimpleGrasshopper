@@ -1,6 +1,7 @@
 ﻿using GH_IO;
 using GH_IO.Serialization;
 using GH_IO.Types;
+using Newtonsoft.Json;
 using SimpleGrasshopper.Attributes;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
@@ -307,15 +308,11 @@ public static class IOHelper
         }
         else
         {
-            var v = reader.GetByteArray(name);
-            if (v != null)
+            var va = DeserializeObject(name);
+            if (va != null)
             {
-                var va = DeserializeObject(v);
-                if (va != null)
-                {
-                    value = va;
-                    return true;
-                }
+                value = va;
+                return true;
             }
         }
 
@@ -474,7 +471,7 @@ public static class IOHelper
         }
         else
         {
-            writer.SetByteArray(name, SerializeObject(value));
+            writer.SetString(name, SerializeObject(value));
         }
     }
 
@@ -485,33 +482,11 @@ public static class IOHelper
     /// </summary>
     /// <param name="obj"></param>
     /// <returns></returns>
-    public static byte[] SerializeObject(object obj)
+    public static string SerializeObject(object obj)
     {
-        var type = obj.GetType();
-        if (_unserializedTypes.Contains(type)) return [];
-        try
-        {
-            BinaryFormatter bf = new BinaryFormatter();
-            using var ms = new MemoryStream();
-            bf.Serialize(ms, obj);
-            return ms.ToArray();
-        }
-        catch
-        {
-            _unserializedTypes.Add(type);
-            return [];
-        }
+        return JsonConvert.SerializeObject(obj);
     }
 
-    /// <summary>
-    ///  Serialize an object from string.
-    /// </summary>
-    /// <param name="obj"></param>
-    /// <returns></returns>
-    public static string SerializeObjectStr(object obj)
-    {
-        return Encoding.ASCII.GetString(SerializeObject(obj));
-    }
     /// <summary>
     /// Get an object from string.
     /// </summary>
@@ -520,44 +495,17 @@ public static class IOHelper
     /// <returns></returns>
     public static T? DeserializeObject<T>(string str)
     {
-        var obj = DeserializeObject(str);
-        return obj is T t ? t : default;
+        return JsonConvert.DeserializeObject<T>(str);
     }
 
     /// <summary>
-    /// Get an object from byte array.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="bytes"></param>
-    /// <returns></returns>
-    public static T? DeserializeObject<T>(byte[] bytes)
-    {
-        var obj = DeserializeObject(bytes);
-        return obj is T t ? t : default;
-    }
-
-    /// <summary>
-    /// Get an object from string.
+    /// 
     /// </summary>
     /// <param name="str"></param>
     /// <returns></returns>
     public static object? DeserializeObject(string str)
     {
-        return DeserializeObject(Encoding.ASCII.GetBytes(str));
-    }
-
-    /// <summary>
-    /// Get an object from byte array.
-    /// </summary>
-    /// <param name="bytes"></param>
-    /// <returns></returns>
-    public static object? DeserializeObject(byte[] bytes)
-    {
-        using var memStream = new MemoryStream();
-        var binForm = new BinaryFormatter();
-        memStream.Write(bytes, 0, bytes.Length);
-        memStream.Seek(0, SeekOrigin.Begin);
-        return binForm.Deserialize(memStream);
+        return JsonConvert.DeserializeObject(str);
     }
 
     #endregion

@@ -74,7 +74,7 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
                 {
                     fieldStr = fieldType.GetFullMetadataName();
                     getValueStr = $"IOHelper.DeserializeObject<{fieldStr}>(AssemblyPriority.GetDocument()?.ValueTable.GetValue(\"{key}\", string.Empty) ?? string.Empty)";
-                    setValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.SetValue(\"{key}\", IOHelper.SerializeObjectStr(value))";
+                    setValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.SetValue(\"{key}\", IOHelper.SerializeObject(value))";
                 }
                 else if (fieldType.TypeKind == TypeKind.Enum)
                 {
