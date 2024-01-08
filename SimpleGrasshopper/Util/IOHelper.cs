@@ -1,10 +1,7 @@
 ﻿using GH_IO;
 using GH_IO.Serialization;
-using GH_IO.Types;
 using Newtonsoft.Json;
 using SimpleGrasshopper.Attributes;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
 
 namespace SimpleGrasshopper.Util;
 
@@ -57,262 +54,39 @@ public static class IOHelper
 
     internal static bool Read(this GH_IReader reader, string name, Type type, out object value)
     {
-        if (type == typeof(bool))
+        var getMethod = reader.GetType().GetAllRuntimeMethods().FirstOrDefault(m =>
         {
-            bool v = false;
-            if (reader.TryGetBoolean(name, ref v))
+            if (!m.Name.StartsWith("Get")) return false;
+            if (m.ReturnParameter.ParameterType != type) return false;
+            var parameters = m.GetParameters();
+            if (parameters.Length != 1) return false;
+            if (parameters[0].ParameterType != typeof(string)) return false;
+            return true;
+        });
+
+        if (getMethod != null)
+        {
+            try
             {
-                value = v;
-                return true;
+                value = getMethod.Invoke(reader, [name]);
+                return value != null;
             }
-        }
-        else if (type == typeof(byte))
-        {
-            byte v = 0;
-            if (reader.TryGetByte(name, ref v))
+            catch
             {
-                value = v;
-                return true;
             }
-        }
-        else if (type == typeof(int))
-        {
-            int v = 0;
-            if (reader.TryGetInt32(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(long))
-        {
-            long v = 0;
-            if (reader.TryGetInt64(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(float))
-        {
-            float v = 0;
-            if (reader.TryGetSingle(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(double))
-        {
-            double v = 0;
-            if (reader.TryGetDouble(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(decimal))
-        {
-            decimal v = 0;
-            if (reader.TryGetDecimal(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(DateTime))
-        {
-            DateTime v = DateTime.Now;
-            if (reader.TryGetDate(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(Guid))
-        {
-            Guid v = Guid.Empty;
-            if (reader.TryGetGuid(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(string))
-        {
-            string v = string.Empty;
-            if (reader.TryGetString(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(Point))
-        {
-            Point v = default;
-            if (reader.TryGetDrawingPoint(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(PointF))
-        {
-            PointF v = default;
-            if (reader.TryGetDrawingPointF(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(Size))
-        {
-            Size v = default;
-            if (reader.TryGetDrawingSize(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(SizeF))
-        {
-            SizeF v = default;
-            if (reader.TryGetDrawingSizeF(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(Rectangle))
-        {
-            Rectangle v = default;
-            if (reader.TryGetDrawingRectangle(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(RectangleF))
-        {
-            RectangleF v = default;
-            if (reader.TryGetDrawingRectangleF(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(Color))
-        {
-            Color v = default;
-            if (reader.TryGetDrawingColor(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(GH_Point2D))
-        {
-            GH_Point2D v = default;
-            if (reader.TryGetPoint2D(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(GH_Point3D))
-        {
-            GH_Point3D v = default;
-            if (reader.TryGetPoint3D(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(GH_Point4D))
-        {
-            GH_Point4D v = default;
-            if (reader.TryGetPoint4D(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(GH_Interval1D))
-        {
-            GH_Interval1D v = default;
-            if (reader.TryGetInterval1D(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(GH_Interval2D))
-        {
-            GH_Interval2D v = default;
-            if (reader.TryGetInterval2D(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(GH_Line))
-        {
-            GH_Line v = default;
-            if (reader.TryGetLine(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(GH_BoundingBox))
-        {
-            GH_BoundingBox v = default;
-            if (reader.TryGetBoundingBox(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(GH_Plane))
-        {
-            GH_Plane v = default;
-            if (reader.TryGetPlane(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(GH_Version))
-        {
-            GH_Version v = default;
-            if (reader.TryGetVersion(name, ref v))
-            {
-                value = v;
-                return true;
-            }
-        }
-        else if (type == typeof(Bitmap))
-        {
-            value = reader.GetDrawingBitmap(name);
-            return value != null;
-        }
-        else if(type == typeof(byte[]))
-        {
-            value = reader.GetByteArray(name);
-            return value != null;
-        }
-        else if(type == typeof(double[]))
-        {
-            value = reader.GetDoubleArray(name);
-            return value != null;
         }
         else
         {
-            var va = DeserializeObject(name);
-            if (va != null)
+            var str = string.Empty;
+            if (reader.TryGetString(name, ref str))
             {
-                value = va;
-                return true;
+                var va = typeof(IOHelper).GetAllRuntimeMethods().First(m => m.Name == "DeserializeObject")
+                    .MakeGenericMethod(type).Invoke(null, [str]);
+                if (va != null)
+                {
+                    value = va;
+                    return true;
+                }
             }
         }
 
@@ -353,121 +127,19 @@ public static class IOHelper
     {
         var type = value.GetType();
 
-        if (type == typeof(bool))
+        var setMethod = writer.GetType().GetAllRuntimeMethods().FirstOrDefault(m =>
         {
-            writer.SetBoolean(name, (bool)value);
-        }
-        else if (type == typeof(byte))
+            if (!m.Name.StartsWith("Set")) return false;
+            var parameters = m.GetParameters();
+            if (parameters.Length != 2) return false;
+            if (parameters[0].ParameterType != typeof(string)) return false;
+            if (parameters[1].ParameterType != type) return false;
+            return true;
+        });
+
+        if (setMethod != null)
         {
-            writer.SetByte(name, (byte)value);
-        }
-        else if (type == typeof(int))
-        {
-            writer.SetInt32(name, (int)value);
-        }
-        else if (type == typeof(long))
-        {
-            writer.SetInt64(name, (long)value);
-        }
-        else if (type == typeof(float))
-        {
-            writer.SetSingle(name, (float)value);
-        }
-        else if (type == typeof(double))
-        {
-            writer.SetDouble(name, (double)value);
-        }
-        else if (type == typeof(decimal))
-        {
-            writer.SetDecimal(name, (decimal)value);
-        }
-        else if (type == typeof(DateTime))
-        {
-            writer.SetDate(name, (DateTime)value);
-        }
-        else if (type == typeof(Guid))
-        {
-            writer.SetGuid(name, (Guid)value);
-        }
-        else if (type == typeof(string))
-        {
-            writer.SetString(name, (string)value);
-        }
-        else if (type == typeof(Point))
-        {
-            writer.SetDrawingPoint(name, (Point)value);
-        }
-        else if (type == typeof(PointF))
-        {
-            writer.SetDrawingPointF(name, (PointF)value);
-        }
-        else if (type == typeof(Size))
-        {
-            writer.SetDrawingSize(name, (Size)value);
-        }
-        else if (type == typeof(SizeF))
-        {
-            writer.SetDrawingSizeF(name, (SizeF)value);
-        }
-        else if (type == typeof(Rectangle))
-        {
-            writer.SetDrawingRectangle(name, (Rectangle)value);
-        }
-        else if (type == typeof(RectangleF))
-        {
-            writer.SetDrawingRectangleF(name, (RectangleF)value);
-        }
-        else if (type == typeof(Color))
-        {
-            writer.SetDrawingColor(name, (Color)value);
-        }
-        else if (type == typeof(GH_Point2D))
-        {
-            writer.SetPoint2D(name, (GH_Point2D)value);
-        }
-        else if (type == typeof(GH_Point3D))
-        {
-            writer.SetPoint3D(name, (GH_Point3D)value);
-        }
-        else if (type == typeof(GH_Point4D))
-        {
-            writer.SetPoint4D(name, (GH_Point4D)value);
-        }
-        else if (type == typeof(GH_Interval1D))
-        {
-            writer.SetInterval1D(name, (GH_Interval1D)value);
-        }
-        else if (type == typeof(GH_Interval2D))
-        {
-            writer.SetInterval2D(name, (GH_Interval2D)value);
-        }
-        else if (type == typeof(GH_Line))
-        {
-            writer.SetLine(name, (GH_Line)value);
-        }
-        else if (type == typeof(GH_BoundingBox))
-        {
-            writer.SetBoundingBox(name, (GH_BoundingBox)value); 
-        }
-        else if (type == typeof(GH_Plane))
-        {
-            writer.SetPlane(name, (GH_Plane)value); 
-        }
-        else if (type == typeof(GH_Version))
-        {
-            writer.SetVersion(name, (GH_Version)value);
-        }
-        else if (type == typeof(Bitmap))
-        {
-            writer.SetDrawingBitmap(name, (Bitmap)value);
-        }
-        else if (type == typeof(byte[]))
-        {
-            writer.SetByteArray(name, (byte[])value);
-        }
-        else if (type == typeof(double[]))
-        {
-            writer.SetDoubleArray(name, (double[])value);
+            setMethod.Invoke(writer, [name, value]);
         }
         else
         {
@@ -476,7 +148,11 @@ public static class IOHelper
     }
 
     #region Serialization
-    static readonly List<Type> _unserializedTypes = [];
+    static readonly JsonSerializerSettings _setting = new ()
+    {
+        TypeNameHandling = TypeNameHandling.Objects,
+    };
+
     /// <summary>
     /// Serialize an object.
     /// </summary>
@@ -484,7 +160,7 @@ public static class IOHelper
     /// <returns></returns>
     public static string SerializeObject(object obj)
     {
-        return JsonConvert.SerializeObject(obj);
+        return JsonConvert.SerializeObject(obj, _setting);
     }
 
     /// <summary>
@@ -495,18 +171,7 @@ public static class IOHelper
     /// <returns></returns>
     public static T? DeserializeObject<T>(string str)
     {
-        return JsonConvert.DeserializeObject<T>(str);
+        return JsonConvert.DeserializeObject<T>(str, _setting);
     }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="str"></param>
-    /// <returns></returns>
-    public static object? DeserializeObject(string str)
-    {
-        return JsonConvert.DeserializeObject(str);
-    }
-
     #endregion
 }

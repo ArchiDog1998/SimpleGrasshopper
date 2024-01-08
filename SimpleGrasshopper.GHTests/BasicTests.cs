@@ -87,9 +87,13 @@ internal static class BasicTests
     {
         if (!string.IsNullOrEmpty(input))
         {
-            SettingClass.TestingValue = input;
+            SettingClass.TestingData = new TypeTest()
+            {
+                 FirstValue = 15,
+            };
         }
-        output = SettingClass.TestingValue;
+        SettingClass.TestingData ??= new TypeTest();
+        output = SettingClass.TestingData.FirstValue.ToString();
     }
 
     [DocObj("Tag", "T", "T")]
