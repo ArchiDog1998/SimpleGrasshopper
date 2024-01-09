@@ -68,6 +68,22 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
                 var fieldType = model.GetTypeInfo(fieldTypeStr).Type!;
                 var fieldStr = fieldTypeStr.ToString();
 
+                var names = new List<string>();
+                foreach (var attrSet in field.AttributeLists)
+                {
+                    if (attrSet == null) continue;
+                    foreach (var attr in attrSet.Attributes)
+                    {
+                        if (model.GetSymbolInfo(attr).Symbol?.GetFullMetadataName()
+                            is "SimpleGrasshopper.Attributes.ConfigAttribute"
+                            or "SimpleGrasshopper.Attributes.RangeAttribute"
+                            or "SimpleGrasshopper.Attributes.ToolButtonAttribute")
+                        {
+                            names.Add(attr.ToString());
+                        }
+                    }
+                }
+
                 string getValueStr, setValueStr;
 
                 if (!SettingClassGenerator.IsFieldTypeValid(fieldType))
@@ -88,7 +104,9 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
                     setValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.SetValue(\"{key}\", value)";
                 }
 
+                var attributeStr = names.Count == 0 ? "" : $"[{string.Join(", ", names)}]";
                 var propertyCode = $$"""
+                        {{attributeStr}}
                         public static {{fieldStr}} {{propertyName}}
                         {
                             get => {{getValueStr}};
