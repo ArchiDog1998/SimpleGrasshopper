@@ -89,7 +89,7 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
                 if (!SettingClassGenerator.IsFieldTypeValid(fieldType))
                 {
                     fieldStr = fieldType.GetFullMetadataName();
-                    getValueStr = $"IOHelper.DeserializeObject<{fieldStr}>(AssemblyPriority.GetDocument()?.ValueTable.GetValue(\"{key}\", string.Empty) ?? string.Empty)";
+                    getValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.GetValue(\"{key}\", null) is string str ? IOHelper.DeserializeObject<{fieldStr}>(str) : {variableName}";
                     setValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.SetValue(\"{key}\", IOHelper.SerializeObject(value))";
                 }
                 else if (fieldType.TypeKind == TypeKind.Enum)

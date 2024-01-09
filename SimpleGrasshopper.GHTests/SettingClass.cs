@@ -1,5 +1,7 @@
 ﻿using Eto.Forms;
+using Rhino.FileIO;
 using SimpleGrasshopper.Attributes;
+using SimpleGrasshopper.Util;
 using System.ComponentModel;
 using System.Drawing;
 
@@ -13,7 +15,7 @@ internal partial class SettingClass
     [DocData]
     private static readonly EnumTesting _testingEnum = EnumTesting.How;
 
-    [DocData]
+    [Setting]
     private static readonly TypeTest _testingData = null!;
 
     [Setting, Config("Major Bool")]

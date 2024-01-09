@@ -80,7 +80,7 @@ public static class IOHelper
             var str = string.Empty;
             if (reader.TryGetString(name, ref str))
             {
-                var va = typeof(IOHelper).GetAllRuntimeMethods().First(m => m.Name == "DeserializeObject")
+                var va = typeof(IOHelper).GetAllRuntimeMethods().First(m => m.Name == nameof(DeserializeObject))
                     .MakeGenericMethod(type).Invoke(null, [str]);
                 if (va != null)
                 {
