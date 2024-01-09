@@ -71,7 +71,8 @@ public class ConfigAttributeWarning : IIncrementalGenerator
 
                         var symbolName = symbol?.GetFullMetadataName();
 
-                        if (symbolName == "SimpleGrasshopper.Attributes.SettingAttribute")
+                        if (symbolName is "SimpleGrasshopper.Attributes.SettingAttribute"
+                                       or "SimpleGrasshopper.Attributes.DocDataAttribute")
                         {
                             hasSetting = true;
                         }
@@ -93,7 +94,7 @@ public class ConfigAttributeWarning : IIncrementalGenerator
 
                 if (!hasSetting)
                 {
-                    spc.DiagnosticAttributeUsing(loc, $"The attribute {attributeName} must be used with the attribute SimpleGrasshopper.Attributes.SettingAttribute!");
+                    spc.DiagnosticAttributeUsing(loc, $"The attribute {attributeName} must be used with the attribute SimpleGrasshopper.Attributes.SettingAttribute or SimpleGrasshopper.Attributes.DocDataAttribute!");
                 }
             }
         });
