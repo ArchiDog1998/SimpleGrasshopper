@@ -3,6 +3,7 @@ using Grasshopper.GUI.Canvas;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
 using SimpleGrasshopper.Attributes;
+using System;
 using System.Drawing.Imaging;
 using GH_DigitScroller = Grasshopper.GUI.GH_DigitScroller;
 
@@ -78,6 +79,17 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// <summary>
     /// Modify the doc data in one way.
     /// </summary>
+    /// <typeparam name="T">the return type</typeparam>
+    /// <param name="doc">the document.</param>
+    /// <param name="function">the function</param>
+    public static T? ModifyDocData<T>(GH_Document doc, Func<T> function)
+    {
+        return ModifyDocData(() => doc, function);
+    }
+
+    /// <summary>
+    /// Modify the doc data in one way.
+    /// </summary>
     /// <param name="getDoc">how to get the doc.</param>
     /// <param name="action">the action.</param>
     public static void ModifyDocData(Func<GH_Document> getDoc, Action action)
@@ -85,9 +97,29 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         GetDocument = getDoc;
         try
         {
-            action?.Invoke();
+            action();
         }
         finally 
+        {
+            GetDocument = GetDocumentDefault;
+        }
+    }
+
+    /// <summary>
+    /// Modify the doc data in one way.
+    /// </summary>
+    /// <typeparam name="T">the return type</typeparam>
+    /// <param name="getDoc">how to get the doc.</param>
+    /// <param name="function">the function</param>
+    /// <returns></returns>
+    public static T? ModifyDocData<T>(Func<GH_Document> getDoc, Func<T> function)
+    {
+        GetDocument = getDoc;
+        try
+        {
+            return function();
+        }
+        finally
         {
             GetDocument = GetDocumentDefault;
         }
