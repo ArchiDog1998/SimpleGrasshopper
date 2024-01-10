@@ -44,6 +44,6 @@ partial class SimpleAssemblyPriority
     protected override void DoWithEditor(GH_DocumentEditor editor)
     {
         base.DoWithEditor(editor);
-        CustomShortcut[Keys.A] = () => MessageBox.Show("ShortcutTest!");
+        CustomShortcuts[Keys.A] = () => MessageBox.Show("ShortcutTest!");
     }
 }

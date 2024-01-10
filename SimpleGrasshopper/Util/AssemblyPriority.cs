@@ -25,7 +25,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// <summary>
     /// All your custom shortcut for the grasshopper.
     /// </summary>
-    public static readonly Dictionary<Keys, Action> CustomShortcut = [];
+    public static Dictionary<Keys, Action> CustomShortcuts { get; } = [];
 
     /// <summary>
     /// Default way to get the document.
@@ -144,7 +144,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
     private static void Editor_KeyDown(object? sender, KeyEventArgs e)
     {
-        if (CustomShortcut.TryGetValue(e.KeyCode, out var act))
+        if (CustomShortcuts.TryGetValue(e.KeyCode, out var act))
         {
             act?.Invoke();
             return;
