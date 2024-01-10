@@ -9,12 +9,12 @@ public class ConfigAttributeWarning : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        InitOneAttribute(context, "Config", null, null);
+        InitOneAttribute(context, "Config", null);
 
         InitOneAttribute(context, "ToolButton",
             [
                 "System.Boolean",
-            ], null);
+            ]);
     }
 
     private static void ValidTypes(SourceProductionContext spc, string attributeName, string[]? validTypes, TypeSyntax type, SemanticModel model)
@@ -40,10 +40,9 @@ public class ConfigAttributeWarning : IIncrementalGenerator
         }
     }
 
-    private static void InitOneAttribute(IncrementalGeneratorInitializationContext context, string attributeName, string[]? validTypes, string? parent)
+    private static void InitOneAttribute(IncrementalGeneratorInitializationContext context, string attributeName, string[]? validTypes)
     {
         attributeName = $"SimpleGrasshopper.Attributes.{attributeName}Attribute";
-        parent = parent == null ? null : $"SimpleGrasshopper.Attributes.{parent}Attribute";
 
         var provider = context.SyntaxProvider.ForAttributeWithMetadataName
             (attributeName,
@@ -62,7 +61,6 @@ public class ConfigAttributeWarning : IIncrementalGenerator
                 ValidTypes(spc, attributeName, validTypes, field.Declaration.Type, model);
 
                 var hasSetting = false;
-                var hasParent = false;
                 foreach (var attrs in field.AttributeLists)
                 {
                     foreach (var attr in attrs.Attributes)
@@ -76,20 +74,11 @@ public class ConfigAttributeWarning : IIncrementalGenerator
                         {
                             hasSetting = true;
                         }
-                        if (symbolName == parent)
-                        {
-                            hasParent = true;
-                        }
                         else if (symbolName == attributeName)
                         {
                             loc = attr.Name.GetLocation();
                         }
                     }
-                }
-
-                if (!hasParent && parent != null)
-                {
-                    spc.DiagnosticAttributeUsing(loc, $"The attribute {attributeName} must be used with the attribute {parent}!");
                 }
 
                 if (!hasSetting)
@@ -120,12 +109,6 @@ public class ConfigAttributeWarning : IIncrementalGenerator
                     || !accessor.Any(x => x.IsKind(SyntaxKind.SetAccessorDeclaration))))
                 {
                     spc.DiagnosticPropertyGetSet(property.Identifier.GetLocation(), "The property should has a getter and a setter!");
-                }
-
-                if (parent != null && !property.AttributeLists.Any(m => m.Attributes.Any(a => model.GetSymbolInfo(a).Symbol!.GetFullMetadataName() == parent)))
-                {
-                    spc.DiagnosticAttributeUsing(property.Identifier.GetLocation(),
-                        $"The attribute {attributeName} must be used with the {parent}!");
                 }
 
                 ValidTypes(spc, attributeName, validTypes, property.Type, model);
