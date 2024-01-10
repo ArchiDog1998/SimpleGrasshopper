@@ -1,4 +1,5 @@
-﻿using Grasshopper.Kernel;
+﻿using Grasshopper.GUI;
+using Grasshopper.Kernel;
 using System.Drawing;
 
 namespace SimpleGrasshopper.GHTests;
@@ -39,4 +40,10 @@ public class SimpleGrasshopper_GHTestsInfo : GH_AssemblyInfo
 partial class SimpleAssemblyPriority
 {
     protected override int? MenuIndex => 4;
+
+    protected override void DoWithEditor(GH_DocumentEditor editor)
+    {
+        base.DoWithEditor(editor);
+        CustomShortcut[Keys.A] = () => MessageBox.Show("ShortcutTest!");
+    }
 }

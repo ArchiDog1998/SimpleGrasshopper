@@ -2,7 +2,6 @@
 using Grasshopper.GUI.Canvas;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
-using Rhino.ApplicationSettings;
 using SimpleGrasshopper.Attributes;
 using System.Drawing.Imaging;
 using GH_DigitScroller = Grasshopper.GUI.GH_DigitScroller;
@@ -14,11 +13,19 @@ namespace SimpleGrasshopper.Util;
 /// </summary>
 public abstract class AssemblyPriority : GH_AssemblyPriority
 {
+    private static MethodInfo? _oldKeyDown = null;
+    private static EventInfo? _keydownEvent = null;
+
     /// <summary>
     /// The working document.
     /// </summary>
     [ThreadStatic]
     public static Func<GH_Document> GetDocument = () => Instances.ActiveCanvas.Document;
+
+    /// <summary>
+    /// All your custom shortcut for the grasshopper.
+    /// </summary>
+    public static readonly Dictionary<Keys, Action> CustomShortcut = [];
 
     /// <summary>
     /// Default way to get the document.
@@ -58,6 +65,34 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// </summary>
     protected virtual string DateTimePickerCustomFormat => "yyyy/MM/dd hh:mm:ss";
 
+    /// <summary>
+    /// Modify the doc data in one way.
+    /// </summary>
+    /// <param name="doc">the document.</param>
+    /// <param name="action">the action.</param>
+    public static void ModifyDocData(GH_Document doc, Action action)
+    {
+        ModifyDocData(() => doc, action);
+    }
+
+    /// <summary>
+    /// Modify the doc data in one way.
+    /// </summary>
+    /// <param name="getDoc">how to get the doc.</param>
+    /// <param name="action">the action.</param>
+    public static void ModifyDocData(Func<GH_Document> getDoc, Action action)
+    {
+        GetDocument = getDoc;
+        try
+        {
+            action?.Invoke();
+        }
+        finally 
+        {
+            GetDocument = GetDocumentDefault;
+        }
+    }
+
     /// <inheritdoc/>
     public override GH_LoadingInstruction PriorityLoad()
     {
@@ -75,7 +110,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             Instances.ActiveCanvas.DocumentChanged += ActiveCanvas_DocumentChanged;
             return;
         }
-        DoWithEditor(editor);
+        DoSomethingFirst(editor);
     }
 
     private void ActiveCanvas_DocumentChanged(GH_Canvas sender, GH_CanvasDocumentChangedEventArgs e)
@@ -87,7 +122,34 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             return;
         }
+        DoSomethingFirst(editor);
+    }
+
+    private void DoSomethingFirst(GH_DocumentEditor editor)
+    {
+        _oldKeyDown ??= typeof(GH_DocumentEditor).GetAllRuntimeMethods().First(m => m.Name == "EditorKeyDown");
+        _keydownEvent ??= typeof(GH_DocumentEditor).GetEvent("KeyDown")!;
+
+        try
+        {
+            _keydownEvent.RemoveEventHandler(editor, Delegate.CreateDelegate(typeof(KeyEventHandler), editor, _oldKeyDown));
+        }
+        catch { }
+
+        editor.KeyDown -= Editor_KeyDown;
+        editor.KeyDown += Editor_KeyDown;
+
         DoWithEditor(editor);
+    }
+
+    private static void Editor_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (CustomShortcut.TryGetValue(e.KeyCode, out var act))
+        {
+            act?.Invoke();
+            return;
+        }
+        _oldKeyDown?.Invoke(sender, [sender, e]);
     }
 
     /// <summary>
