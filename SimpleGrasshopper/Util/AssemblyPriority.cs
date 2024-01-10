@@ -2,6 +2,7 @@
 using Grasshopper.GUI.Canvas;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
+using Rhino.ApplicationSettings;
 using SimpleGrasshopper.Attributes;
 using System.Drawing.Imaging;
 using GH_DigitScroller = Grasshopper.GUI.GH_DigitScroller;
@@ -728,8 +729,15 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     {
         var attribute = propertyInfo.GetCustomAttribute<ConfigAttribute>();
         if (attribute == null) return null;
-
+        
         var major = new ToolStripMenuItem(attribute.Name);
+
+        if (propertyInfo.GetCustomAttribute<ShortcutAttribute>() is ShortcutAttribute shortcut)
+        {
+            major.ShortcutKeyDisplayString = shortcut.DisplayString ?? shortcut.ShortcutKey.ToString();
+            major.ShortcutKeys = shortcut.ShortcutKey;
+            major.ShowShortcutKeys = shortcut.ShowShortcut;
+        }
 
         var iconName = attribute.Icon;
         if (!string.IsNullOrEmpty(iconName))

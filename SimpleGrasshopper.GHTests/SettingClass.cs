@@ -1,9 +1,5 @@
-﻿using Eto.Forms;
-using Rhino.FileIO;
-using SimpleGrasshopper.Attributes;
-using SimpleGrasshopper.Util;
+﻿using SimpleGrasshopper.Attributes;
 using System.ComponentModel;
-using System.Drawing;
 
 namespace SimpleGrasshopper.GHTests;
 
@@ -44,6 +40,7 @@ internal partial class SettingClass
     [Config("EnumValue")]
     public static EnumTesting Test { get; set; }
 
+    [Shortcut(Keys.Q | Keys.Control, "Ctrl+Q")]
     [Config("Button")]
     public static object Button
     {

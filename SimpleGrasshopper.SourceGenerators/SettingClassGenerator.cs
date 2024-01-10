@@ -68,6 +68,7 @@ public class SettingClassGenerator : IIncrementalGenerator
                         if (model.GetSymbolInfo(attr).Symbol?.GetFullMetadataName()
                             is "SimpleGrasshopper.Attributes.ConfigAttribute"
                             or "SimpleGrasshopper.Attributes.RangeAttribute"
+                            or "SimpleGrasshopper.Attributes.ShortcutAttribute"
                             or "SimpleGrasshopper.Attributes.ToolButtonAttribute")
                         {
                             names.Add(attr.ToString());

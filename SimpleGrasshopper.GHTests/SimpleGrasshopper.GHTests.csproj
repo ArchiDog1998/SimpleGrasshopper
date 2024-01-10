@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net7.0-windows</TargetFramework>
     <Title>SimpleGrasshopper.GHTests</Title>
     <Description>Description of SimpleGrasshopper.GHTests</Description>
     <TargetExt>.gha</TargetExt>
+	  <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   
   <ItemGroup>
