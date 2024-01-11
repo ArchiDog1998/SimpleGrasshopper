@@ -82,7 +82,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// <typeparam name="T">the return type</typeparam>
     /// <param name="doc">the document.</param>
     /// <param name="function">the function</param>
-    public static T? ModifyDocData<T>(GH_Document doc, Func<T> function)
+    public static T ModifyDocData<T>(GH_Document doc, Func<T> function)
     {
         return ModifyDocData(() => doc, function);
     }
@@ -112,7 +112,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// <param name="getDoc">how to get the doc.</param>
     /// <param name="function">the function</param>
     /// <returns></returns>
-    public static T? ModifyDocData<T>(Func<GH_Document> getDoc, Func<T> function)
+    public static T ModifyDocData<T>(Func<GH_Document> getDoc, Func<T> function)
     {
         GetDocument = getDoc;
         try
