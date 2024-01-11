@@ -90,9 +90,9 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// </summary>
     /// <param name="getDoc">how to get the doc.</param>
     /// <param name="action">the action.</param>
-    public static void ModifyDocData(Func<GH_Document> getDoc, Action action)
+    public static void ModifyDocData(Func<GH_Document>? getDoc, Action action)
     {
-        GetDocument = getDoc;
+        if (getDoc != null) GetDocument = getDoc;
         try
         {
             action();
@@ -110,9 +110,9 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// <param name="getDoc">how to get the doc.</param>
     /// <param name="function">the function</param>
     /// <returns></returns>
-    public static T ModifyDocData<T>(Func<GH_Document> getDoc, Func<T> function)
+    public static T ModifyDocData<T>(Func<GH_Document>? getDoc, Func<T> function)
     {
-        GetDocument = getDoc;
+        if (getDoc != null) GetDocument = getDoc;
         try
         {
             return function();
