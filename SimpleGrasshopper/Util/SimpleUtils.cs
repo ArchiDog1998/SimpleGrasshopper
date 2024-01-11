@@ -1,4 +1,5 @@
-﻿using Grasshopper.Kernel.Attributes;
+﻿using Grasshopper.GUI;
+using Grasshopper.Kernel.Attributes;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
@@ -582,5 +583,39 @@ public static class SimpleUtils
 
             return parameters[0].ParameterType.GetRawType() == paramType;
         });
+    }
+
+    /// <summary>
+    /// Create a scroller.
+    /// </summary>
+    /// <param name="menu"></param>
+    /// <param name="min"></param>
+    /// <param name="max"></param>
+    /// <param name="decimalPlace"></param>
+    /// <param name="originValue"></param>
+    /// <param name="setValue"></param>
+    /// <returns></returns>
+    public static GH_DigitScroller AddScroller(this ToolStripDropDown menu, decimal min, decimal max, decimal originValue, int decimalPlace,  Action<decimal> setValue)
+    {
+        GH_DigitScroller slider = new()
+        {
+            MinimumValue = min,
+            MaximumValue = max,
+            DecimalPlaces = decimalPlace,
+            Value = originValue,
+            Size = new Size(150, 24),
+        };
+
+        slider.ValueChanged += (sender, e) =>
+        {
+            var result = e.Value;
+            result = result >= min ? result : min;
+            result = result <= max ? result : max;
+            slider.Value = result;
+            setValue(result);
+        };
+
+        GH_DocumentObject.Menu_AppendCustomItem(menu, slider);
+        return slider;
     }
 }

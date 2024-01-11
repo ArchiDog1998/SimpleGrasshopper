@@ -3,9 +3,7 @@ using Grasshopper.GUI.Canvas;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
 using SimpleGrasshopper.Attributes;
-using System;
 using System.Drawing.Imaging;
-using GH_DigitScroller = Grasshopper.GUI.GH_DigitScroller;
 
 namespace SimpleGrasshopper.Util;
 
@@ -651,7 +649,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         var item = CreateBaseItem(propertyInfo, defaultImage);
         if (item == null) return null;
 
-        var slider = CreateScroller(min, max, place, Convert.ToDecimal(i),
+        var slider = item.DropDown.AddScroller(min, max, Convert.ToDecimal(i),place, 
             v => propertyInfo.SetValue(null, Convert.ChangeType(v, typeof(T))));
 
         AddPropertyChangedEvent(propertyInfo, (T b) =>
@@ -659,33 +657,8 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             slider.Value = Convert.ToDecimal(b);
         });
 
-        GH_DocumentObject.Menu_AppendCustomItem(item.DropDown, slider);
-
         AddResetItem(item.DropDownItems, propertyInfo);
         return item;
-    }
-
-    private static GH_DigitScroller CreateScroller(decimal min, decimal max, int decimalPlace, decimal originValue, Action<decimal> setValue)
-    {
-        GH_DigitScroller slider = new()
-        {
-            MinimumValue = min,
-            MaximumValue = max,
-            DecimalPlaces = decimalPlace,
-            Value = originValue,
-            Size = new Size(150, 24),
-        };
-
-        slider.ValueChanged += (sender, e) =>
-        {
-            var result = e.Value;
-            result = result >= min ? result : min;
-            result = result <= max ? result : max;
-            slider.Value = result;
-            setValue(result);
-        };
-
-        return slider;
     }
 
     private ToolStripItem? CreateColorItem(PropertyInfo propertyInfo)
