@@ -29,7 +29,14 @@ internal static class Utils
         s = s.ContainingSymbol;
         while (!IsRootNamespace(s))
         {
-            sb.Insert(0, s.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat) + '.');
+            try
+            {
+                sb.Insert(0, s.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat) + '.');
+            }
+            catch 
+            {
+                break;
+            }
 
             s = s.ContainingSymbol;
         }
@@ -44,14 +51,20 @@ internal static class Utils
 
     private static string GetTypeSymbolName(this ISymbol symbol)
     {
+        if (symbol is IArrayTypeSymbol arrayTypeSymbol) //Array
+        {
+            return arrayTypeSymbol.ElementType.GetFullMetadataName() + "[]";
+        }
+
         var str = symbol.MetadataName;
-        if (symbol is not INamedTypeSymbol symbolType) return str;
+        if (symbol is INamedTypeSymbol symbolType)//Generic
+        {
+            var strs = str.Split('`');
+            if (strs.Length < 2) return str;
+            str = strs[0];
 
-        var strs = str.Split('`');
-        if (strs.Length < 2) return str;
-        str = strs[0];
-
-        str += "<" + string.Join(", ", symbolType.TypeArguments.Select(p => p.GetTypeSymbolName())) + ">";
+            str += "<" + string.Join(", ", symbolType.TypeArguments.Select(p => p.GetFullMetadataName())) + ">";
+        }
         return str;
     }
 
