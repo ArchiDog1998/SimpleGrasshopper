@@ -27,10 +27,29 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     public static Dictionary<Keys, Action> CustomShortcuts { get; } = [];
 
     /// <summary>
+    /// The delegate for <see cref="CustomShortcutClicked"/>
+    /// </summary>
+    /// <param name="key">the clicked key.</param>
+    /// <returns>Is this be handled.</returns>
+    public delegate bool ShortcutClickedHandler(Keys key);
+
+    private readonly static List<ShortcutClickedHandler> _customShortcutFuncs = [];
+
+    /// <summary>
     /// Your shortcuts. This got lower priority to <see cref="CustomShortcuts"/>.
     /// If this return true, which means the key was handled.
     /// </summary>
-    public static List<Func<Keys, bool>> CustomShortcutFuncs { get; } = [];
+    public static event ShortcutClickedHandler CustomShortcutClicked
+    {
+        add
+        {
+            _customShortcutFuncs.Add(value);
+        }
+        remove
+        {
+            _customShortcutFuncs.Remove(value);
+        }
+    }
 
     /// <summary>
     /// Default way to get the document.
@@ -185,7 +204,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             act?.Invoke();
             return;
         }
-        foreach(var shortcut in CustomShortcutFuncs)
+        foreach(var shortcut in _customShortcutFuncs)
         {
             if (shortcut?.Invoke(e.KeyCode) ?? false)
             {
@@ -751,12 +770,11 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             if (sender is not ToolStripMenuItem i) return;
             propertyInfo.SetValue(null, !i.Checked);
 
-            if (i.HasDropDownItems)
+            if (!i.HasDropDownItems) return;
+
+            foreach (ToolStripItem it in i.DropDownItems)
             {
-                foreach (ToolStripItem it in i.DropDownItems)
-                {
-                    it.Enabled = i.Checked;
-                }
+                it.Enabled = i.Checked;
             }
         };
 
@@ -769,12 +787,11 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             if (sender is not ToolStripMenuItem i) return;
 
-            if (i.HasDropDownItems)
+            if (!i.HasDropDownItems) return;
+
+            foreach (ToolStripItem it in i.DropDownItems)
             {
-                foreach (ToolStripItem it in i.DropDownItems)
-                {
-                    it.Enabled = i.Checked;
-                }
+                it.Enabled = i.Checked;
             }
         };
 
@@ -790,6 +807,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     {
         var type = propertyInfo.DeclaringType;
         if (type == null) return;
+
         var method = type.GetRuntimeMethod($"Reset{propertyInfo.Name}", []);
         if (method == null) return;
 

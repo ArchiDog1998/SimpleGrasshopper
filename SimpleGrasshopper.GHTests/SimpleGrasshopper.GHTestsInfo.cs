@@ -44,6 +44,14 @@ partial class SimpleAssemblyPriority
     protected override void DoWithEditor(GH_DocumentEditor editor)
     {
         base.DoWithEditor(editor);
+        CustomShortcutClicked += SimpleAssemblyPriority_CustomShortcutClicked;
         CustomShortcuts[Keys.A] = () => MessageBox.Show("ShortcutTest!");
+    }
+
+    private bool SimpleAssemblyPriority_CustomShortcutClicked(Keys arg)
+    {
+        if (arg != Keys.B) return false;
+        MessageBox.Show("Clicked!");
+        return true;
     }
 }
