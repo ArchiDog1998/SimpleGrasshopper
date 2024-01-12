@@ -19,12 +19,18 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// The working document.
     /// </summary>
     [ThreadStatic]
-    public static Func<GH_Document> GetDocument = () => Instances.ActiveCanvas.Document;
+    public static Func<GH_Document> GetDocument = () => Instances.ActiveCanvas?.Document!;
 
     /// <summary>
     /// All your custom shortcut for the grasshopper.
     /// </summary>
     public static Dictionary<Keys, Action> CustomShortcuts { get; } = [];
+
+    /// <summary>
+    /// Your shortcuts. This got lower priority to <see cref="CustomShortcuts"/>.
+    /// If this return true, which means the key was handled.
+    /// </summary>
+    public static List<Func<Keys, bool>> CustomShortcutFuncs { get; } = [];
 
     /// <summary>
     /// Default way to get the document.
@@ -178,6 +184,13 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             act?.Invoke();
             return;
+        }
+        foreach(var shortcut in CustomShortcutFuncs)
+        {
+            if (shortcut?.Invoke(e.KeyCode) ?? false)
+            {
+                return;
+            }
         }
         _oldKeyDown?.Invoke(sender, [sender, e]);
     }
