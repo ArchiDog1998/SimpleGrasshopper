@@ -6,6 +6,9 @@ namespace SimpleGrasshopper.GHTests;
 internal partial class SettingClass
 {
     [DocData]
+    private static readonly Dictionary<int, string> _dictTest = [];
+
+    [DocData]
     private static readonly string _testingValue = "Hello";
 
     [DocData]

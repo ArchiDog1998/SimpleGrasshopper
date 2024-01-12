@@ -24,7 +24,7 @@ internal static class Utils
             return string.Empty;
         }
 
-        var sb = new StringBuilder(s.MetadataName);
+        var sb = new StringBuilder(s.GetTypeSymbolName());
 
         s = s.ContainingSymbol;
         while (!IsRootNamespace(s))
@@ -40,6 +40,19 @@ internal static class Utils
         {
             return symbol is INamespaceSymbol s && s.IsGlobalNamespace;
         }
+    }
+
+    private static string GetTypeSymbolName(this ISymbol symbol)
+    {
+        var str = symbol.MetadataName;
+        if (symbol is not INamedTypeSymbol symbolType) return str;
+
+        var strs = str.Split('`');
+        if (strs.Length < 2) return str;
+        str = strs[0];
+
+        str += "<" + string.Join(", ", symbolType.TypeArguments.Select(p => p.GetTypeSymbolName())) + ">";
+        return str;
     }
 
     public static bool IsObsolete(this MemberDeclarationSyntax syntax)
