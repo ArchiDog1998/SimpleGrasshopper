@@ -6,7 +6,10 @@ namespace SimpleGrasshopper.GHTests;
 internal partial class SettingClass
 {
     [DocData]
-    private static readonly Dictionary<int, int?[]> _dictTest = [];
+    private static readonly Dictionary<int, int?[]> _dictTest = new()
+    {
+        {5, [6, null] },
+    };
 
     [DocData]
     private static readonly string? _testingValue = "Hello";
@@ -43,14 +46,15 @@ internal partial class SettingClass
     [Config("EnumValue")]
     public static EnumTesting Test { get; set; }
 
-    [Shortcut(Keys.Q | Keys.Control, "Ctrl+Q")]
+    [Shortcut(Keys.E | Keys.Control, "Ctrl+E")]
     [Config("Button")]
     public static object Button
     {
         get => false;
         set
         {
-            MessageBox.Show("Clicked");
+            var v = DictTest;
+             MessageBox.Show("Clicked");
         }
     }
 

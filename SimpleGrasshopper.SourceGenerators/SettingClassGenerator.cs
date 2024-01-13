@@ -81,7 +81,7 @@ public class SettingClassGenerator : IIncrementalGenerator
                 if (!IsFieldTypeValid(fieldType))
                 {
                     fieldStr = fieldType.GetFullMetadataName();
-                    getValueStr = $"Instances.Settings.GetValue(\"{key}\", null) is string str ? IOHelper.DeserializeObject<{fieldStr}>(str) : {variableName}";
+                    getValueStr = $"Instances.Settings.GetValue(\"{key}\", null) is string str && !string.IsNullOrEmpty(str) ? IOHelper.DeserializeObject<{fieldStr}>(str) : {variableName}";
                     setValueStr = $"Instances.Settings.SetValue(\"{key}\", IOHelper.SerializeObject(value))";
                 }
                 else if (fieldType.TypeKind == TypeKind.Enum)

@@ -199,14 +199,15 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
     private static void Editor_KeyDown(object? sender, KeyEventArgs e)
     {
-        if (CustomShortcuts.TryGetValue(e.KeyCode, out var act))
+        var key = Control.ModifierKeys | e.KeyCode;
+        if (CustomShortcuts.TryGetValue(key, out var act))
         {
             act?.Invoke();
             return;
         }
         foreach(var shortcut in _customShortcutFuncs)
         {
-            if (shortcut?.Invoke(e.KeyCode) ?? false)
+            if (shortcut?.Invoke(key) ?? false)
             {
                 return;
             }
