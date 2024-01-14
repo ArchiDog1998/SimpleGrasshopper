@@ -1,4 +1,5 @@
 ﻿using SimpleGrasshopper.Attributes;
+using SimpleGrasshopper.Util;
 using System.ComponentModel;
 
 namespace SimpleGrasshopper.GHTests;
@@ -54,6 +55,7 @@ internal partial class SettingClass
         set
         {
             var v = DictTest;
+            var a = typeof(SettingClass).Assembly.GetString("testing.txt");
              MessageBox.Show("Clicked");
         }
     }

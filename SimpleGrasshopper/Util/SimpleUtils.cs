@@ -298,6 +298,60 @@ public static class SimpleUtils
         }
     }
 
+    /// <summary>
+    /// Get stream value in the assembly
+    /// </summary>
+    /// <param name="assembly"></param>
+    /// <param name="path">name or local path or url</param>
+    /// <returns></returns>
+    public static string? GetString(this Assembly assembly, string path)
+    {
+        var str = GetStringRaw(assembly, path);
+        if (str != null) return str;
+
+        try
+        {
+            if (File.Exists(path))
+            {
+                return File.ReadAllText(path);
+            }
+            if (Uri.TryCreate(path, UriKind.RelativeOrAbsolute, out var url)
+                && url != null)
+            {
+                using var client = new WebClient();
+                var data = client.DownloadData(url);
+                var stream = new MemoryStream(data);
+                using var reader = new StreamReader(stream);
+                return reader.ReadToEnd();
+            }
+        }
+        catch
+        {
+#if DEBUG
+            //throw;
+#endif
+        }
+
+        return null;
+
+        static string? GetStringRaw(Assembly assembly, string path)
+        {
+            var name = assembly.GetManifestResourceNames().FirstOrDefault(n => n.EndsWith(path));
+            if (name == null) return null;
+            using var stream = assembly.GetManifestResourceStream(name);
+            if (stream == null) return null;
+            try
+            {
+                using var reader = new StreamReader(stream);
+                return reader.ReadToEnd();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+
     internal static void AddRuntimeMessages(this IGH_Param param, IEnumerable<RuntimeMessage> messages)
     {
         foreach (var msg in messages)
