@@ -344,8 +344,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
                 && p.GetCustomAttribute<ConfigAttribute>() != null)
             .ToList();
 
-        var majorProperty = properties.FirstOrDefault(p => p.PropertyType.GetRawType() == typeof(bool)
-            && p.GetCustomAttribute<ConfigAttribute>()?.Name == assemblyName);
+        var majorProperty = properties.FirstOrDefault(p => p.GetCustomAttribute<ConfigAttribute>()?.Name == assemblyName);
 
         if (majorProperty != null)
         {
@@ -354,9 +353,12 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
         var items = GetAllItems(properties!);
 
-        if (items.Length == 0) return null;
+        if (items.Length == 0 && majorProperty == null) return null;
 
-        var major = new ToolStripMenuItem(assemblyName);
+        var major = majorProperty != null 
+            ? CreateItem(majorProperty) ?? new ToolStripMenuItem(assemblyName)
+            : new ToolStripMenuItem(assemblyName);
+
         if (icon != null)
         {
             major.Image = icon;
@@ -365,12 +367,14 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         var desc = assembly.GetAssemblyDescription();
         if (!string.IsNullOrEmpty(desc))
         {
-            major.ToolTipText = desc;
-        }
-
-        if (majorProperty != null)
-        {
-            major = ToBoolItem(major, majorProperty);
+            if (string.IsNullOrEmpty(major.ToolTipText))
+            {
+                major.ToolTipText = desc;
+            }
+            else
+            {
+                major.ToolTipText += "\n" + desc;
+            }
         }
 
         major.DropDown.Closing += (sender, e) =>
@@ -454,10 +458,10 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         return [.. result];
     }
 
-    private ToolStripItem? CreateItem(PropertyInfo propertyInfo)
+    private ToolStripMenuItem? CreateItem(PropertyInfo propertyInfo)
     {
         var type = propertyInfo.PropertyType.GetRawType();
-        ToolStripItem? item;
+        ToolStripMenuItem? item;
         if (CustomItemsCreators.TryGetValue(type, out var creator))
         {
             item = creator?.Invoke(propertyInfo);
@@ -543,7 +547,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         return item;
     }
 
-    private ToolStripItem? CreateDateTimeItem(PropertyInfo propertyInfo)
+    private ToolStripMenuItem? CreateDateTimeItem(PropertyInfo propertyInfo)
     {
         var item = CreateBaseItem(propertyInfo, new Param_Time().Icon_24x24);
         if (item == null) return null;
@@ -576,7 +580,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         return item;
     }
 
-    private ToolStripItem? CreateEnumItem(PropertyInfo propertyInfo)
+    private ToolStripMenuItem? CreateEnumItem(PropertyInfo propertyInfo)
     {
         var item = CreateBaseItem(propertyInfo, new GH_ValueList().Icon_24x24);
         if (item == null) return null;
@@ -640,7 +644,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         public readonly override string ToString() => Name;
     }
 
-    private ToolStripItem? CreateIntegerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max)
+    private ToolStripMenuItem? CreateIntegerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max)
     {
         int place = 0;
 
@@ -655,7 +659,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         return item;
     }
 
-    private ToolStripItem? CreateNumberItem<T>(PropertyInfo propertyInfo)
+    private ToolStripMenuItem? CreateNumberItem<T>(PropertyInfo propertyInfo)
     {
         decimal min = decimal.MinValue;
         decimal max = decimal.MaxValue;
@@ -672,7 +676,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         return item;
     }
 
-    private ToolStripItem? CreateScrollerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max, int place, Image? defaultImage)
+    private ToolStripMenuItem? CreateScrollerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max, int place, Image? defaultImage)
     {
         if (propertyInfo.GetValue(null) is not T i)
         {
@@ -694,7 +698,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         return item;
     }
 
-    private ToolStripItem? CreateColorItem(PropertyInfo propertyInfo)
+    private ToolStripMenuItem? CreateColorItem(PropertyInfo propertyInfo)
     {
         if (propertyInfo.GetValue(null) is not Color c)
         {
@@ -718,7 +722,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         return item;
     }
 
-    private ToolStripItem? CreateStringItem(PropertyInfo propertyInfo)
+    private ToolStripMenuItem? CreateStringItem(PropertyInfo propertyInfo)
     {
         if (propertyInfo.GetValue(null) is not string s)
         {
@@ -749,7 +753,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         return item;
     }
 
-    private ToolStripItem? CreateBoolItem(PropertyInfo propertyInfo)
+    private ToolStripMenuItem? CreateBoolItem(PropertyInfo propertyInfo)
     {
         var item = CreateBaseItem(propertyInfo, new Param_Boolean().Icon_24x24);
         if (item == null) return null;
