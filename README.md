@@ -12,13 +12,13 @@ Add the package from nuget package.
 
 ```html
   <ItemGroup>
-    <PackageReference Include="SimpleGrasshopper" Version="0.9.1" />
+    <PackageReference Include="SimpleGrasshopper" Version="1.4.7" />
   <ItemGroup>
 ```
 
 Don't forget to copy this `SimpleGrasshopper.dll` and `Newtonsoft.Json.dll` file to your output folder!
 
-![image-20231124084353080](assets/image-20231124084353080.png)
+![image-20231124084353080](https://raw.githubusercontent.com/ArchiDog1998/SimpleGrasshopper/main/assets/image-20231124084353080.png)
 
 Notice: if you want to create a plugin in rhino8 with .Net core, please add a `Grasshoppper` reference to your project!
 
@@ -47,7 +47,7 @@ internal class SimpleSubcategory
 
 Now, you'll see a component in GH!
 
-![image-20231123221923982](assets/image-20231123221923982.png)
+![image-20231123221923982](https://raw.githubusercontent.com/ArchiDog1998/SimpleGrasshopper/main/assets/image-20231123221923982.png)
 
 The parameters can be `in`, `out,` or `ref`.
 
@@ -107,11 +107,11 @@ internal class SimpleSubcategory
 }
 ```
 
-![image-20231123223432423](assets/image-20231123223432423.png)
+![image-20231123223432423](https://raw.githubusercontent.com/ArchiDog1998/SimpleGrasshopper/main/assets/image-20231123223432423.png)
 
-![image-20231123223445165](assets/image-20231123223445165.png)
+![image-20231123223445165](https://raw.githubusercontent.com/ArchiDog1998/SimpleGrasshopper/main/assets/image-20231123223445165.png)
 
-![image-20231123223455689](assets/image-20231123223455689.png)
+![image-20231123223455689](https://raw.githubusercontent.com/ArchiDog1998/SimpleGrasshopper/main/assets/image-20231123223455689.png)
 
 #### Data Access
 
@@ -153,7 +153,7 @@ public enum EnumTest : byte
 
 
 
-![image-20231123225356231](assets/image-20231123225356231.png)
+![image-20231123225356231](https://raw.githubusercontent.com/ArchiDog1998/SimpleGrasshopper/main/assets/image-20231123225356231.png)
 
 ### Parameters
 
@@ -174,7 +174,7 @@ public class TypeTest
 
 ```
 
-![image-20231123224941091](assets/image-20231123224941091.png)
+![image-20231123224941091](https://raw.githubusercontent.com/ArchiDog1998/SimpleGrasshopper/main/assets/image-20231123224941091.png)
 
 And this parameter can also be used in the component!
 
@@ -196,7 +196,7 @@ internal class SimpleSubcategory
 
 ```
 
-![image-20231123225140458](assets/image-20231123225140458.png)
+![image-20231123225140458](https://raw.githubusercontent.com/ArchiDog1998/SimpleGrasshopper/main/assets/image-20231123225140458.png)
 
 If you want your parameter can be previewed, please add the interface `IPreviewData`. If you want your data can be baked, please add the interface `IGH_BakeAwareData`.
 
@@ -210,7 +210,7 @@ For some common components, there are some ez ways to create them.
 
 If you create your data type, and you want to modify its property, you can add a tag called `PropertyComponentAttribute` to your type definition.
 
-![image-20231213104531419](assets/image-20231213104531419.png)
+![image-20231213104531419](https://raw.githubusercontent.com/ArchiDog1998/SimpleGrasshopper/main/assets/image-20231213104531419.png)
 
 ``` c#
 [PropertyComponent]
@@ -227,7 +227,7 @@ public class TypeTest
 
 If you are soo lazy to add a lot of tags to every method in one type. You can add a tag called `TypeComponentAttribute`. It'll create a method component for your plugin, and this component can use all public methods.
 
-![image-20231213110009360](assets/image-20231213110009360.png)
+![image-20231213110009360](https://raw.githubusercontent.com/ArchiDog1998/SimpleGrasshopper/main/assets/image-20231213110009360.png)
 
 ``` c#
 [TypeComponent]
@@ -290,9 +290,17 @@ var c = SettingStruct.AnotherSetting;
 
 That makes it easier!
 
+#### DocData
+
+The data that you want to save in the document can be made easier. The `DocDataAttribute` is here to help you! It is very similar to the [Setting](#Settings) things.
+
 #### Configurations
 
 If you want to add your custom menu to Grasshopper. You can add a tag called `ConfigAttribute` to your setting or your property.
+
+#### Undo
+
+An easier way to record undo.
 
 ### Advanced
 
