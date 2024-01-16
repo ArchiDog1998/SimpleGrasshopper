@@ -122,7 +122,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             action();
         }
-        finally 
+        finally
         {
             GetDocument = GetDocumentDefault;
         }
@@ -205,7 +205,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             act?.Invoke();
             return;
         }
-        foreach(var shortcut in _customShortcutFuncs)
+        foreach (var shortcut in _customShortcutFuncs)
         {
             if (shortcut?.Invoke(key) ?? false)
             {
@@ -355,7 +355,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
         if (items.Length == 0 && majorProperty == null) return null;
 
-        var major = majorProperty != null 
+        var major = majorProperty != null
             ? CreateItem(majorProperty) ?? new ToolStripMenuItem(assemblyName)
             : new ToolStripMenuItem(assemblyName);
 
@@ -595,7 +595,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             FlatStyle = FlatStyle.System,
         };
-        
+
         var array = Enum.GetValues(type);
         var objs = new List<object>(array.Length);
         foreach (var enumItem in array)
@@ -686,7 +686,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         var item = CreateBaseItem(propertyInfo, defaultImage);
         if (item == null) return null;
 
-        var slider = item.DropDown.AddScroller(min, max, Convert.ToDecimal(i),place, 
+        var slider = item.DropDown.AddScroller(min, max, Convert.ToDecimal(i), place,
             v => propertyInfo.SetValue(null, Convert.ChangeType(v, typeof(T))));
 
         AddPropertyChangedEvent(propertyInfo, (T b) =>
@@ -832,7 +832,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     {
         var attribute = propertyInfo.GetCustomAttribute<ConfigAttribute>();
         if (attribute == null) return null;
-        
+
         var major = new ToolStripMenuItem(attribute.Name);
 
         if (propertyInfo.GetCustomAttribute<ShortcutAttribute>() is ShortcutAttribute shortcut)

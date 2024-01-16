@@ -148,7 +148,7 @@ public static class IOHelper
     }
 
     #region Serialization
-    static readonly JsonSerializerSettings _setting = new ()
+    static readonly JsonSerializerSettings _setting = new()
     {
         TypeNameHandling = TypeNameHandling.Objects,
     };
@@ -172,6 +172,17 @@ public static class IOHelper
     public static T? DeserializeObject<T>(string str)
     {
         return JsonConvert.DeserializeObject<T>(str, _setting);
+    }
+
+    /// <summary>
+    /// Get an object from string.
+    /// </summary>
+    /// <param name="str"></param>
+    /// <param name="type">type</param>
+    /// <returns></returns>
+    public static object? DeserializeObject(string str, Type type)
+    {
+        return JsonConvert.DeserializeObject(str, type, _setting);
     }
     #endregion
 }

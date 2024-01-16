@@ -271,7 +271,7 @@ public abstract class MethodComponent(
             result[param.MethodParamIndex] = param.GetValue(DA, out var value, ghParam)
                 ? value : param.Param.Type.CreateInstance(true);
         }
-        foreach(var param in _memberParams)
+        foreach (var param in _memberParams)
         {
             result[param.MethodParamIndex] = param.GetValue(this);
         }
@@ -292,7 +292,7 @@ public abstract class MethodComponent(
         {
             _resultParam.Value.SetValue(DA, result);
         }
-        
+
         foreach (var param in _outputParams)
         {
             param.SetValue(DA, parameters[param.MethodParamIndex]!);
@@ -346,7 +346,7 @@ public abstract class MethodComponent(
         {
             AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.InnerException.Message);
         }
-        catch (Exception ex) when(ex.Message.StartsWith("%SimpleGrasshopper_RangeSetting"))
+        catch (Exception ex) when (ex.Message.StartsWith("%SimpleGrasshopper_RangeSetting"))
         {
             AddRuntimeMessage(GH_RuntimeMessageLevel.Error, ex.Message.Substring(31));
         }
@@ -471,7 +471,7 @@ public abstract class MethodComponent(
                 if (sender is not ListBox listBox
                 || listBox.SelectedItem is not MemberShowing member) return;
 
-                this.RecordDocumentObjectMember(nameof(MethodIndex));
+                this.RecordDocumentObjectMember(nameof(MethodIndex), Undo.AfterUndo.None);
 
                 MethodIndex = member.Index;
             };
@@ -493,7 +493,7 @@ public abstract class MethodComponent(
 
                 item.Click += (sender, e) =>
                 {
-                    this.RecordDocumentObjectMember(nameof(MethodIndex));
+                    this.RecordDocumentObjectMember(nameof(MethodIndex), Undo.AfterUndo.None);
 
                     MethodIndex = (int)((ToolStripMenuItem)sender!).Tag;
                 };

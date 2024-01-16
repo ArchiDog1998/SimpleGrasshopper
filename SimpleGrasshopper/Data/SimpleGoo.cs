@@ -135,7 +135,7 @@ public class SimpleGoo<T> : GH_Goo<T>
     /// <inheritdoc/>
     public override bool Write(GH_IWriter writer)
     {
-        if(m_value != null)
+        if (m_value != null)
         {
             writer.Write("Value", m_value);
         }

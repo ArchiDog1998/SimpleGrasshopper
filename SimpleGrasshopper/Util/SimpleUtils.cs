@@ -415,7 +415,7 @@ public static class SimpleUtils
                 var i = item;
                 var message = ModifyValueItem(ref i, range);
                 lt.Add(i);
-                if(message != null) messages.Add(message.Value);
+                if (message != null) messages.Add(message.Value);
             }
 
             list.Clear();
@@ -424,7 +424,7 @@ public static class SimpleUtils
                 list.Add(item);
             }
 
-            return [..messages];
+            return [.. messages];
         }
 
         static RuntimeMessage? ModifyValueItem(ref object value, RangeAttribute range)
@@ -439,7 +439,7 @@ public static class SimpleUtils
 
             var field = value.GetType().GetAllRuntimeFields().FirstOrDefault(f => f.GetCustomAttribute<RangeValueAttribute>() != null);
             var prop = value is IGH_Goo ? value.GetType().GetRuntimeProperty("Value")
-                :  value.GetType().GetAllRuntimeProperties().FirstOrDefault(f => f.GetCustomAttribute<RangeValueAttribute>() != null);
+                : value.GetType().GetAllRuntimeProperties().FirstOrDefault(f => f.GetCustomAttribute<RangeValueAttribute>() != null);
 
             if (prop != null)
             {
@@ -650,7 +650,7 @@ public static class SimpleUtils
     /// <param name="originValue"></param>
     /// <param name="setValue"></param>
     /// <returns></returns>
-    public static GH_DigitScroller AddScroller(this ToolStripDropDown menu, decimal min, decimal max, decimal originValue, int decimalPlace,  Action<decimal> setValue)
+    public static GH_DigitScroller AddScroller(this ToolStripDropDown menu, decimal min, decimal max, decimal originValue, int decimalPlace, Action<decimal> setValue)
     {
         GH_DigitScroller slider = new()
         {
@@ -679,9 +679,11 @@ public static class SimpleUtils
     /// </summary>
     /// <param name="obj">The obj.</param>
     /// <param name="memberName">The member to record.</param>
-    public static void RecordDocumentObjectMember(this IGH_DocumentObject obj, string memberName)
+    /// <param name="after">After undo, what should happend.</param>
+    /// <param name="action">The action to do after changing</param>
+    public static void RecordDocumentObjectMember(this IGH_DocumentObject obj, string memberName, AfterUndo after, Action? action = null)
     {
         var doc = obj.OnPingDocument();
-        doc.UndoUtil.RecordEvent(memberName + " Changed", new GH_MemberUndoAction(obj, memberName));
+        doc.UndoUtil.RecordEvent(memberName + " Changed", new GH_MemberUndoAction(obj, memberName, after, action));
     }
 }

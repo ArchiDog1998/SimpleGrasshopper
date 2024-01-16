@@ -169,7 +169,7 @@ internal readonly struct TypeParam
 
             case GH_ParamAccess.tree:
                 var dataInfo = obj.GetType().GetRuntimeFields().FirstOrDefault(p => p.Name == "m_data");
-                
+
                 var data = dataInfo.GetValue(obj);
 
                 var pathsInfo = data.GetType().GetRuntimeFields().FirstOrDefault(p => p.Name == "keys");
@@ -209,7 +209,7 @@ internal readonly struct TypeParam
 
     private static TR ChangeTypePrivate<TS, TR>(TS source)
     {
-        if(typeof(TS).IsGeneralType(typeof(GH_Goo<>)) != null
+        if (typeof(TS).IsGeneralType(typeof(GH_Goo<>)) != null
             && typeof(TR).IsGeneralType(typeof(GH_Goo<>)) != null)
         {
             var getProp = typeof(TS).GetRuntimeProperties().FirstOrDefault(p => p.Name == "Value");

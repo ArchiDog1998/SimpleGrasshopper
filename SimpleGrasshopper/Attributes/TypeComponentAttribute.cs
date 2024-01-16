@@ -26,7 +26,7 @@ public class TypeComponentAttribute(string? name = null,
     /// 
     /// </summary>
     public string? NickName => nickName;
-    
+
     /// <summary>
     /// 
     /// </summary>

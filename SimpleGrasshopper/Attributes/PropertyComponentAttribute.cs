@@ -16,9 +16,9 @@ public class PropertyComponentAttribute(
     string? name = null,
     string? nickName = null,
     string? description = null,
-    string iconPath = "", 
-    GH_Exposure exposure = GH_Exposure.primary, 
-    string subCategory = "") 
+    string iconPath = "",
+    GH_Exposure exposure = GH_Exposure.primary,
+    string subCategory = "")
     : Attribute
 {
     /// <summary>

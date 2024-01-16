@@ -16,8 +16,8 @@ internal readonly struct MemberParam(string name, Type type, int index, bool isI
     public object? GetValue(object obj)
     {
         if (_isInstance) return obj;
-        return isIn 
-            ? _field?.GetValue(obj) ?? _prop?.GetValue(obj) 
+        return isIn
+            ? _field?.GetValue(obj) ?? _prop?.GetValue(obj)
             : Type?.CreateInstance() ?? null;
     }
 
