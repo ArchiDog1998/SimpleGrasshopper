@@ -45,6 +45,7 @@ public abstract class MethodComponent(
             value = (value + count) % count;
 
             if (value == _methodIndex) return;
+
             _methodIndex = value;
 
             if (name == null)
@@ -469,6 +470,9 @@ public abstract class MethodComponent(
             {
                 if (sender is not ListBox listBox
                 || listBox.SelectedItem is not MemberShowing member) return;
+
+                this.RecordDocumentObjectMember(nameof(MethodIndex));
+
                 MethodIndex = member.Index;
             };
             GH_Component.Menu_AppendCustomItem(menu, box);
@@ -489,6 +493,8 @@ public abstract class MethodComponent(
 
                 item.Click += (sender, e) =>
                 {
+                    this.RecordDocumentObjectMember(nameof(MethodIndex));
+
                     MethodIndex = (int)((ToolStripMenuItem)sender!).Tag;
                 };
 

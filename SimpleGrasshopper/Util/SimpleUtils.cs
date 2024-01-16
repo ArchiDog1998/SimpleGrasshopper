@@ -6,6 +6,7 @@ using Grasshopper.Kernel.Types;
 using Rhino;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
+using SimpleGrasshopper.Undo;
 using System.Collections;
 using System.ComponentModel;
 using System.Net;
@@ -671,5 +672,16 @@ public static class SimpleUtils
 
         GH_DocumentObject.Menu_AppendCustomItem(menu, slider);
         return slider;
+    }
+
+    /// <summary>
+    /// Record the doc obj member changed.
+    /// </summary>
+    /// <param name="obj">The obj.</param>
+    /// <param name="memberName">The member to record.</param>
+    public static void RecordDocumentObjectMember(this IGH_DocumentObject obj, string memberName)
+    {
+        var doc = obj.OnPingDocument();
+        doc.UndoUtil.RecordEvent(memberName + " Changed", new GH_MemberUndoAction(obj, memberName));
     }
 }
