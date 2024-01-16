@@ -85,14 +85,10 @@ internal static class BasicTests
 
     private static void SaveTest(MethodComponent ___instance, out string output, string input = null!)
     {
-        if (!string.IsNullOrEmpty(input))
-        {
-            SettingClass.TestingData = new TypeTest()
-            {
-                 FirstValue = 15,
-            };
-        }
-        SettingClass.TestingData ??= new TypeTest();
+        //SettingClass.RecordTestingData(___instance.OnPingDocument());
+        //var data = SettingClass.TestingData;
+        //data.FirstValue = 20;
+        //SettingClass.TestingData = data;
         output = SettingClass.TestingData.FirstValue.ToString();
     }
 

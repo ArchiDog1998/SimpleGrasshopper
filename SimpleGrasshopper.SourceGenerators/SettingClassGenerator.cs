@@ -105,6 +105,7 @@ public class SettingClassGenerator : IIncrementalGenerator
                             set
                             {
                                 if ({{propertyName}} == value) return;
+
                                 {{setValueStr}};
 
                                 On{{propertyName}}Changed?.Invoke(value);
@@ -118,6 +119,11 @@ public class SettingClassGenerator : IIncrementalGenerator
                         {
                             {{propertyName}} = {{variableName}};
                         }
+
+                        public static void Record{{propertyName}}(GH_Document document)
+                        {
+                            document.UndoUtil.RecordEvent("Setting {{propertyName}} Changed", new GH_SettingUndoAction(Instances.Settings, "{{key}}"));
+                        }
                 """;
 
                 propertyCodes.Add(propertyCode);
@@ -125,10 +131,12 @@ public class SettingClassGenerator : IIncrementalGenerator
 
             var code = $$"""
              using Grasshopper;
+             using Grasshopper.Kernel;
              using System;
              using System.Drawing;
              using SimpleGrasshopper.Attributes;
              using SimpleGrasshopper.Data;
+             using SimpleGrasshopper.Undo;
              using SimpleGrasshopper.Util;
 
              namespace {{nameSpace}}

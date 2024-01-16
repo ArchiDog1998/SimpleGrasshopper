@@ -114,6 +114,7 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
                             set
                             {
                                 if ({{propertyName}} == value) return;
+
                                 {{setValueStr}};
 
                                 On{{propertyName}}Changed?.Invoke(value);
@@ -126,6 +127,11 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
                         public static void Reset{{propertyName}}()
                         {
                             {{propertyName}} = {{variableName}};
+                        }
+
+                        public static void Record{{propertyName}}()
+                        {
+                            AssemblyPriority.GetDocument()?.UndoUtil.RecordEvent("Doc Data {{propertyName}} Changed", new GH_SettingUndoAction(AssemblyPriority.GetDocument().ValueTable, "{{key}}"));
                         }
                 """;
 
@@ -141,6 +147,7 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
              using System.Drawing;
              using SimpleGrasshopper.Attributes;
              using SimpleGrasshopper.Data;
+             using SimpleGrasshopper.Undo;
              using SimpleGrasshopper.Util;
 
              namespace {{nameSpace}}

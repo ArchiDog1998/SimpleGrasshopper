@@ -1,5 +1,7 @@
 ﻿using Grasshopper.GUI;
 using Grasshopper.Kernel;
+using SimpleGrasshopper.Undo;
+using SimpleGrasshopper.Util;
 using System.Drawing;
 
 namespace SimpleGrasshopper.GHTests;

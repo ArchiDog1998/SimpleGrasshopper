@@ -595,7 +595,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             FlatStyle = FlatStyle.System,
         };
-        ;
+        
         var array = Enum.GetValues(type);
         var objs = new List<object>(array.Length);
         foreach (var enumItem in array)
