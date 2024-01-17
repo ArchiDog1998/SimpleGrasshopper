@@ -4,7 +4,6 @@ using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
 using SimpleGrasshopper.Attributes;
 using System.Drawing.Imaging;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace SimpleGrasshopper.Util;
 
@@ -614,13 +613,19 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
             foreach (var @enum in enums)
             {
-                var i = new ToolStripMenuItem(((Enum)@enum).GetDescription(), null, (s, e) =>
+                var eItem = (Enum)@enum;
+
+                var iconPath = eItem.GetCustomAttribute<IconAttribute>()?.IconPath;
+
+                var i = new ToolStripMenuItem(eItem.GetDescription(),
+                     iconPath == null ? null : GetType().Assembly.GetBitmap(iconPath),
+                     (s, e) =>
                 {
-                    propertyInfo.SetValue(null, @enum);
+                    propertyInfo.SetValue(null, eItem);
                 })
                 {
-                    Checked = Enum.Equals(e, @enum),
-                    Tag = @enum,
+                    Checked = Enum.Equals(e, eItem),
+                    Tag = eItem,
                 };
 
                 i.DropDownOpening += (sender, e) =>

@@ -65,6 +65,7 @@ public enum EnumTesting : byte
 {
     [Description("No. 1")]
     What,
+    [Icon("b7798b74-037e-4f0c-8ac7-dc1043d093e0")]
     Why,
     How,
 }
