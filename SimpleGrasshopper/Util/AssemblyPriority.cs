@@ -77,7 +77,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// <summary>
     /// The custom menu item creators.
     /// </summary>
-    protected virtual Dictionary<Type, Func<PropertyInfo, ToolStripMenuItem?>> CustomItemsCreators { get; } = [];
+    protected virtual Dictionary<Type, Func<PropertyInfo, ToolStripMenuItem[]>> CustomItemsCreators { get; } = [];
 
     /// <summary>
     /// The display string about reseting the value.
@@ -344,20 +344,14 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
                 && p.GetCustomAttribute<ConfigAttribute>() != null)
             .ToList();
 
-        var majorProperty = properties.FirstOrDefault(p => p.GetCustomAttribute<ConfigAttribute>()?.Name == assemblyName);
-
-        if (majorProperty != null)
-        {
-            properties.Remove(majorProperty);
-        }
-
         var items = GetAllItems(properties!);
 
-        if (items.Length == 0 && majorProperty == null) return null;
+        if (items.Count == 0) return null;
 
-        var major = majorProperty != null
-            ? CreateItem(majorProperty) ?? new ToolStripMenuItem(assemblyName)
-            : new ToolStripMenuItem(assemblyName);
+        var mItem = items.FirstOrDefault(i => i.Item1.Tag as string == assemblyName);
+        items = items.Where(i => i.Item1 != mItem.Item1).ToList();
+
+        var major = mItem.Item1 ?? new ToolStripMenuItem(assemblyName);
 
         if (icon != null)
         {
@@ -397,36 +391,39 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         return major;
     }
 
-    private (ToolStripItem, byte, ushort)[] GetAllItems(List<PropertyInfo?> propertyInfos)
+    private List<(ToolStripMenuItem, byte, ushort)> GetAllItems(List<PropertyInfo?> propertyInfos)
     {
         var parentList = new List<ToolStripMenuItem>(propertyInfos.Count);
-        var flattenList = new List<(ToolStripItem, string, byte, ushort)>(propertyInfos.Count);
+        var flattenList = new List<(ToolStripMenuItem, string, byte, ushort)>(propertyInfos.Count);
         foreach (var property in propertyInfos)
         {
             if (property == null) continue;
 
-            var item = CreateItem(property);
-            if (item == null) continue;
+            var items = CreateItems(property);
 
             var attr = property.GetCustomAttribute<ConfigAttribute>();
             var parent = attr?.Parent ?? string.Empty;
             var section = attr?.Section ?? 0;
             var order = attr?.Order ?? 0;
-            flattenList.Add((item, parent, section, order));
 
-            if (item is ToolStripMenuItem menuItem)
+            foreach (var item in items)
             {
-                parentList.Add(menuItem);
+                flattenList.Add((item, parent, section, order));
+
+                if (item is ToolStripMenuItem menuItem)
+                {
+                    parentList.Add(menuItem);
+                }
             }
         }
 
-        var result = new List<(ToolStripItem, byte, ushort)>(flattenList.Count);
-        var sectionDict = new Dictionary<ToolStripMenuItem, List<(ToolStripItem, byte, ushort)>>();
+        var result = new List<(ToolStripMenuItem, byte, ushort)>(flattenList.Count);
+        var sectionDict = new Dictionary<ToolStripMenuItem, List<(ToolStripMenuItem, byte, ushort)>>();
         foreach (var (item, parent, section, order) in flattenList)
         {
             if (!string.IsNullOrEmpty(parent))
             {
-                var parentItem = parentList.FirstOrDefault(i => i.Text == parent);
+                var parentItem = parentList.FirstOrDefault(i => i.Tag as string == parent);
                 if (parentItem != null)
                 {
                     if (!sectionDict.TryGetValue(parentItem, out var children)) children = [];
@@ -455,181 +452,182 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             }
         }
 
-        return [.. result];
+        return result;
     }
 
-    private ToolStripMenuItem? CreateItem(PropertyInfo propertyInfo)
+    private ToolStripMenuItem[] CreateItems(PropertyInfo propertyInfo)
     {
         var type = propertyInfo.PropertyType.GetRawType();
-        ToolStripMenuItem? item;
+
         if (CustomItemsCreators.TryGetValue(type, out var creator))
         {
-            item = creator?.Invoke(propertyInfo);
+            return creator?.Invoke(propertyInfo) ?? [];
         }
         else if (type == typeof(bool))
         {
-            item = CreateBoolItem(propertyInfo);
+            return CreateBoolItem(propertyInfo);
         }
         else if (type == typeof(string))
         {
-            item = CreateStringItem(propertyInfo);
+            return CreateStringItem(propertyInfo);
         }
         else if (type == typeof(Color))
         {
-            item = CreateColorItem(propertyInfo);
+            return CreateColorItem(propertyInfo);
         }
         else if (type == typeof(int))
         {
-            item = CreateIntegerItem<int>(propertyInfo, int.MinValue, int.MaxValue);
+            return CreateIntegerItem<int>(propertyInfo, int.MinValue, int.MaxValue);
         }
         else if (type == typeof(byte))
         {
-            item = CreateIntegerItem<byte>(propertyInfo, byte.MinValue, byte.MaxValue);
+            return CreateIntegerItem<byte>(propertyInfo, byte.MinValue, byte.MaxValue);
         }
         else if (type == typeof(sbyte))
         {
-            item = CreateIntegerItem<sbyte>(propertyInfo, sbyte.MinValue, sbyte.MaxValue);
+            return CreateIntegerItem<sbyte>(propertyInfo, sbyte.MinValue, sbyte.MaxValue);
         }
         else if (type == typeof(short))
         {
-            item = CreateIntegerItem<short>(propertyInfo, short.MinValue, short.MaxValue);
+            return CreateIntegerItem<short>(propertyInfo, short.MinValue, short.MaxValue);
         }
         else if (type == typeof(ushort))
         {
-            item = CreateIntegerItem<ushort>(propertyInfo, ushort.MinValue, ushort.MaxValue);
+            return CreateIntegerItem<ushort>(propertyInfo, ushort.MinValue, ushort.MaxValue);
         }
         else if (type == typeof(uint))
         {
-            item = CreateIntegerItem<uint>(propertyInfo, uint.MinValue, uint.MaxValue);
+            return CreateIntegerItem<uint>(propertyInfo, uint.MinValue, uint.MaxValue);
         }
         else if (type == typeof(long))
         {
-            item = CreateIntegerItem<long>(propertyInfo, long.MinValue, long.MaxValue);
+            return CreateIntegerItem<long>(propertyInfo, long.MinValue, long.MaxValue);
         }
         else if (type == typeof(ulong))
         {
-            item = CreateIntegerItem<ulong>(propertyInfo, ulong.MinValue, ulong.MaxValue);
+            return CreateIntegerItem<ulong>(propertyInfo, ulong.MinValue, ulong.MaxValue);
         }
         else if (type == typeof(double))
         {
-            item = CreateNumberItem<double>(propertyInfo);
+            return CreateNumberItem<double>(propertyInfo);
         }
         else if (type == typeof(float))
         {
-            item = CreateNumberItem<float>(propertyInfo);
+            return CreateNumberItem<float>(propertyInfo);
         }
         else if (type == typeof(decimal))
         {
-            item = CreateNumberItem<decimal>(propertyInfo);
+            return CreateNumberItem<decimal>(propertyInfo);
         }
         else if (type == typeof(DateTime))
         {
-            item = CreateDateTimeItem(propertyInfo);
+            return CreateDateTimeItem(propertyInfo);
         }
         else if (type.IsEnum)
         {
-            item = CreateEnumItem(propertyInfo);
+            return CreateEnumItem(propertyInfo);
         }
         else
         {
             var isObject = type == typeof(object);
-            item = CreateBaseItem(propertyInfo, isObject ? null
-                : new Param_GenericObject().Icon_24x24);
-            if (isObject && item != null)
-            {
-                item.Click += (s, e) =>
+            return [.. CreateBaseItems(propertyInfo, isObject ? null
+                : new Param_GenericObject().Icon_24x24).Select(item =>
                 {
-                    propertyInfo.SetValue(null, null);
-                };
-            }
+                    if (isObject)
+                    {
+                        item.Click += (s, e) =>
+                        {
+                            propertyInfo.SetValue(null, null);
+                        };
+                    }
+                    return item;
+                })];
         }
-
-        return item;
     }
 
-    private ToolStripMenuItem? CreateDateTimeItem(PropertyInfo propertyInfo)
+    private ToolStripMenuItem[] CreateDateTimeItem(PropertyInfo propertyInfo)
     {
-        var item = CreateBaseItem(propertyInfo, new Param_Time().Icon_24x24);
-        if (item == null) return null;
-
         if (propertyInfo.GetValue(null) is not DateTime time)
         {
-            return null;
+            return [];
         }
 
-        var ctrl = new DateTimePicker()
+        return [.. CreateBaseItems(propertyInfo, new Param_Time().Icon_24x24).Select(item =>
         {
-            Value = time,
-            Format = DateTimePickerFormat.Custom,
-            CustomFormat = DateTimePickerCustomFormat,
-        };
+            var ctrl = new DateTimePicker()
+            {
+                Value = time,
+                Format = DateTimePickerFormat.Custom,
+                CustomFormat = DateTimePickerCustomFormat,
+            };
 
-        ctrl.ValueChanged += (sender, e) =>
-        {
-            if (sender is not DateTimePicker picker) return;
-            propertyInfo.SetValue(null, picker.Value);
-        };
+            ctrl.ValueChanged += (sender, e) =>
+            {
+                if (sender is not DateTimePicker picker) return;
+                propertyInfo.SetValue(null, picker.Value);
+            };
 
-        AddPropertyChangedEvent(propertyInfo, (DateTime b) =>
-        {
-            ctrl.Value = b;
-        });
+            AddPropertyChangedEvent(propertyInfo, (DateTime b) =>
+            {
+                ctrl.Value = b;
+            });
 
-        GH_DocumentObject.Menu_AppendCustomItem(item.DropDown, ctrl);
-        AddResetItem(item.DropDownItems, propertyInfo);
-        return item;
+            GH_DocumentObject.Menu_AppendCustomItem(item.DropDown, ctrl);
+            AddResetItem(item.DropDownItems, propertyInfo);
+            return item;
+        })];
     }
 
-    private ToolStripMenuItem? CreateEnumItem(PropertyInfo propertyInfo)
+    private ToolStripMenuItem[] CreateEnumItem(PropertyInfo propertyInfo)
     {
-        var item = CreateBaseItem(propertyInfo, new GH_ValueList().Icon_24x24);
-        if (item == null) return null;
-
         var i = propertyInfo.GetValue(null);
-        if (i == null) return null;
+        if (i == null) return [];
 
-        var type = propertyInfo.PropertyType;
-        var e = Enum.ToObject(type, i);
-
-        var box = new ToolStripComboBox()
+        return [.. CreateBaseItems(propertyInfo, new GH_ValueList().Icon_24x24).Select(item =>
         {
-            FlatStyle = FlatStyle.System,
-        };
+            var type = propertyInfo.PropertyType;
+            var e = Enum.ToObject(type, i);
 
-        var array = Enum.GetValues(type);
-        var objs = new List<object>(array.Length);
-        foreach (var enumItem in array)
-        {
-            objs.Add(new EnumRelay()
+            var box = new ToolStripComboBox()
             {
-                Value = enumItem,
-                Name = ((Enum)enumItem).GetDescription(),
-            });
-        }
-        box.Items.AddRange([.. objs]);
-        box.SelectedIndex = Array.IndexOf(array, e);
+                FlatStyle = FlatStyle.System,
+            };
 
-        box.SelectedIndexChanged += (sender, e) =>
-        {
-            if (sender is not ToolStripComboBox b) return;
-            propertyInfo.SetValue(null, ((EnumRelay)b.SelectedItem).Value);
-        };
+            var array = Enum.GetValues(type);
+            var objs = new List<object>(array.Length);
+            foreach (var enumItem in array)
+            {
+                objs.Add(new EnumRelay()
+                {
+                    Value = enumItem,
+                    Name = ((Enum)enumItem).GetDescription(),
+                });
+            }
+            box.Items.AddRange([.. objs]);
+            box.SelectedIndex = Array.IndexOf(array, e);
 
-        var method = typeof(AssemblyPriority).GetAllRuntimeMethods()
-            .First(m => m.Name == nameof(GetSettingDelegate))
-            .MakeGenericMethod(type);
+            box.SelectedIndexChanged += (sender, e) =>
+            {
+                if (sender is not ToolStripComboBox b) return;
+                propertyInfo.SetValue(null, ((EnumRelay)b.SelectedItem).Value);
+            };
 
-        var dele = method.Invoke(null, [array, box]);
+            var method = typeof(AssemblyPriority).GetAllRuntimeMethods()
+                .First(m => m.Name == nameof(GetSettingDelegate))
+                .MakeGenericMethod(type);
 
-        method = typeof(AssemblyPriority).GetAllRuntimeMethods()
-            .First(m => m.Name == nameof(AddPropertyChangedEvent))
-            .MakeGenericMethod(type);
+            var dele = method.Invoke(null, [array, box]);
 
-        method.Invoke(null, [propertyInfo, dele]);
+            method = typeof(AssemblyPriority).GetAllRuntimeMethods()
+                .First(m => m.Name == nameof(AddPropertyChangedEvent))
+                .MakeGenericMethod(type);
 
-        item.DropDownItems.Add(box);
-        AddResetItem(item.DropDownItems, propertyInfo);
-        return item;
+            method.Invoke(null, [propertyInfo, dele]);
+
+            item.DropDownItems.Add(box);
+            AddResetItem(item.DropDownItems, propertyInfo);
+            return item;
+        })];
     }
 
     private static Action<T> GetSettingDelegate<T>(Array array, ToolStripComboBox box)
@@ -644,7 +642,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         public readonly override string ToString() => Name;
     }
 
-    private ToolStripMenuItem? CreateIntegerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max)
+    private ToolStripMenuItem[] CreateIntegerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max)
     {
         int place = 0;
 
@@ -655,11 +653,10 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             max = Math.Min(max, range.Max);
             place = Math.Min(place, range.Place);
         }
-        var item = CreateScrollerItem<T>(propertyInfo, min, max, place, new Param_Integer().Icon_24x24);
-        return item;
+        return CreateScrollerItem<T>(propertyInfo, min, max, place, new Param_Integer().Icon_24x24);
     }
 
-    private ToolStripMenuItem? CreateNumberItem<T>(PropertyInfo propertyInfo)
+    private ToolStripMenuItem[] CreateNumberItem<T>(PropertyInfo propertyInfo)
     {
         decimal min = decimal.MinValue;
         decimal max = decimal.MaxValue;
@@ -672,94 +669,93 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             max = Math.Min(max, range.Max);
             place = Math.Max(place, range.Place);
         }
-        var item = CreateScrollerItem<T>(propertyInfo, min, max, place, new Param_Number().Icon_24x24);
-        return item;
+        return CreateScrollerItem<T>(propertyInfo, min, max, place, new Param_Number().Icon_24x24);
     }
 
-    private ToolStripMenuItem? CreateScrollerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max, int place, Image? defaultImage)
+    private ToolStripMenuItem[] CreateScrollerItem<T>(PropertyInfo propertyInfo, decimal min, decimal max, int place, Image? defaultImage)
     {
         if (propertyInfo.GetValue(null) is not T i)
         {
-            return null;
+            return [];
         }
 
-        var item = CreateBaseItem(propertyInfo, defaultImage);
-        if (item == null) return null;
-
-        var slider = item.DropDown.AddScroller(min, max, Convert.ToDecimal(i), place,
+        return [.. CreateBaseItems(propertyInfo, defaultImage).Select(item =>
+        {
+            var slider = item.DropDown.AddScroller(min, max, Convert.ToDecimal(i), place,
             v => propertyInfo.SetValue(null, Convert.ChangeType(v, typeof(T))));
 
-        AddPropertyChangedEvent(propertyInfo, (T b) =>
-        {
-            slider.Value = Convert.ToDecimal(b);
-        });
+            AddPropertyChangedEvent(propertyInfo, (T b) =>
+            {
+                slider.Value = Convert.ToDecimal(b);
+            });
 
-        AddResetItem(item.DropDownItems, propertyInfo);
-        return item;
+            AddResetItem(item.DropDownItems, propertyInfo);
+            return item;
+        })];
     }
 
-    private ToolStripMenuItem? CreateColorItem(PropertyInfo propertyInfo)
+    private ToolStripMenuItem[] CreateColorItem(PropertyInfo propertyInfo)
     {
         if (propertyInfo.GetValue(null) is not Color c)
         {
-            return null;
+            return [];
         }
 
-        var item = CreateBaseItem(propertyInfo, new Param_Colour().Icon_24x24);
-        if (item == null) return null;
-
-        GH_ColourPicker picker = GH_DocumentObject.Menu_AppendColourPicker(item.DropDown, c, (sender, e) =>
+        return [..CreateBaseItems(propertyInfo, new Param_Colour().Icon_24x24).Select(item =>
         {
-            propertyInfo.SetValue(null, e.Colour);
-        });
+            GH_ColourPicker picker = GH_DocumentObject.Menu_AppendColourPicker(item.DropDown, c, (sender, e) =>
+            {
+                propertyInfo.SetValue(null, e.Colour);
+            });
 
-        AddPropertyChangedEvent(propertyInfo, (Color b) =>
-        {
-            picker.Colour = b;
-        });
+            AddPropertyChangedEvent(propertyInfo, (Color b) =>
+            {
+                picker.Colour = b;
+            });
 
-        AddResetItem(item.DropDownItems, propertyInfo);
-        return item;
+            AddResetItem(item.DropDownItems, propertyInfo);
+            return item;
+        })];
     }
 
-    private ToolStripMenuItem? CreateStringItem(PropertyInfo propertyInfo)
+    private ToolStripMenuItem[] CreateStringItem(PropertyInfo propertyInfo)
     {
         if (propertyInfo.GetValue(null) is not string s)
         {
-            return null;
+            return [];
         }
 
-        var item = CreateBaseItem(propertyInfo, new Param_String().Icon_24x24);
-        if (item == null) return null;
-
-        var textItem = new ToolStripTextBox
+        return [.. CreateBaseItems(propertyInfo, new Param_String().Icon_24x24).Select(item =>
         {
-            Text = s,
-            BorderStyle = BorderStyle.FixedSingle,
-        };
+            var textItem = new ToolStripTextBox
+            {
+                Text = s,
+                BorderStyle = BorderStyle.FixedSingle,
+            };
 
-        textItem.TextChanged += (sender, e) =>
-        {
-            propertyInfo.SetValue(null, textItem.Text);
-        };
+            textItem.TextChanged += (sender, e) =>
+            {
+                propertyInfo.SetValue(null, textItem.Text);
+            };
 
-        AddPropertyChangedEvent(propertyInfo, (string b) =>
-        {
-            textItem.Text = b;
-        });
+            AddPropertyChangedEvent(propertyInfo, (string b) =>
+            {
+                textItem.Text = b;
+            });
 
-        item.DropDownItems.Add(textItem);
-        AddResetItem(item.DropDownItems, propertyInfo);
-        return item;
+            item.DropDownItems.Add(textItem);
+            AddResetItem(item.DropDownItems, propertyInfo);
+            return item;
+        })];
     }
 
-    private ToolStripMenuItem? CreateBoolItem(PropertyInfo propertyInfo)
+    private ToolStripMenuItem[] CreateBoolItem(PropertyInfo propertyInfo)
     {
-        var item = CreateBaseItem(propertyInfo, new Param_Boolean().Icon_24x24);
-        if (item == null) return null;
-
-        item = ToBoolItem(item, propertyInfo);
-        return item;
+        return [.. CreateBaseItems(propertyInfo, new Param_Boolean().Icon_24x24).Select(item =>
+        {
+            item = ToBoolItem(item, propertyInfo);
+            return item;
+        })];
     }
 
     private static ToolStripMenuItem ToBoolItem(ToolStripMenuItem item, PropertyInfo propertyInfo)
@@ -828,47 +824,52 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// <param name="propertyInfo">the property</param>
     /// <param name="defaultImage">the default config image.</param>
     /// <returns>the item.</returns>
-    protected ToolStripMenuItem? CreateBaseItem(PropertyInfo propertyInfo, Image? defaultImage)
+    protected ToolStripMenuItem[] CreateBaseItems(PropertyInfo propertyInfo, Image? defaultImage)
     {
-        var attribute = propertyInfo.GetCustomAttribute<ConfigAttribute>();
-        if (attribute == null) return null;
+        var attributes = propertyInfo.GetCustomAttributes<ConfigAttribute>();
 
-        var major = new ToolStripMenuItem(attribute.Name);
-
-        if (propertyInfo.GetCustomAttribute<ShortcutAttribute>() is ShortcutAttribute shortcut)
+        return [..attributes.Select(attribute =>
         {
-            major.ShortcutKeyDisplayString = shortcut.DisplayString ?? shortcut.ShortcutKey.ToString();
-            major.ShortcutKeys = shortcut.ShortcutKey;
-            major.ShowShortcutKeys = shortcut.ShowShortcut;
-        }
-
-        var iconName = attribute.Icon;
-        if (!string.IsNullOrEmpty(iconName))
-        {
-            var icon = GetType().Assembly.GetBitmap(iconName);
-            if (icon != null)
+            var major = new ToolStripMenuItem(attribute.Name)
             {
-                major.Image = icon;
+                Tag = attribute.Name,
+            };
+
+            if (propertyInfo.GetCustomAttribute<ShortcutAttribute>() is ShortcutAttribute shortcut)
+            {
+                major.ShortcutKeyDisplayString = shortcut.DisplayString ?? shortcut.ShortcutKey.ToString();
+                major.ShortcutKeys = shortcut.ShortcutKey;
+                major.ShowShortcutKeys = shortcut.ShowShortcut;
             }
-        }
-        if (major.Image == null && DefaultIconOpacity > 0 && defaultImage != null)
-        {
-            major.Image = SetImageOpacity(defaultImage, DefaultIconOpacity);
-        }
 
-        var desc = attribute.Description;
-        if (!string.IsNullOrEmpty(desc))
-        {
-            major.ToolTipText = desc;
-        }
+            var iconName = attribute.Icon;
+            if (!string.IsNullOrEmpty(iconName))
+            {
+                var icon = GetType().Assembly.GetBitmap(iconName);
+                if (icon != null)
+                {
+                    major.Image = icon;
+                }
+            }
+            if (major.Image == null && DefaultIconOpacity > 0 && defaultImage != null)
+            {
+                major.Image = SetImageOpacity(defaultImage, DefaultIconOpacity);
+            }
 
-        //No closing when changing value.
-        major.DropDown.Closing += (sender, e) =>
-        {
-            e.Cancel = e.CloseReason is ToolStripDropDownCloseReason.ItemClicked;
-        };
+            var desc = attribute.Description;
+            if (!string.IsNullOrEmpty(desc))
+            {
+                major.ToolTipText = desc;
+            }
 
-        return major;
+            //No closing when changing value.
+            major.DropDown.Closing += (sender, e) =>
+            {
+                e.Cancel = e.CloseReason is ToolStripDropDownCloseReason.ItemClicked;
+            };
+
+            return major;
+        })];
 
         static Image SetImageOpacity(Image image, float opacity)
         {
