@@ -1,4 +1,5 @@
-﻿using SimpleGrasshopper.Attributes;
+﻿using Grasshopper.Kernel.Data;
+using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Util;
 
 namespace SimpleGrasshopper.Data;
@@ -28,7 +29,7 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
         }
     }
 
-    public IGH_Param CreateParam()
+    public IGH_Param CreateParam(Type? owner = null)
     {
         var proxy = Instances.ComponentServer.EmitObjectProxy(
             ParamInfo.GetCustomAttribute<ParamAttribute>()?.Guid ?? Param.ComponentGuid);
@@ -38,7 +39,7 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
             throw new ArgumentException("The guid is not valid for creating a IGH_Param!");
         }
 
-        SetOptional(ParamInfo, param, Access);
+        SetOptional(ParamInfo, owner, param);
         SimpleUtils.SetSpecial(ref param, Param.RawInnerTypeNoGoo,
             ParamInfo.GetCustomAttribute<AngleAttribute>() != null,
             ParamInfo.GetCustomAttribute<HiddenAttribute>() != null);
@@ -52,27 +53,24 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
 
         return param;
 
-        static void SetOptional(ParameterInfo info, IGH_Param param, GH_ParamAccess access)
+        static void SetOptional(ParameterInfo info, Type? owner, IGH_Param param)
         {
-            if (access == GH_ParamAccess.item && info.DefaultValue != null)
+            var data = info.DefaultValue;
+            if (info.GetCustomAttribute<PersistentDataAttribute>()
+                is PersistentDataAttribute persist && owner != null)
             {
-                SetPersistentData(ref param, info.DefaultValue);
+                data = persist.GetValue(owner) ?? data;
+            }
+
+            if (data != null)
+            {
+                SimpleUtils.SetPersistentData(ref param, data);
             }
             else if (info.HasDefaultValue)
             {
                 param.Optional = true;
             }
 
-            static void SetPersistentData(ref IGH_Param param, object data)
-            {
-                var persistType = typeof(GH_PersistentParam<>);
-                if (param.GetType().IsGeneralType(persistType) is not Type persistParam) return;
-
-                var method = persistType.MakeGenericType(persistParam).GetRuntimeMethod("SetPersistentData", [typeof(object[])]);
-
-                if (method == null) return;
-                method.Invoke(param, [new object[] { data }]);
-            }
         }
 
         static void SetTags(IGH_Param param, ParamTagAttribute tag)

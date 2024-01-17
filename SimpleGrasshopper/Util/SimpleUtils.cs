@@ -4,12 +4,14 @@ using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using Rhino;
+using Rhino.Geometry;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Undo;
 using System.Collections;
 using System.ComponentModel;
 using System.Net;
+using System.Windows.Forms.VisualStyles;
 
 namespace SimpleGrasshopper.Util;
 
@@ -241,6 +243,37 @@ public static class SimpleUtils
 #endif
         }
         return null!;
+    }
+
+    internal static void SetPersistentData(ref IGH_Param param, object data)
+    {
+        var persistType = typeof(GH_PersistentParam<>);
+        if (param.GetType().IsGeneralType(persistType) is not Type persistParam) return;
+
+        if (data is IGH_Structure)
+        {
+            var method = persistType.MakeGenericType(persistParam).GetRuntimeMethod("SetPersistentData", [typeof(GH_Structure<>).MakeGenericType(persistParam)]);
+            if (method == null) return;
+            method.Invoke(param, [data]);
+        }
+        else
+        {
+            var method = persistType.MakeGenericType(persistParam).GetRuntimeMethod("SetPersistentData", [typeof(object[])]);
+
+            if (method == null) return;
+
+            if (data.GetType().IsArray)
+            {
+                var length = ((Array)data).Length;
+                var array = Array.CreateInstance(typeof(object), length);
+                Array.Copy((Array)data, array, length);
+                method.Invoke(param, [array]);
+            }
+            else
+            {
+                method.Invoke(param, [new object[] { data }]);
+            }
+        }
     }
 
     /// <summary>

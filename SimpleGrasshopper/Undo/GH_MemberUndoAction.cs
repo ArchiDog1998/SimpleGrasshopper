@@ -15,7 +15,7 @@ public class GH_MemberUndoAction : GH_UndoAction
     string _value;
     Type? _type;
     readonly AfterUndo _after;
-    Action? _action;
+    readonly Action? _action;
 
     /// <summary>
     /// Default ctor.

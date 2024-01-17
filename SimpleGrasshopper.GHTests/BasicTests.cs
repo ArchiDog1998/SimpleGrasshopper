@@ -5,6 +5,7 @@ using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.DocumentObjects;
 using System.ComponentModel;
+using System.Reflection;
 
 namespace SimpleGrasshopper.GHTests;
 
@@ -56,11 +57,27 @@ internal static class BasicTests
         type = input ?? EnumTest.First;
     }
 
+    private static GH_Structure<GH_Boolean>? _testingPD = null;
+    private static GH_Structure<GH_Boolean> TestingPD
+    {
+        get
+        {
+            if (_testingPD != null) return _testingPD;
+            _testingPD = new();
+            _testingPD.Append(new GH_Boolean(true));
+            _testingPD.Append(new GH_Boolean(false));
+            _testingPD.Append(new GH_Boolean(false));
+            return _testingPD;
+        }
+    }
+
+    private static bool[] TestingArray = [false, true, true];
+    private static bool TestingItem = false;
 
     [DocObj("Type Testing", "T", "Testing for my type")]
     private static void MyTypeTest(
         GH_Structure<SimpleGoo<ITypeTest>> type, 
-        GH_Structure<GH_Boolean> bools,
+        [PersistentData(nameof(TestingItem))]GH_Structure<GH_Boolean> bools,
         out ITypeTest typeTest)
     {
         typeTest = new SubTypeTest();

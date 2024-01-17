@@ -164,7 +164,7 @@ public abstract class MethodComponent(
             p.GetNames("Input", "I",
                 out var name, out var nickName, out var description);
 
-            pManager.AddParameter(p.CreateParam(), name, nickName, description, p.Access);
+            pManager.AddParameter(p.CreateParam(MethodInfo.DeclaringType), name, nickName, description, p.Access);
         }
 
         this.Message = message ?? MethodInfo.GetCustomAttribute<MessageAttribute>()?.Message;
