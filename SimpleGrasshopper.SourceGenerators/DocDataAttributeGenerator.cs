@@ -91,18 +91,18 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
                 {
                     fieldStr = fieldType.GetFullMetadataName();
                     getValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.GetValue(\"{key}\", null) is string str && !string.IsNullOrEmpty(str) ? IOHelper.DeserializeObject<{fieldStr}>(str) : {variableName}";
-                    setValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.SetValue(\"{key}\", IOHelper.SerializeObject(value))";
+                    setValueStr = $"AssemblyPriority.GetDocument().ValueTable.SetValue(\"{key}\", IOHelper.SerializeObject(value))";
                 }
                 else if (fieldType.TypeKind == TypeKind.Enum)
                 {
                     fieldStr = fieldType.GetFullMetadataName();
                     getValueStr = $"({fieldStr})Enum.ToObject(typeof({fieldStr}), AssemblyPriority.GetDocument()?.ValueTable.GetValue(\"{key}\", Convert.ToInt32({variableName})) ?? default!)";
-                    setValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.SetValue(\"{key}\", Convert.ToInt32(value))";
+                    setValueStr = $"AssemblyPriority.GetDocument().ValueTable.SetValue(\"{key}\", Convert.ToInt32(value))";
                 }
                 else
                 {
                     getValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.GetValue(\"{key}\", {variableName}) ?? default!";
-                    setValueStr = $"AssemblyPriority.GetDocument()?.ValueTable.SetValue(\"{key}\", value)";
+                    setValueStr = $"AssemblyPriority.GetDocument().ValueTable.SetValue(\"{key}\", value)";
                 }
 
                 var attributeStr = names.Count == 0 ? "" : $"[{string.Join(", ", names)}]";
@@ -113,7 +113,7 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
                             get => {{getValueStr}};
                             set
                             {
-                                if ({{propertyName}} == value) return;
+                                if ({{propertyName}} == value || AssemblyPriority.GetDocument() == null) return;
 
                                 {{setValueStr}};
 

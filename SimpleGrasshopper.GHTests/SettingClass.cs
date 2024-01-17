@@ -44,11 +44,11 @@ internal partial class SettingClass
     [Setting, Config("My Time", parent: "EnumValue")]
     private static readonly DateTime _time = DateTime.Now;
 
-    [Config("EnumValue")]
-    public static EnumTesting Test { get; set; }
+    [Setting, Config("EnumValue")]
+    public static EnumTesting _test = EnumTesting.Why;
 
     [Shortcut(Keys.E | Keys.Control, "Ctrl+E")]
-    [Config("Button")]
+    [Config("Button", parent: "EnumValue.Why")]
     public static object Button
     {
         get => false;
@@ -59,15 +59,6 @@ internal partial class SettingClass
              MessageBox.Show("Clicked");
         }
     }
-
-    #region For the case you want your property can be reset. not suggested.
-    public static event Action<EnumTesting>? OnTestChanged;
-    public static void ResetTest()
-    {
-        Test = EnumTesting.What;
-        OnTestChanged?.Invoke(Test);
-    }
-    #endregion
 }
 
 public enum EnumTesting : byte

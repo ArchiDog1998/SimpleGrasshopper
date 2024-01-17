@@ -4,6 +4,7 @@ using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
 using SimpleGrasshopper.Attributes;
 using System.Drawing.Imaging;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace SimpleGrasshopper.Util;
 
@@ -423,7 +424,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         {
             if (!string.IsNullOrEmpty(parent))
             {
-                var parentItem = parentList.FirstOrDefault(i => i.Tag as string == parent);
+                var parentItem = FindParent(parentList, parent);
                 if (parentItem != null)
                 {
                     if (!sectionDict.TryGetValue(parentItem, out var children)) children = [];
@@ -453,6 +454,27 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         }
 
         return result;
+
+        static ToolStripMenuItem? FindParent(IEnumerable<ToolStripMenuItem> parents, string name)
+        {
+            ToolStripMenuItem? result = null, parent = null;
+
+            while(true)
+            {
+                parent = parents.FirstOrDefault(i => name.StartsWith(i.Tag.ToString()));
+
+                if (parent == null) break;
+                result = parent;
+
+                var stringLength = parent.Tag.ToString().Length + 1;
+                if (name.Length <= stringLength) break;
+
+                parents = parent.DropDownItems.OfType<ToolStripMenuItem>() ?? [];
+                name = name.Substring(stringLength);
+            }
+
+            return result;
+        }
     }
 
     private ToolStripMenuItem[] CreateItems(PropertyInfo propertyInfo)
@@ -588,35 +610,47 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             var type = propertyInfo.PropertyType;
             var e = Enum.ToObject(type, i);
 
-            var box = new ToolStripComboBox()
-            {
-                FlatStyle = FlatStyle.System,
-            };
+            var enums = Enum.GetValues(type);
 
-            var array = Enum.GetValues(type);
-            var objs = new List<object>(array.Length);
-            foreach (var enumItem in array)
+            foreach (var @enum in enums)
             {
-                objs.Add(new EnumRelay()
+                var i = new ToolStripMenuItem(((Enum)@enum).GetDescription(), null, (s, e) =>
                 {
-                    Value = enumItem,
-                    Name = ((Enum)enumItem).GetDescription(),
-                });
-            }
-            box.Items.AddRange([.. objs]);
-            box.SelectedIndex = Array.IndexOf(array, e);
+                    propertyInfo.SetValue(null, @enum);
+                })
+                {
+                    Checked = Enum.Equals(e, @enum),
+                    Tag = @enum,
+                };
 
-            box.SelectedIndexChanged += (sender, e) =>
-            {
-                if (sender is not ToolStripComboBox b) return;
-                propertyInfo.SetValue(null, ((EnumRelay)b.SelectedItem).Value);
-            };
+                i.DropDownOpening += (sender, e) =>
+                {
+                    if (!i.HasDropDownItems) return;
+
+                    foreach (ToolStripItem it in i.DropDownItems)
+                    {
+                        it.Enabled = item.Checked;
+                    }
+                };
+
+                i.CheckedChanged += (s, e) =>
+                {
+                    foreach (ToolStripItem it in i.DropDownItems)
+                    {
+                        it.Enabled = i.Checked;
+                    }
+                };
+
+                item.DropDownItems.Add(i);
+            }
+
+            AddResetItem(item.DropDownItems, propertyInfo);
 
             var method = typeof(AssemblyPriority).GetAllRuntimeMethods()
                 .First(m => m.Name == nameof(GetSettingDelegate))
                 .MakeGenericMethod(type);
 
-            var dele = method.Invoke(null, [array, box]);
+            var dele = method.Invoke(null, [item]);
 
             method = typeof(AssemblyPriority).GetAllRuntimeMethods()
                 .First(m => m.Name == nameof(AddPropertyChangedEvent))
@@ -624,15 +658,20 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
             method.Invoke(null, [propertyInfo, dele]);
 
-            item.DropDownItems.Add(box);
-            AddResetItem(item.DropDownItems, propertyInfo);
             return item;
         })];
     }
 
-    private static Action<T> GetSettingDelegate<T>(Array array, ToolStripComboBox box)
+    private static Action<T> GetSettingDelegate<T>(ToolStripMenuItem item)
     {
-        return (b) => box.SelectedIndex = Array.IndexOf(array, b);
+        return (b) =>
+        {
+            foreach (var i in item.DropDownItems)
+            {
+                if (i is not ToolStripMenuItem menuItem) continue;
+                menuItem.Checked = Enum.Equals(menuItem.Tag, b);
+            }
+        };
     }
 
     private struct EnumRelay
@@ -768,33 +807,27 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         item.Checked = b;
         item.Click += (sender, e) =>
         {
-            if (sender is not ToolStripMenuItem i) return;
-            propertyInfo.SetValue(null, !i.Checked);
+            propertyInfo.SetValue(null, !item.Checked);
+        };
 
-            if (!i.HasDropDownItems) return;
+        item.DropDownOpening += (sender, e) =>
+        {
+            if (!item.HasDropDownItems) return;
 
-            foreach (ToolStripItem it in i.DropDownItems)
+            foreach (ToolStripItem it in item.DropDownItems)
             {
-                it.Enabled = i.Checked;
+                it.Enabled = item.Checked;
             }
         };
 
         AddPropertyChangedEvent(propertyInfo, (bool b) =>
         {
             item.Checked = b;
-        });
-
-        item.DropDownOpening += (sender, e) =>
-        {
-            if (sender is not ToolStripMenuItem i) return;
-
-            if (!i.HasDropDownItems) return;
-
-            foreach (ToolStripItem it in i.DropDownItems)
+            foreach (ToolStripItem it in item.DropDownItems)
             {
-                it.Enabled = i.Checked;
+                it.Enabled = item.Checked;
             }
-        };
+        });
 
         return item;
     }

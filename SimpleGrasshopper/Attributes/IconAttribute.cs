@@ -5,7 +5,7 @@
 /// Please don't forget to embed your file into your project!
 /// </summary>
 /// <param name="iconPath">the path or name of the icon that is embedded in your project</param>
-[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Field)]
 
 public class IconAttribute(string iconPath) : Attribute
 {
