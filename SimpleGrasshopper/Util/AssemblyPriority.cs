@@ -456,11 +456,11 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
         static ToolStripMenuItem? FindParent(IEnumerable<ToolStripMenuItem> parents, string name)
         {
-            ToolStripMenuItem? result = null, parent = null;
+            ToolStripMenuItem? result = null;
 
-            while(true)
+            while (true)
             {
-                parent = parents.FirstOrDefault(i => name.StartsWith(i.Tag.ToString()));
+                var parent = parents.FirstOrDefault(i => name.StartsWith(i.Tag.ToString()));
 
                 if (parent == null) break;
                 result = parent;
