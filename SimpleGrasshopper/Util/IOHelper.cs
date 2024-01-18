@@ -125,6 +125,8 @@ public static class IOHelper
 
     internal static void Write(this GH_IWriter writer, string name, object value)
     {
+        if (writer.Items.Any(i => i.Name == name)) return;
+
         var type = value.GetType();
 
         var setMethod = writer.GetType().GetAllRuntimeMethods().FirstOrDefault(m =>
