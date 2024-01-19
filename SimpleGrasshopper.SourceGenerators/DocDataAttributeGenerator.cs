@@ -76,6 +76,7 @@ public class DocDataAttributeGenerator : IIncrementalGenerator
                     {
                         if (model.GetSymbolInfo(attr).Symbol?.GetFullMetadataName()
                             is "SimpleGrasshopper.Attributes.ConfigAttribute"
+                            or "SimpleGrasshopper.Attributes.DocDataAttribute"
                             or "SimpleGrasshopper.Attributes.RangeAttribute"
                             or "SimpleGrasshopper.Attributes.ShortcutAttribute"
                             or "SimpleGrasshopper.Attributes.ToolButtonAttribute")

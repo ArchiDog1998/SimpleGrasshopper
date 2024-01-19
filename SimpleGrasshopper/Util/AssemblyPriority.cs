@@ -54,7 +54,7 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// <summary>
     /// Default way to get the document.
     /// </summary>
-    public static readonly Func<GH_Document> GetDocumentDefault = () => Instances.ActiveCanvas.Document;
+    public static readonly Func<GH_Document> GetDocumentDefault = () => Instances.ActiveCanvas?.Document!;
 
     private static Bitmap? _bitmap = null;
     private static Bitmap ResetIcon => _bitmap ??= typeof(AssemblyPriority).Assembly.GetBitmap("ResetIcons_24.png")!;
@@ -588,6 +588,14 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
                 propertyInfo.SetValue(null, picker.Value);
             };
 
+            if (propertyInfo.GetCustomAttribute<DocDataAttribute>() != null)
+            {
+                Instances.ActiveCanvas.DocumentChanged += (s, e) =>
+                {
+                    ctrl.Value = (DateTime)propertyInfo.GetValue(null);
+                };
+            }
+
             AddPropertyChangedEvent(propertyInfo, (DateTime b) =>
             {
                 ctrl.Value = b;
@@ -647,6 +655,19 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
                 };
 
                 item.DropDownItems.Add(i);
+            }
+
+            if (propertyInfo.GetCustomAttribute<DocDataAttribute>() != null)
+            {
+                Instances.ActiveCanvas.DocumentChanged += (s, e) =>
+                {
+                    var b = propertyInfo.GetValue(null);
+                    foreach (var i in item.DropDownItems)
+                    {
+                        if (i is not ToolStripMenuItem menuItem) continue;
+                        menuItem.Checked = Enum.Equals(menuItem.Tag, b);
+                    }
+                };
             }
 
             AddResetItem(item.DropDownItems, propertyInfo);
@@ -728,6 +749,14 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             var slider = item.DropDown.AddScroller(min, max, Convert.ToDecimal(i), place,
             v => propertyInfo.SetValue(null, Convert.ChangeType(v, typeof(T))));
 
+            if (propertyInfo.GetCustomAttribute<DocDataAttribute>() != null)
+            {
+                Instances.ActiveCanvas.DocumentChanged += (s, e) =>
+                {
+                    slider.Value = Convert.ToDecimal(propertyInfo.GetValue(null));
+                };
+            }
+
             AddPropertyChangedEvent(propertyInfo, (T b) =>
             {
                 slider.Value = Convert.ToDecimal(b);
@@ -751,6 +780,14 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             {
                 propertyInfo.SetValue(null, e.Colour);
             });
+
+            if (propertyInfo.GetCustomAttribute<DocDataAttribute>() != null)
+            {
+                Instances.ActiveCanvas.DocumentChanged += (s, e) =>
+                {
+                    picker.Colour = (Color)propertyInfo.GetValue(null);
+                };
+            }
 
             AddPropertyChangedEvent(propertyInfo, (Color b) =>
             {
@@ -782,6 +819,14 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
                 propertyInfo.SetValue(null, textItem.Text);
             };
 
+            if (propertyInfo.GetCustomAttribute<DocDataAttribute>() != null)
+            {
+                Instances.ActiveCanvas.DocumentChanged += (s, e) =>
+                {
+                    textItem.Text = (string)propertyInfo.GetValue(null);
+                };
+            }
+
             AddPropertyChangedEvent(propertyInfo, (string b) =>
             {
                 textItem.Text = b;
@@ -810,6 +855,15 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
         }
 
         item.Checked = b;
+
+        if (propertyInfo.GetCustomAttribute<DocDataAttribute>() != null)
+        {
+            Instances.ActiveCanvas.DocumentChanged += (s, e) =>
+            {
+                item.Checked = (bool)propertyInfo.GetValue(null);
+            };
+        }
+
         item.Click += (sender, e) =>
         {
             propertyInfo.SetValue(null, !item.Checked);
