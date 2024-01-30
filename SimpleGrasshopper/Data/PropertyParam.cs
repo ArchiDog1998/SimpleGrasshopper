@@ -34,11 +34,12 @@ internal readonly struct PropertyParam(PropertyInfo info, int index)
             throw new ArgumentException("The guid is not valid for creating a IGH_Param!");
         }
 
-        param.Optional = true;
-
         SimpleUtils.SetSpecial(ref param, Param.RawInnerTypeNoGoo,
             PropInfo.GetCustomAttribute<AngleAttribute>() != null,
             PropInfo.GetCustomAttribute<HiddenAttribute>() != null);
+
+        param.Optional = true;
+
         return param;
     }
 

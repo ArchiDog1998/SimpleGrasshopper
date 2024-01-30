@@ -6,7 +6,6 @@ using System.Collections.Immutable;
 namespace SimpleGrasshopper.SourceGenerators;
 
 [Generator(LanguageNames.CSharp)]
-
 public class DocDataAttributeGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)

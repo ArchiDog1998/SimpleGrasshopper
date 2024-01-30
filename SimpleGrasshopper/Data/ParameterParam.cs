@@ -39,10 +39,10 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
             throw new ArgumentException("The guid is not valid for creating a IGH_Param!");
         }
 
-        SetOptional(ParamInfo, owner, param);
         SimpleUtils.SetSpecial(ref param, Param.RawInnerTypeNoGoo,
             ParamInfo.GetCustomAttribute<AngleAttribute>() != null,
             ParamInfo.GetCustomAttribute<HiddenAttribute>() != null);
+        SetOptional(ParamInfo, owner, param);
 
         if (ParamInfo.GetCustomAttribute<ParamTagAttribute>() is ParamTagAttribute tag)
         {

@@ -7,6 +7,7 @@ using Rhino;
 using Rhino.Geometry;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
+using SimpleGrasshopper.DocumentObjects;
 using SimpleGrasshopper.Undo;
 using System.Collections;
 using System.ComponentModel;
@@ -567,7 +568,13 @@ public static class SimpleUtils
     {
         if (param is Param_Integer integerParam && rawInnerType.IsEnum)
         {
+            if (rawInnerType.GetCustomAttribute<FlagsAttribute>() != null)
+            {
+                param = integerParam = new Param_IntegerFlags();
+            }
+
             var underType = Enum.GetUnderlyingType(rawInnerType);
+
             foreach (object obj in Enum.GetValues(rawInnerType))
             {
                 var v = Convert.ToInt32(Convert.ChangeType(obj, underType));
