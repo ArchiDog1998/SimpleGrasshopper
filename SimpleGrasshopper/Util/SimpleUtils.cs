@@ -11,6 +11,7 @@ using SimpleGrasshopper.DocumentObjects;
 using SimpleGrasshopper.Undo;
 using System.Collections;
 using System.ComponentModel;
+using System.Linq;
 using System.Net;
 using System.Windows.Forms.VisualStyles;
 
@@ -663,7 +664,7 @@ public static class SimpleUtils
 
     internal static MethodInfo? GetOperatorCast(Type type, Type returnType, Type paramType)
     {
-        return type.GetRuntimeMethods().FirstOrDefault(m =>
+        return type.GetAllRuntimeMethods().FirstOrDefault(m =>
         {
             if (!m.IsSpecialName) return false;
             if (m.Name is not "op_Explicit" and not "op_Implicit") return false;
@@ -676,7 +677,7 @@ public static class SimpleUtils
 
             if (parameters.Length != 1) return false;
 
-            return parameters[0].ParameterType.GetRawType() == paramType;
+            return parameters[0].ParameterType.GetRawType().IsAssignableFrom(paramType);
         });
     }
 
