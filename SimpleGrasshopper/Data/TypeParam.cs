@@ -107,6 +107,7 @@ internal readonly struct TypeParam
 
         object[] pms = [ParamIndex!, CreateType.CreateInstance()];
 
+        value = null!;
         if (!(bool)method.Invoke(DA, pms)) return false;
 
         value = ChangeType(pms[1]);

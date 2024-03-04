@@ -1,6 +1,7 @@
 ﻿using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
+using Rhino.Geometry;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.DocumentObjects;
@@ -95,9 +96,10 @@ internal static class BasicTests
     [BaseComponent("SimpleGrasshopper.GHTests.TestComponent")]
     [DocObj("Save", "S", "S")]
 
-    private static void SaveTest(MethodComponent ___instance)
+    private static GH_Surface SaveTest(MethodComponent ___instance, GH_Surface srf)
     {
         var t = ___instance.GetType();
+        return srf;
     }
 
     private static void SaveTest(MethodComponent ___instance, out string output, string input = null!)

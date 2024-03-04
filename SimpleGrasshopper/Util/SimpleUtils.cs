@@ -113,14 +113,12 @@ public static class SimpleUtils
 
         if (type.IsEnum)
         {
-            //Integer.
-            return new Guid("{2E3AB970-8545-46bb-836C-1C11E5610BCE}");
+            return new Guid(ParamGuids.Integer);
         }
 
         if (type == typeof(string)) //A lot of people using this.
         {
-            //String.
-            return new Guid("{3EDE854E-C753-40eb-84CB-B48008F14FD4}");
+            return new Guid(ParamGuids.String);
         }
 
         var paramTypes = Instances.ComponentServer.ObjectProxies
