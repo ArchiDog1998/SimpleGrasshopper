@@ -47,7 +47,7 @@ internal readonly struct TypeParam
             _ => CreateInnerType,
         };
 
-        ComponentGuid = RawInnerTypeNoGoo.GetDocObjGuid();
+        ComponentGuid = RawInnerType.GetDocObjGuid();
 
         static Type GetAccessAndType(Type type, out GH_ParamAccess access)
         {

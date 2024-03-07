@@ -106,6 +106,11 @@ public static class SimpleUtils
 
     internal static Guid GetDocObjGuid(this Type type)
     {
+        if (type == typeof(GH_Surface))
+        {
+            return new Guid(ParamGuids.Surface);
+        }
+
         if (type.IsGeneralType(typeof(GH_Goo<>)) is Type rawType)
         {
             type = rawType.GetRawType();
