@@ -140,7 +140,7 @@ public static class SimpleUtils
                 return true;
             })
             .Select(p => p.Type)
-            .OrderByDescending(t => t.Assembly != typeof(GH_Component).Assembly)
+            .OrderBy(t => t.Assembly != typeof(GH_Component).Assembly)
             .ToArray();
 
         foreach (var paramType in paramTypes)

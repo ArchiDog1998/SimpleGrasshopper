@@ -111,9 +111,11 @@ internal static class BasicTests
         output = SettingClass.TestingData.FirstValue.ToString();
     }
 
+    private static Color defaultcolor = Color.White;
     [DocObj("Tag", "T", "T")]
     private static void TagTest(
-        [ParamTag(true, GH_DataMapping.Flatten, true, true)]int a)
+        [ParamTag(true, GH_DataMapping.Flatten, true, true)]int a,
+        [PersistentData(nameof(defaultcolor))] Color color)
     {
 
     }
