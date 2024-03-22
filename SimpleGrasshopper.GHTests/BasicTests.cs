@@ -1,4 +1,6 @@
-﻿using Grasshopper.Kernel;
+﻿using Grasshopper.GUI.Canvas;
+using Grasshopper.Kernel;
+using Grasshopper.Kernel.Attributes;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 using Rhino.Geometry;
@@ -112,12 +114,28 @@ internal static class BasicTests
     }
 
     private static Color defaultcolor = Color.White;
+
+    [DocObjAttr("SimpleGrasshopper.GHTests.MyAttr")]
     [DocObj("Tag", "T", "T")]
     private static void TagTest(
         [ParamTag(true, GH_DataMapping.Flatten, true, true)]int a,
         [PersistentData(nameof(defaultcolor))] Color color)
     {
 
+    }
+}
+
+public class MyAttr(IGH_Component component) 
+    : GH_ComponentAttributes(component)
+{
+    protected override void Render(GH_Canvas canvas, Graphics graphics, GH_CanvasChannel channel)
+    {
+        base.Render(canvas, graphics, channel);
+
+        if (channel == GH_CanvasChannel.Objects)
+        {
+            graphics.DrawRectangle(new Pen(new SolidBrush(Color.Black)), Bounds);
+        }
     }
 }
 

@@ -76,6 +76,31 @@ public abstract class TypeComponentGenerator : IIncrementalGenerator
                 codeClassName += "_Obsolete";
             }
 
+            var attr = "";
+            if (this is TypeMethodComponentGenerator)
+            {
+                foreach (var attrs in syntax.AttributeLists)
+                {
+                    foreach (var a in attrs.Attributes)
+                    {
+                        var attrSymbol = model.GetSymbolInfo(a).Symbol;
+
+                        switch (attrSymbol?.GetFullMetadataName())
+                        {
+                            case "SimpleGrasshopper.Attributes.DocObjAttrAttribute":
+                                var strs = a.ToString().Split('"');
+                                if (strs.Length > 3) continue;
+
+                                attr = strs[1];
+
+                                if (string.IsNullOrEmpty(attr)) continue;
+
+                                attr = $"public override Grasshopper.Kernel.IGH_Attributes CreateAttribute() => new {attr}(this);";
+                                break;
+                        }
+                    }
+                }
+            }
 
             var code = $$"""
              using SimpleGrasshopper.DocumentObjects;
@@ -87,6 +112,8 @@ public abstract class TypeComponentGenerator : IIncrementalGenerator
                     : {{string.Format(GetComponentName(syntax, model), className)}}
                 {
                     public override Guid ComponentGuid => new ("{{guidStr}}");
+
+                    {{attr}}
                 }
              }
              """;

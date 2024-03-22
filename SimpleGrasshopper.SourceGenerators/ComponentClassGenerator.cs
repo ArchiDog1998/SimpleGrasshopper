@@ -44,19 +44,34 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
             }
 
             var componentName = "MethodComponent";
+            var attr = "";
             foreach (var attrs in syntax.AttributeLists)
             {
                 foreach (var a in attrs.Attributes)
                 {
                     var attrSymbol = model.GetSymbolInfo(a).Symbol;
-                    if (attrSymbol?.GetFullMetadataName() != "SimpleGrasshopper.Attributes.BaseComponentAttribute") continue;
+                    switch (attrSymbol?.GetFullMetadataName())
+                    {
+                        case "SimpleGrasshopper.Attributes.BaseComponentAttribute":
+                            var strs = a.ToString().Split('"');
+                            if (strs.Length > 3) continue;
 
-                    var strs = a.ToString().Split('"');
-                    if (strs.Length > 3) continue;
+                            componentName = strs[1];
+                            break;
 
-                    componentName = strs[1];
-                    break;
+                        case "SimpleGrasshopper.Attributes.DocObjAttrAttribute":
+                            strs = a.ToString().Split('"');
+                            if (strs.Length > 3) continue;
+
+                            attr = strs[1];
+                            break;
+                    }
                 }
+            }
+
+            if (!string.IsNullOrEmpty(attr))
+            {
+                attr = $"public override Grasshopper.Kernel.IGH_Attributes CreateAttribute() => new {attr}(this);";
             }
 
             var code = $$"""
@@ -73,6 +88,8 @@ public class ComponentClassGenerator : ClassGenerator<MethodDeclarationSyntax>
                     .Where(m => m.Name == "{{methodName}}" && m.GetCustomAttribute<IgnoreAttribute>() == null).ToArray())
                 {
                     public override Guid ComponentGuid => new ("{{guidStr}}");
+
+                    {{attr}}
                 }
              }
              """;
