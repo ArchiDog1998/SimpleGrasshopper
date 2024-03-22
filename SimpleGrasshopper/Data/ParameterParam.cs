@@ -29,7 +29,7 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
         }
     }
 
-    public IGH_Param CreateParam(Type? owner = null)
+    public IGH_Param CreateParam(out bool principal, Type? owner = null)
     {
         var proxy = Instances.ComponentServer.EmitObjectProxy(
             ParamInfo.GetCustomAttribute<ParamAttribute>()?.Guid ?? Param.ComponentGuid);
@@ -44,10 +44,8 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
             ParamInfo.GetCustomAttribute<HiddenAttribute>() != null);
         SetOptional(ParamInfo, owner, param);
 
-        if (ParamInfo.GetCustomAttribute<ParamTagAttribute>() is ParamTagAttribute tag)
-        {
-            SetTags(param, tag);
-        }
+        principal = ParamInfo.GetCustomAttribute<ParamTagAttribute>() is ParamTagAttribute tag
+            && SetTags(param, tag);
 
         param.CreateAttributes();
 
@@ -73,19 +71,14 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
 
         }
 
-        static void SetTags(IGH_Param param, ParamTagAttribute tag)
+        static bool SetTags(IGH_Param param, ParamTagAttribute tag)
         {
             var props = param.GetType().GetAllRuntimeProperties();
             props.FirstOrDefault(p => p.Name == "Reverse")?.SetValue(param, tag.Reverse);
             props.FirstOrDefault(p => p.Name == "Simplify")?.SetValue(param, tag.Simplify);
             props.FirstOrDefault(p => p.Name == "DataMapping")?.SetValue(param, tag.Mapping);
 
-            var prop = props.FirstOrDefault(p => p.Name == "IsPrincipal");
-            var method = props.GetType().GetAllRuntimeMethods().FirstOrDefault(m => m.Name == "SetPrincipal");
-            if (prop != null && method != null && (GH_PrincipalState)prop.GetValue(param) != GH_PrincipalState.CannotBePrincipal)
-            {
-                method.Invoke(param, [tag.Principal, false, false]);
-            }
+            return tag.Principal;
         }
     }
 

@@ -164,7 +164,11 @@ public abstract class MethodComponent(
             p.GetNames("Input", "I",
                 out var name, out var nickName, out var description);
 
-            pManager.AddParameter(p.CreateParam(MethodInfo.DeclaringType), name, nickName, description, p.Access);
+            pManager.AddParameter(p.CreateParam(out var principal, MethodInfo.DeclaringType), name, nickName, description, p.Access);
+            if (principal)
+            {
+                this.PrincipalParameterIndex = paramIndex - 1;
+            }
         }
 
         this.Message = message ?? MethodInfo.GetCustomAttribute<MessageAttribute>()?.Message;
@@ -208,7 +212,11 @@ public abstract class MethodComponent(
             param.GetNames("Result", "R",
                 out var name, out var nickName, out var description);
 
-            pManager.AddParameter(param.CreateParam(), name, nickName, description, param.Access);
+            pManager.AddParameter(param.CreateParam(out var principal), name, nickName, description, param.Access);
+            if (principal)
+            {
+                this.PrincipalParameterIndex = paramIndex - 1;
+            }
         }
         else
         {
@@ -231,7 +239,11 @@ public abstract class MethodComponent(
             p.GetNames("Output", "O",
                 out var name, out var nickName, out var description);
 
-            pManager.AddParameter(p.CreateParam(), name, nickName, description, p.Access);
+            pManager.AddParameter(p.CreateParam(out var principal), name, nickName, description, p.Access);
+            if (principal)
+            {
+                this.PrincipalParameterIndex = paramIndex - 1;
+            }
         }
     }
 
