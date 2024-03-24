@@ -222,11 +222,14 @@ public static class SimpleUtils
         static object ChangeTypeNotNull(object obj, Type type)
         {
             if (type.IsEnum) return Enum.ToObject(type, obj);
+            if (type.IsAssignableFrom(obj.GetType())) return obj;
+
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)
                 && Nullable.GetUnderlyingType(type) == obj.GetType())
             {
                 return Activator.CreateInstance(typeof(Nullable<>).MakeGenericType(obj.GetType()), obj);
             }
+
             return Convert.ChangeType(obj, type);
         }
     }
