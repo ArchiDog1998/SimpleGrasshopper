@@ -1,4 +1,6 @@
 ﻿using GH_IO.Serialization;
+using Grasshopper.GUI;
+using Grasshopper.Kernel.Attributes;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
@@ -20,6 +22,47 @@ public abstract class TypePropertyComponent<T>()
     private readonly List<PropertyParam> _setProps = [], _getProps = [];
     private readonly Guid _guid = typeof(T).GetDocObjGuid();
     private readonly TypePropertyType _type = typeof(T).GetCustomAttribute<PropertyComponentAttribute>()?.Type ?? TypePropertyType.Property;
+
+    private string[] _setPropsName = AllSetProperties.Select(p => p.Name).ToArray(), _getPropsName = AllGetProperties.Select(p => p.Name).ToArray();
+
+    [DocData]
+    internal string[] SetPropsName 
+    {
+        get => _setPropsName;
+        set 
+        {
+            _setPropsName = value;
+            ClearInfo();
+        }
+    }
+
+    [DocData]
+    internal string[] GetPropsName
+    {
+        get => _getPropsName;
+        set
+        {
+            _getPropsName = value;
+            ClearInfo();
+        }
+    }
+
+    private void ClearInfo()
+    {
+        //Destroy
+        Params.Clear();
+        DestroyIconCache();
+
+        //Build
+        _changing = true;
+        PostConstructor();
+        _changing = false;
+
+        //Update
+        ExpireSolution(true);
+        Attributes.ExpireLayout();
+        Instances.ActiveCanvas.Refresh();
+    }
 
     private static string GetName(Type type)
     {
@@ -73,7 +116,6 @@ public abstract class TypePropertyComponent<T>()
         }
     }
 
-
     private IGH_Param CreateTypeParam()
     {
         if (Instances.ComponentServer.EmitObjectProxy(_guid).CreateInstance()
@@ -90,6 +132,8 @@ public abstract class TypePropertyComponent<T>()
     }
 
     private static IEnumerable<PropertyInfo> AllProperties => typeof(T).GetRuntimeProperties().Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null);
+    private static IEnumerable<PropertyInfo> AllSetProperties => AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic);
+    private static IEnumerable<PropertyInfo> AllGetProperties => AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic);
 
     /// <inheritdoc/>
     protected sealed override void RegisterInputParams(GH_InputParamManager pManager)
@@ -106,7 +150,7 @@ public abstract class TypePropertyComponent<T>()
 
         if (_type != TypePropertyType.Dtor)
         {
-            var setProperties = AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic).ToArray();
+            var setProperties = AllSetProperties.Where(p => SetPropsName.Contains(p.Name)).ToArray();
 
             for (int i = 0; i < setProperties.Length; i++)
             {
@@ -137,7 +181,7 @@ public abstract class TypePropertyComponent<T>()
 
         if (_type != TypePropertyType.Ctor)
         {
-            var getProperties = AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic).ToArray();
+            var getProperties = AllGetProperties.Where(p => GetPropsName.Contains(p.Name)).ToArray();
 
             for (int i = 0; i < getProperties.Length; i++)
             {
@@ -178,6 +222,120 @@ public abstract class TypePropertyComponent<T>()
         {
             DA.SetData(0, o);
         }
+    }
+
+    /// <inheritdoc/>
+    public override void AppendAdditionalMenuItems(ToolStripDropDown mainMenu)
+    {
+        base.AppendAdditionalMenuItems(mainMenu);
+
+        mainMenu.Items.Add(GetItem("Set Properties", nameof(SetPropsName), AllSetProperties.ToArray(), SetPropsName, i => SetPropsName = i));
+        mainMenu.Items.Add(GetItem("Get Properties", nameof(GetPropsName), AllGetProperties.ToArray(), GetPropsName, i => GetPropsName = i));
+    }
+
+    private ToolStripMenuItem GetItem(string name, string propertyName, PropertyInfo[] properties, string[] props, Action<string[]> changed)
+    {
+        var result = new ToolStripMenuItem(name);
+        var count = properties.Length;
+
+        var width = (int)Math.Round(220f * GH_GraphicsUtil.UiScale);
+
+        var textItem = new ToolStripTextBox
+        {
+            Text = string.Empty,
+            BorderStyle = BorderStyle.FixedSingle,
+            Width = width,
+            AutoSize = false,
+            ToolTipText = "Searching...",
+        };
+
+        result.DropDown.Items.Add(textItem);
+
+        textItem.TextChanged += (sender, e) =>
+        {
+            while (result.DropDown.Items.Count > 1)
+            {
+                result.DropDown.Items.RemoveAt(1);
+            }
+            for (int i = 0; i < count; i++)
+            {
+                var prop = properties[i];
+
+                if (!prop.Name.StartsWith(textItem.Text, StringComparison.OrdinalIgnoreCase)) continue;
+
+                var item = new ToolStripMenuItem
+                {
+                    Text = prop.Name,
+                    Checked = props.Contains(prop.Name),
+                };
+
+                item.Click += (sender, e) =>
+                {
+                    this.RecordDocumentObjectMember(propertyName, Undo.AfterUndo.None);
+
+                    if (item.Checked)
+                    {
+                        changed([.. props.Where(i => i != item.Text)]);
+                    }
+                    else
+                    {
+                        changed([.. props, item.Text]);
+                    }
+                };
+
+                result.DropDown.Items.Add(item);
+            }
+        };
+
+        for (int i = 0; i < count; i++)
+        {
+            var prop = properties[i];
+
+            var item = new ToolStripMenuItem
+            {
+                Text = prop.Name,
+                Checked = props.Contains(prop.Name),
+            };
+
+            item.Click += (sender, e) =>
+            {
+                this.RecordDocumentObjectMember(propertyName, Undo.AfterUndo.None);
+
+                if (item.Checked)
+                {
+                    changed([.. props.Where(i => i != item.Text)]);
+                }
+                else
+                {
+                    changed([.. props, item.Text]);
+                }
+            };
+
+            result.DropDown.Items.Add(item);
+        }
+
+        result.DropDown.MaximumSize = new(500, 600);
+
+        return result;
+    }
+
+    private bool _changing = false;
+    /// <inheritdoc/>
+    public sealed override void CreateAttributes()
+    {
+        if (!_changing || m_attributes == null)
+        {
+            m_attributes = CreateAttribute();
+        }
+    }
+
+    /// <summary>
+    /// Your custom <see cref="IGH_Attributes"/>
+    /// </summary>
+    /// <returns>the attribute you want.</returns>
+    public virtual IGH_Attributes CreateAttribute()
+    {
+        return new GH_ComponentAttributes(this);
     }
 
     /// <inheritdoc/>

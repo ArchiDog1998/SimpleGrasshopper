@@ -19,6 +19,9 @@ public interface ITypeTest : IPreviewData, IGH_BakeAwareData
     [DocObj("Value", "V", "")]
     int FirstValue { get; set; }
 
+    [DocObj("Value2", "V2", "")]
+    int SecondValue { get; set; }
+
     [DocObj("Add Property", "A P", "Testing")]
     void AddValue(int value);
 
@@ -27,13 +30,14 @@ public interface ITypeTest : IPreviewData, IGH_BakeAwareData
 }
 
 
-
 public class TypeTest : ITypeTest
 {
     public int FirstValue { get; set; }
 
     [Ignore]
     public BoundingBox ClippingBox => new(0, 0, 0, 1, 1, 1);
+
+    public int SecondValue { get; set; }
 
     public void AddValue(int value)
     {

@@ -3,11 +3,13 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Attributes;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
+using Rhino.Display;
 using Rhino.Geometry;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.DocumentObjects;
 using System.ComponentModel;
+using System.Numerics;
 using System.Reflection;
 
 namespace SimpleGrasshopper.GHTests;
@@ -24,7 +26,7 @@ internal static class BasicTests
         [DocObj("B", "B", "B"), Range(double.NegativeInfinity, 0)] int b,
         [DocObj("C", "C", "C")] ref int c)
     {
-        var  result = a + b;
+        var result = a + b;
         c += result;
         return result;
     }
@@ -36,7 +38,7 @@ internal static class BasicTests
 
     [DocObj("DataType test", "Data Type", "A test for data type.")]
     public static RuntimeData DataTypeTest(
-        [Range(0, 5)] int a, 
+        [Range(0, 5)] int a,
         [Range(0, 5)] List<int> b,
         [Range(0, 5)] GH_Structure<GH_Integer> c)
     {
@@ -52,7 +54,7 @@ internal static class BasicTests
     }
 
     [DocObj("Enum Param", "Enu", "Enum testing")]
-    private static void EnumTypeTest(out EnumTest type, 
+    private static void EnumTypeTest(out EnumTest type,
         EnumTest? input = null,
         EnumTest?[] input1 = null!,
         GH_Structure<SimpleGoo<EnumTest?>> input2 = null!)
@@ -79,8 +81,8 @@ internal static class BasicTests
 
     [DocObj("Type Testing", "T", "Testing for my type")]
     private static void MyTypeTest(
-        GH_Structure<SimpleGoo<ITypeTest>> type, 
-        [PersistentData(nameof(TestingItem))]GH_Structure<GH_Boolean> bools,
+        GH_Structure<SimpleGoo<ITypeTest>> type,
+        [PersistentData(nameof(TestingItem))] GH_Structure<GH_Boolean> bools,
         out ITypeTest typeTest)
     {
         typeTest = new SubTypeTest();
@@ -118,10 +120,32 @@ internal static class BasicTests
     [DocObjAttr("SimpleGrasshopper.GHTests.MyAttr")]
     [DocObj("Tag", "T", "T")]
     private static void TagTest(
-        [ParamTag(true, GH_DataMapping.Flatten, true, true)]int a,
+        [ParamTag(true, GH_DataMapping.Flatten, true, true)] int a,
         [PersistentData(nameof(defaultcolor))] Color color)
     {
 
+    }
+
+    [DocObj("Range", "R", "R")]
+    public static void Test(double angle, GH_Rectangle rect, double centerX, double centerY, out double x, out double y)
+    {
+        var xMin = rect.Boundingbox.Min.X;
+        var yMin = rect.Boundingbox.Min.Y;
+        var xMax = rect.Boundingbox.Max.X;
+        var yMax = rect.Boundingbox.Max.Y;
+
+        var cos = Math.Cos(angle);
+        var xRange = cos > 0 ? (xMax - centerX) : (centerX - xMin);
+        var sin = Math.Sin(angle);
+        var yRange = sin > 0 ? (yMax - centerY) : (centerY - yMin);
+
+        var angleForPos = Math.Atan2(sin * xRange, cos * yRange);
+
+        x = centerX + Math.Cos(angleForPos) * xRange;
+        y = centerY + Math.Sin(angleForPos) * yRange;
+
+        x = Math.Min(Math.Max(x, xMin), xMax);
+        y = Math.Min(Math.Max(y, yMin), yMax);
     }
 }
 
