@@ -30,12 +30,22 @@ public static class SimpleUtils
         return GetAssemblyName(assembly);
     }
 
-    internal static string GetAssemblyName(this Type type)
+    /// <summary>
+    /// Get the assmebly name from a type.
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public static string GetAssemblyName(this Type type)
     {
         return GetAssemblyName(type.Assembly);
     }
 
-    internal static string GetAssemblyName(this Assembly assembly)
+    /// <summary>
+    /// Get the assembly name from an assembly.
+    /// </summary>
+    /// <param name="assembly"></param>
+    /// <returns></returns>
+    public static string GetAssemblyName(this Assembly assembly)
         => assembly.GetAssemblyStringProperty("Name");
 
     internal static string GetAssemblyDescription(this Assembly assembly)
