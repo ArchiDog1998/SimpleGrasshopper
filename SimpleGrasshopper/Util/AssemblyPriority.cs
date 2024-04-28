@@ -27,6 +27,11 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     public static Dictionary<Keys, Action> CustomShortcuts { get; } = [];
 
     /// <summary>
+    /// The type format of the specific type
+    /// </summary>
+    public static Func<Type, string> GetTypeStringFormat { get; set; } = t => "{0}";
+
+    /// <summary>
     /// The delegate for <see cref="CustomShortcutClicked"/>
     /// </summary>
     /// <param name="key">the clicked key.</param>
