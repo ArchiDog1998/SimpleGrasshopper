@@ -17,8 +17,14 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
     public void GetNames(string defaultName, string defaultNickName, out string name, out string nickName, out string description)
     {
         var attr = ParamInfo.GetCustomAttribute<DocObjAttribute>();
-        defaultName = ParamInfo.Name ?? defaultName;
-        defaultNickName = ParamInfo.Name ?? defaultNickName;
+        var defaultValue = ParamInfo.Name;
+        if (defaultValue is "value" or "obj" or "@object")
+        {
+            defaultValue = null;
+        }
+
+        defaultName = defaultValue ?? defaultName;
+        defaultNickName = defaultValue ?? defaultNickName;
 
         name = attr?.Name ?? defaultName;
         nickName = attr?.NickName ?? defaultNickName;

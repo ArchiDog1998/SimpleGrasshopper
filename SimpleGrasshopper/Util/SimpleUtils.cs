@@ -93,10 +93,17 @@ public static class SimpleUtils
     internal static string GetDocObjDescription(this MemberInfo method)
         => GetDocObjProperty(method, a => a.Description);
 
-    private static string GetDocObjProperty(this MemberInfo method, Func<DocObjAttribute, string> getProperty)
+    private static string GetDocObjProperty(this MemberInfo member, Func<DocObjAttribute, string> getProperty)
     {
-        var attr = method.GetCustomAttribute<DocObjAttribute>();
-        return attr == null ? method.Name : getProperty(attr);
+        var attr = member.GetCustomAttribute<DocObjAttribute>();
+        if(attr != null) return getProperty(attr);
+        if (member is MethodInfo method && method.IsSpecialName)
+        {
+            var parameters = string.Join(", ", method.GetParameters()
+                .Select(p => p.ParameterType.GetRawType().GetDocObjName()));
+            return $"({parameters}) -> {method.ReturnType.GetRawType().GetDocObjName()}";
+        }
+        return member.Name;
     }
 
     internal static string GetDocObjName(this Type type)

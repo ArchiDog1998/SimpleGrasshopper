@@ -161,7 +161,7 @@ public abstract class MethodComponent(
             var p = new ParameterParam(parameter, paramIndex++, i);
 
             _inputParams.Add(p);
-            p.GetNames("Input", "I",
+            p.GetNames(p.Param.RawInnerType.Name, p.Param.RawInnerType.Name,
                 out var name, out var nickName, out var description);
 
             pManager.AddParameter(p.CreateParam(out var principal, MethodInfo.DeclaringType), name, nickName, description, p.Access);
@@ -194,7 +194,7 @@ public abstract class MethodComponent(
         {
             _declarationParam = tp;
 
-            tp.GetNames("Object", "Obj",
+            tp.GetNames(tp.RawInnerType.Name, tp.RawInnerType.Name,
                 out var name, out var nickName, out var description);
 
             pManager.AddParameter(tp.CreateParam(), name, nickName, description, tp.Access);
@@ -209,7 +209,7 @@ public abstract class MethodComponent(
 
             _resultParam = param;
 
-            param.GetNames("Result", "R",
+            param.GetNames(param.Param.RawInnerType.Name, param.Param.RawInnerType.Name,
                 out var name, out var nickName, out var description);
 
             pManager.AddParameter(param.CreateParam(out var principal), name, nickName, description, param.Access);
@@ -236,7 +236,7 @@ public abstract class MethodComponent(
 
             _outputParams.Add(p);
 
-            p.GetNames("Output", "O",
+            p.GetNames(p.Param.RawInnerType.Name, p.Param.RawInnerType.Name,
                 out var name, out var nickName, out var description);
 
             pManager.AddParameter(p.CreateParam(out var principal), name, nickName, description, p.Access);
@@ -468,7 +468,7 @@ public abstract class MethodComponent(
                 {
                     var method = methodInfos[i];
 
-                    if (!method.GetDocObjName().StartsWith(textItem.Text, StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!method.GetDocObjName().Contains(textItem.Text)) continue;
 
                     var item = new MemberShowing(method, i);
                     box.Items.Add(item);
