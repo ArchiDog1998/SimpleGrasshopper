@@ -25,6 +25,11 @@ public abstract class TypePropertyComponent<T>()
     /// </summary>
     protected virtual TypePropertyType Type { get; } = typeof(T).GetCustomAttribute<PropertyComponentAttribute>()?.Type ?? TypePropertyType.Property;
 
+    /// <summary>
+    /// Set the set value.
+    /// </summary>
+    protected virtual bool SetProperty => true;
+
     private static IEnumerable<PropertyInfo> AllProperties { get; } = typeof(T).GetRuntimeProperties().Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null);
     private static PropertyInfo[] AllSetProperties { get; } = AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic).ToArray();
     private static PropertyInfo[] AllGetProperties { get; } = AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic).ToArray();
@@ -177,9 +182,12 @@ public abstract class TypePropertyComponent<T>()
         }
 
         object o = obj!;
-        foreach (var prop in _setProps)
+        if (SetProperty)
         {
-            prop.GetValue(DA, ref o, Params.Input[prop.Param.ParamIndex]);
+            foreach (var prop in _setProps)
+            {
+                prop.GetValue(DA, ref o, Params.Input[prop.Param.ParamIndex]);
+            }
         }
 
         foreach (var prop in _getProps)
