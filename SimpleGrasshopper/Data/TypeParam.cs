@@ -7,9 +7,9 @@ using System.Linq.Expressions;
 
 namespace SimpleGrasshopper.Data;
 
-internal readonly struct TypeParam
+internal class TypeParam
 {
-    public int ParamIndex { get; }
+    public int ParamIndex { get; set; }
     public Type Type { get; }
     public Type RawType { get; }
     public Type CreateType { get; }

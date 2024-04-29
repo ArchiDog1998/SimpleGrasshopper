@@ -29,7 +29,6 @@ public interface ITypeTest : IPreviewData, IGH_BakeAwareData
     void ReduceValue(int value);
 }
 
-
 public class TypeTest : ITypeTest
 {
     public int FirstValue { get; set; }

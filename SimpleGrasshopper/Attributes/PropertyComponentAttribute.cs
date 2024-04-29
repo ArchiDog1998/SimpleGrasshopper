@@ -60,20 +60,26 @@ public class PropertyComponentAttribute(
 /// <summary>
 /// 
 /// </summary>
+[Flags]
 public enum TypePropertyType : byte
 {
     /// <summary>
     /// 
     /// </summary>
-    Ctor,
+    None,
 
     /// <summary>
     /// 
     /// </summary>
-    Dtor,
+    Ctor = 1 << 0,
 
     /// <summary>
     /// 
     /// </summary>
-    Property,
+    Dtor = 1 << 1,
+
+    /// <summary>
+    /// 
+    /// </summary>
+    Property = Ctor | Dtor,
 }

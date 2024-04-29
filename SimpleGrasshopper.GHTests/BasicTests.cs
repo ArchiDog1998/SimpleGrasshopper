@@ -3,14 +3,11 @@ using Grasshopper.Kernel;
 using Grasshopper.Kernel.Attributes;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
-using Rhino.Display;
 using Rhino.Geometry;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.DocumentObjects;
 using System.ComponentModel;
-using System.Numerics;
-using System.Reflection;
 
 namespace SimpleGrasshopper.GHTests;
 
@@ -89,7 +86,7 @@ internal static class BasicTests
     }
 
     [DocObj("Create Type", "C T", "Create a new type")]
-    private static ITypeTest CreateTest(ref string __Message, MethodComponent ___instance)
+    private static ITypeTest CreateTest(ref string __Message, MethodComponent ___instance, int number)
     {
         var t = ___instance.GetType();
 

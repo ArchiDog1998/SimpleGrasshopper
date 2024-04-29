@@ -288,17 +288,14 @@ public abstract class MethodComponent(
             result[param.MethodParamIndex] = param.GetValue(this);
         }
 
-        if (!_declarationParam.HasValue || !_declarationParam.Value.GetValue(DA, out obj)) obj = null!;
-
+        if (_declarationParam is null || !_declarationParam.GetValue(DA, out obj)) obj = null!;
         return result;
     }
 
     private void SetParameters(IGH_DataAccess DA, object obj, object result, object?[] parameters)
     {
-        if (_declarationParam.HasValue)
-        {
-            _declarationParam.Value.SetValue(DA, obj);
-        }
+        _declarationParam?.SetValue(DA, obj);
+
 
         if (_resultParam.HasValue)
         {

@@ -1,6 +1,4 @@
-﻿using GH_IO.Serialization;
-using Grasshopper.GUI;
-using Grasshopper.Kernel.Attributes;
+﻿using Grasshopper.GUI;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
@@ -17,52 +15,25 @@ public abstract class TypePropertyComponent<T>()
          GetNickName(typeof(T)),
          typeof(T).GetCustomAttribute<PropertyComponentAttribute>()?.Description ?? typeof(T).GetDocObjDescription(),
          typeof(T).GetAssemblyName(),
-         GetSubCate(typeof(T)))
+         GetSubCate(typeof(T))), IGH_VariableParameterComponent
 {
     private readonly List<PropertyParam> _setProps = [], _getProps = [];
     private readonly Guid _guid = typeof(T).GetDocObjGuid();
-    private readonly TypePropertyType _type = typeof(T).GetCustomAttribute<PropertyComponentAttribute>()?.Type ?? TypePropertyType.Property;
 
-    private string[] _setPropsName = AllSetProperties.Select(p => p.Name).ToArray(), _getPropsName = AllGetProperties.Select(p => p.Name).ToArray();
+    /// <summary>
+    /// The type of this property component.
+    /// </summary>
+    protected virtual TypePropertyType Type { get; } = typeof(T).GetCustomAttribute<PropertyComponentAttribute>()?.Type ?? TypePropertyType.Property;
 
-    [DocData]
-    internal string[] SetPropsName 
-    {
-        get => _setPropsName;
-        set 
-        {
-            _setPropsName = value;
-            ClearInfo();
-        }
-    }
+    private static IEnumerable<PropertyInfo> AllProperties { get; } = typeof(T).GetRuntimeProperties().Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null);
+    private static PropertyInfo[] AllSetProperties { get; } = AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic).ToArray();
+    private static PropertyInfo[] AllGetProperties { get; } = AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic).ToArray();
 
     [DocData]
-    internal string[] GetPropsName
-    {
-        get => _getPropsName;
-        set
-        {
-            _getPropsName = value;
-            ClearInfo();
-        }
-    }
+    internal List<string> SetPropsName { get; set; } = [..AllSetProperties.Select(p => p.Name)];
 
-    private void ClearInfo()
-    {
-        //Destroy
-        Params.Clear();
-        DestroyIconCache();
-
-        //Build
-        _changing = true;
-        PostConstructor();
-        _changing = false;
-
-        //Update
-        ExpireSolution(true);
-        Attributes.ExpireLayout();
-        Instances.ActiveCanvas.Refresh();
-    }
+    [DocData]
+    internal List<string> GetPropsName { get; set; } = [..AllGetProperties.Select(p => p.Name)];
 
     private static string GetName(Type type)
     {
@@ -124,16 +95,12 @@ public abstract class TypePropertyComponent<T>()
             throw new Exception("The type of this document object is not param!");
         }
 
-        if (_type != TypePropertyType.Dtor)
+        if (Type != TypePropertyType.Dtor)
         {
             param.Optional = true;
         }
         return param;
     }
-
-    private static IEnumerable<PropertyInfo> AllProperties => typeof(T).GetRuntimeProperties().Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null);
-    private static IEnumerable<PropertyInfo> AllSetProperties => AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic);
-    private static IEnumerable<PropertyInfo> AllGetProperties => AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic);
 
     /// <inheritdoc/>
     protected sealed override void RegisterInputParams(GH_InputParamManager pManager)
@@ -141,16 +108,16 @@ public abstract class TypePropertyComponent<T>()
         int start = 0;
         _setProps.Clear();
 
-        if (_type != TypePropertyType.Ctor)
+        if (Type != TypePropertyType.Ctor)
         {
             var keyParam = CreateTypeParam();
             pManager.AddParameter(keyParam, keyParam.Name, keyParam.NickName, keyParam.Description, GH_ParamAccess.item);
             start++;
         }
 
-        if (_type != TypePropertyType.Dtor)
+        if (Type != TypePropertyType.Dtor)
         {
-            var setProperties = AllSetProperties.Where(p => SetPropsName.Contains(p.Name)).ToArray();
+            var setProperties = SetPropsName.Select(n => AllSetProperties.FirstOrDefault(p => p.Name == n)).Where(i => i is not null).ToArray();
 
             for (int i = 0; i < setProperties.Length; i++)
             {
@@ -172,16 +139,16 @@ public abstract class TypePropertyComponent<T>()
         int start = 0;
         _getProps.Clear();
 
-        if (_type != TypePropertyType.Dtor)
+        if (Type != TypePropertyType.Dtor)
         {
             var keyParam = CreateTypeParam();
             pManager.AddParameter(keyParam, keyParam.Name, keyParam.NickName, keyParam.Description, GH_ParamAccess.item);
             start++;
         }
 
-        if (_type != TypePropertyType.Ctor)
+        if (Type != TypePropertyType.Ctor)
         {
-            var getProperties = AllGetProperties.Where(p => GetPropsName.Contains(p.Name)).ToArray();
+            var getProperties = GetPropsName.Select(n => AllGetProperties.FirstOrDefault(p => p.Name == n)).Where(i => i is not null).ToArray();
 
             for (int i = 0; i < getProperties.Length; i++)
             {
@@ -201,7 +168,7 @@ public abstract class TypePropertyComponent<T>()
     protected sealed override void SolveInstance(IGH_DataAccess DA)
     {
         T obj = default!;
-        if (_type == TypePropertyType.Ctor || !DA.GetData(0, ref obj))
+        if (Type == TypePropertyType.Ctor || !DA.GetData(0, ref obj))
         {
             if (typeof(T).IsInterface) return;
             obj = (T)typeof(T).CreateInstance();
@@ -218,7 +185,7 @@ public abstract class TypePropertyComponent<T>()
             prop.SetValue(DA, o);
         }
 
-        if (_type != TypePropertyType.Dtor)
+        if (Type != TypePropertyType.Dtor)
         {
             DA.SetData(0, o);
         }
@@ -229,11 +196,110 @@ public abstract class TypePropertyComponent<T>()
     {
         base.AppendAdditionalMenuItems(mainMenu);
 
-        mainMenu.Items.Add(GetItem("Set Properties", nameof(SetPropsName), AllSetProperties.ToArray(), SetPropsName, i => SetPropsName = i));
-        mainMenu.Items.Add(GetItem("Get Properties", nameof(GetPropsName), AllGetProperties.ToArray(), GetPropsName, i => GetPropsName = i));
+        mainMenu.Items.Add(GetItem("Set Properties", AllSetProperties, SetPropsName, p =>
+        {
+            var index = this.Params.Input.Count;
+            var param = new PropertyParam(p, index);
+
+            _setProps.Add(param);
+            SetPropsName.Add(param.PropInfo.Name);
+
+            param.GetNames($"Prop {index}", $"P {index}",
+                out var name, out var nickName, out var description);
+
+            var result = param.CreateParam();
+            result.Name = name;
+            result.NickName = nickName;
+            result.Description = description;
+            result.Access = param.Access;
+            this.Params.RegisterInputParam(result);
+        }, p =>
+        {
+            var index = SetPropsName.IndexOf(p.Name);
+            RemoveSetProps(index);
+        }));
+        mainMenu.Items.Add(GetItem("Get Properties", AllGetProperties, GetPropsName, p =>
+        {
+            var index = this.Params.Output.Count;
+            var param = new PropertyParam(p, index);
+
+            _getProps.Add(param);
+            GetPropsName.Add(param.PropInfo.Name);
+
+            param.GetNames($"Prop {index}", $"P {index}",
+                out var name, out var nickName, out var description);
+
+            var result = param.CreateParam();
+            result.Name = name;
+            result.NickName = nickName;
+            result.Description = description;
+            result.Access = param.Access;
+            this.Params.RegisterOutputParam(result);
+        }, p =>
+        {
+            var index = GetPropsName.IndexOf(p.Name);
+            RemoveGetProps(index);
+        }));
+
+        var clear = new ToolStripMenuItem("Remove all unused properties.");
+        clear.Click += (s, e) =>
+        {
+            int i = 0;
+            while(i < _setProps.Count)
+            {
+                var prop = _setProps[i];
+                var param = this.Params.Input[prop.Param.ParamIndex];
+                if (param.SourceCount == 0)
+                {
+                    RemoveSetProps(i);
+                    continue;
+                }
+                i++;
+            }
+
+            i = 0;
+            while (i < _getProps.Count)
+            {
+                var prop = _getProps[i];
+                var param = this.Params.Output[prop.Param.ParamIndex];
+                if (param.Recipients.Count == 0)
+                {
+                    RemoveGetProps(i);
+                    continue;
+                }
+                i++;
+            }
+
+            this.ExpireSolution(true);
+        };
+        mainMenu.Items.Add(clear);
     }
 
-    private ToolStripMenuItem GetItem(string name, string propertyName, PropertyInfo[] properties, string[] props, Action<string[]> changed)
+    private void RemoveSetProps(int index)
+    {
+        var prop = _setProps[index];
+        Params.UnregisterInputParameter(Params.Input[prop.Param.ParamIndex]);
+        _setProps.RemoveAt(index);
+        SetPropsName.RemoveAt(index);
+        for (int i = index; i < _setProps.Count; i++)
+        {
+            _setProps[i].Param.ParamIndex--;
+        }
+    }
+
+    private void RemoveGetProps(int index)
+    {
+        var prop = _getProps[index];
+        Params.UnregisterOutputParameter(Params.Output[prop.Param.ParamIndex]);
+        _getProps.RemoveAt(index);
+        GetPropsName.RemoveAt(index);
+        for (int i = index; i < _getProps.Count; i++)
+        {
+            _getProps[i].Param.ParamIndex--;
+        }
+    }
+
+    private ToolStripMenuItem GetItem(string name, PropertyInfo[] properties, List<string> props,  Action<PropertyInfo> add, Action<PropertyInfo> remove)
     {
         var result = new ToolStripMenuItem(name);
         var count = properties.Length;
@@ -265,22 +331,23 @@ public abstract class TypePropertyComponent<T>()
 
                 var item = new ToolStripMenuItem
                 {
-                    Text = prop.Name,
+                    Text = prop.GetDocObjName(),
                     Checked = props.Contains(prop.Name),
+                    Tag = prop,
                 };
 
                 item.Click += (sender, e) =>
                 {
-                    this.RecordDocumentObjectMember(propertyName, Undo.AfterUndo.None);
-
+                    var property = (PropertyInfo)((ToolStripMenuItem)sender).Tag;
                     if (item.Checked)
                     {
-                        changed([.. props.Where(i => i != item.Text)]);
+                        remove(property);
                     }
                     else
                     {
-                        changed([.. props, item.Text]);
+                        add(property);
                     }
+                    this.ExpireSolution(true);
                 };
 
                 result.DropDown.Items.Add(item);
@@ -293,22 +360,23 @@ public abstract class TypePropertyComponent<T>()
 
             var item = new ToolStripMenuItem
             {
-                Text = prop.Name,
+                Text = prop.GetDocObjName(),
                 Checked = props.Contains(prop.Name),
+                Tag = prop,
             };
 
             item.Click += (sender, e) =>
             {
-                this.RecordDocumentObjectMember(propertyName, Undo.AfterUndo.None);
-
+                var property = (PropertyInfo)((ToolStripMenuItem)sender).Tag;
                 if (item.Checked)
                 {
-                    changed([.. props.Where(i => i != item.Text)]);
+                    remove(property);
                 }
                 else
                 {
-                    changed([.. props, item.Text]);
+                    add(property);
                 }
+                this.ExpireSolution(true);
             };
 
             result.DropDown.Items.Add(item);
@@ -319,36 +387,118 @@ public abstract class TypePropertyComponent<T>()
         return result;
     }
 
-    private bool _changing = false;
     /// <inheritdoc/>
-    public sealed override void CreateAttributes()
+    public virtual bool CanInsertParameter(GH_ParameterSide side, int index)
     {
-        if (!_changing || m_attributes == null)
+        switch (side)
         {
-            m_attributes = CreateAttribute();
+            case GH_ParameterSide.Input:
+                var count = Params.Input.Count;
+                if (index < count) return false;
+                if (SetPropsName.Count == AllSetProperties.Length) return false;
+                return true;
+
+            case GH_ParameterSide.Output:
+                count = Params.Output.Count;
+                if (index < count) return false;
+                if (GetPropsName.Count == AllGetProperties.Length) return false;
+                return true;
+
+            default:
+                return false;
         }
     }
 
-    /// <summary>
-    /// Your custom <see cref="IGH_Attributes"/>
-    /// </summary>
-    /// <returns>the attribute you want.</returns>
-    public virtual IGH_Attributes CreateAttribute()
+    /// <inheritdoc/>
+    public virtual bool CanRemoveParameter(GH_ParameterSide side, int index)
     {
-        return new GH_ComponentAttributes(this);
+        switch (side)
+        {
+            case GH_ParameterSide.Input:
+                if (index > 0) return true;
+                return !Type.HasFlag(TypePropertyType.Dtor);
+
+            case GH_ParameterSide.Output:
+                if (index > 0) return true;
+                return !Type.HasFlag(TypePropertyType.Ctor);
+            default:
+                return false;
+        }
     }
 
     /// <inheritdoc/>
-    public override bool Read(GH_IReader reader)
+    public virtual IGH_Param CreateParameter(GH_ParameterSide side, int index)
     {
-        reader.Read(this);
-        return base.Read(reader);
+        switch (side)
+        {
+            case GH_ParameterSide.Input:
+                var param = new PropertyParam(AllSetProperties.FirstOrDefault(p => !SetPropsName.Contains(p.Name)), index);
+
+                _setProps.Add(param);
+                SetPropsName.Add(param.PropInfo.Name);
+
+                param.GetNames($"Prop {index}", $"P {index}",
+                    out var name, out var nickName, out var description);
+
+                var result = param.CreateParam();
+                result.Name = name;
+                result.NickName = nickName;
+                result.Description = description;
+                result.Access = param.Access;
+                return result;
+
+            case GH_ParameterSide.Output:
+                param = new PropertyParam(AllGetProperties.FirstOrDefault(p => !GetPropsName.Contains( p.Name)), index);
+
+                _getProps.Add(param);
+                GetPropsName.Add(param.PropInfo.Name);
+
+                param.GetNames($"Prop {index}", $"P {index}",
+                    out name, out nickName, out description);
+
+                result = param.CreateParam();
+                result.Name = name;
+                result.NickName = nickName;
+                result.Description = description;
+                result.Access = param.Access;
+                return result;
+            default:
+                throw new ArgumentException("The value side is not valid!");
+        }
     }
 
     /// <inheritdoc/>
-    public override bool Write(GH_IWriter writer)
+    public virtual bool DestroyParameter(GH_ParameterSide side, int index)
     {
-        writer.Write(this);
-        return base.Write(writer);
+        switch (side)
+        {
+            case GH_ParameterSide.Input:
+                if (Type.HasFlag(TypePropertyType.Dtor)) index--;
+                _setProps.RemoveAt(index);
+                SetPropsName.RemoveAt(index);
+                for (int i = index; i < _setProps.Count; i++)
+                {
+                    _setProps[i].Param.ParamIndex--;
+                }
+                return true;
+
+            case GH_ParameterSide.Output:
+                if (Type.HasFlag(TypePropertyType.Ctor)) index--;
+                _getProps.RemoveAt(index);
+                GetPropsName.RemoveAt(index);
+                for (int i = index; i < _getProps.Count; i++)
+                {
+                    _getProps[i].Param.ParamIndex--;
+                }
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public virtual void VariableParameterMaintenance()
+    {
     }
 }
