@@ -49,7 +49,12 @@ public class SimpleGoo<T> : GH_Goo<T>
         var str = Value?.ToString();
         if (!string.IsNullOrEmpty(str))
         {
-            return string.Format(AssemblyPriority.GetTypeStringFormat(typeof(T)), str);
+            var format = "{0}";
+            if(AssemblyPriority.TypeStringFormats.TryGetValue(typeof(T), out var func))
+            {
+                format = func(typeof(T));
+            }
+            return string.Format(format, str);
         }
 
         return TypeName + " <Null>";

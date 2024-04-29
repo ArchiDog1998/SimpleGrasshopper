@@ -2,6 +2,7 @@
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
+using System;
 
 namespace SimpleGrasshopper.DocumentObjects;
 
@@ -74,5 +75,85 @@ public abstract class TypeParameter<T>()
     {
         writer.Write(this);
         return base.Write(writer);
+    }
+
+    /// <inheritdoc/>
+    public override void AppendAdditionalMenuItems(ToolStripDropDown menu)
+    {
+        if (!AssemblyPriority.PropertyComponentsGuid.TryGetValue(typeof(T), out var guid))
+        {
+            base.AppendAdditionalMenuItems(menu);
+            return;
+        }
+
+        switch (Kind)
+        {
+            case GH_ParamKind.floating:
+                menu.Items.Add(GetConstructor(guid));
+                menu.Items.Add(GetDeconstructor(guid));
+                break;
+
+            case GH_ParamKind.input:
+                menu.Items.Add(GetConstructor(guid));
+                break;
+
+            case GH_ParamKind.output:
+                menu.Items.Add(GetDeconstructor(guid));
+                break;
+        }
+
+        Menu_AppendSeparator(menu);
+        base.AppendAdditionalMenuItems(menu);
+        return;
+    }
+
+    private ToolStripMenuItem GetDeconstructor(Guid guid)
+    {
+        var item = new ToolStripMenuItem("Deconstructor");
+        item.Click += (s, e) =>
+        {
+            var point = this.Attributes.Pivot;
+            point.X += 200;
+
+            Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
+            Instances.ActiveCanvas.InstantiateNewObject(guid, point, false);
+            Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
+
+            void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
+            {
+                foreach (var item in e.Objects)
+                {
+                    if (item is not IGH_Component comp) continue;
+                    comp.Params.Input[0].AddSource(this);
+                    this.ExpireSolution(true);
+                }
+            }
+        };
+        return item;
+    }
+
+    private ToolStripMenuItem GetConstructor(Guid guid)
+    {
+        var item = new ToolStripMenuItem("Constructor");
+        item.Click += (s, e) =>
+        {
+            var point = this.Attributes.Pivot;
+            point.X -= 200;
+
+            Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
+            Instances.ActiveCanvas.InstantiateNewObject(guid, point, false);
+            Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
+
+            void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
+            {
+                foreach (var item in e.Objects)
+                {
+                    if (item is not IGH_Component comp) continue;
+                    this.AddSource(comp.Params.Output[0]);
+                    comp.ExpireSolution(true);
+                }
+            }
+        };
+        return item;
     }
 }

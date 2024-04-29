@@ -105,6 +105,8 @@ public abstract class TypePropertyComponent<T>()
     /// <inheritdoc/>
     protected sealed override void RegisterInputParams(GH_InputParamManager pManager)
     {
+        AssemblyPriority.PropertyComponentsGuid[typeof(T)] = ComponentGuid;
+
         int start = 0;
         _setProps.Clear();
 

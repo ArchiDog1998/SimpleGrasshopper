@@ -29,7 +29,9 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// <summary>
     /// The type format of the specific type
     /// </summary>
-    public static Func<Type, string> GetTypeStringFormat { get; set; } = t => "{0}";
+    public static Dictionary<Type, Func<Type, string>> TypeStringFormats { get; } = [];
+
+    internal static Dictionary<Type, Guid> PropertyComponentsGuid { get; } = [];
 
     /// <summary>
     /// The delegate for <see cref="CustomShortcutClicked"/>
