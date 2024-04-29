@@ -27,9 +27,17 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     public static Dictionary<Keys, Action> CustomShortcuts { get; } = [];
 
     /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="str"></param>
+    /// <returns>handled.</returns>
+    public delegate bool TypeStringDelegate(Type type, out string str);
+
+    /// <summary>
     /// The type format of the specific type
     /// </summary>
-    public static Dictionary<Type, Func<Type, string>> TypeStringFormats { get; } = [];
+    public static List<TypeStringDelegate> TypeStringFormats { get; } = [];
 
     internal static Dictionary<Type, Guid> PropertyComponentsGuid { get; } = [];
 

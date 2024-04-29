@@ -50,9 +50,12 @@ public class SimpleGoo<T> : GH_Goo<T>
         if (!string.IsNullOrEmpty(str))
         {
             var format = "{0}";
-            if(AssemblyPriority.TypeStringFormats.TryGetValue(typeof(T), out var func))
+
+            foreach (var func in AssemblyPriority.TypeStringFormats)
             {
-                format = func(typeof(T));
+                if (!func(typeof(T), out var fo)) continue;
+                format = fo;
+                break;
             }
             return string.Format(format, str);
         }
