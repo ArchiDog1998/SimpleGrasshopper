@@ -32,7 +32,7 @@ public abstract class TypePropertyComponent<T>()
     /// </summary>
     protected virtual bool SetProperty => true;
 
-    private static IEnumerable<PropertyInfo> AllProperties { get; } = typeof(T).GetRuntimeProperties().Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null && !p.SetMethod.IsStatic);
+    private static IEnumerable<PropertyInfo> AllProperties { get; } = typeof(T).GetRuntimeProperties().Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null);
     private static IEnumerable<FieldInfo> AllFields { get; } = typeof(T).GetRuntimeFields()
         .Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null && p.IsPublic);
     private static FieldPropInfo[] AllSetProperties { get; } = [.. AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic), .. AllFields];
