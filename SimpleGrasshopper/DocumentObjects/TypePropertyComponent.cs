@@ -283,6 +283,7 @@ public abstract class TypePropertyComponent<T>()
                 i++;
             }
 
+            this.Params.OnParametersChanged();
             this.ExpireSolution(true);
         };
         mainMenu.Items.Add(clear);
@@ -360,6 +361,7 @@ public abstract class TypePropertyComponent<T>()
                     {
                         add(property);
                     }
+                    this.Params.OnParametersChanged();
                     this.ExpireSolution(true);
                 };
 
@@ -389,6 +391,7 @@ public abstract class TypePropertyComponent<T>()
                 {
                     add(property);
                 }
+                this.Params.OnParametersChanged();
                 this.ExpireSolution(true);
             };
 
