@@ -26,6 +26,9 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
         defaultName = defaultValue ?? defaultName;
         defaultNickName = defaultValue ?? defaultNickName;
 
+        defaultName = defaultName.SpaceStr();
+        defaultNickName = defaultNickName.UpperStr();
+
         name = attr?.Name ?? defaultName;
         nickName = attr?.NickName ?? defaultNickName;
         description = attr?.Description ?? defaultName;

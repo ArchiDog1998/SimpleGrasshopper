@@ -135,8 +135,7 @@ public abstract class TypePropertyComponent<T>()
 
                 _setProps.Add(param);
 
-                param.GetNames($"Prop {i}", $"P {i}",
-                    out var name, out var nickName, out var description);
+                param.GetNames(out var name, out var nickName, out var description);
 
                 pManager.AddParameter(param.CreateParam(), name, nickName, description, param.Access);
             }
@@ -166,8 +165,7 @@ public abstract class TypePropertyComponent<T>()
 
                 _getProps.Add(param);
 
-                param.GetNames($"Prop {i}", $"P {i}",
-                    out var name, out var nickName, out var description);
+                param.GetNames(out var name, out var nickName, out var description);
 
                 pManager.AddParameter(param.CreateParam(), name, nickName, description, param.Access);
             }
@@ -217,8 +215,7 @@ public abstract class TypePropertyComponent<T>()
             _setProps.Add(param);
             SetPropsName.Add(param.PropInfo.Name);
 
-            param.GetNames($"Prop {index}", $"P {index}",
-                out var name, out var nickName, out var description);
+            param.GetNames(out var name, out var nickName, out var description);
 
             var result = param.CreateParam();
             result.Name = name;
@@ -239,8 +236,7 @@ public abstract class TypePropertyComponent<T>()
             _getProps.Add(param);
             GetPropsName.Add(param.PropInfo.Name);
 
-            param.GetNames($"Prop {index}", $"P {index}",
-                out var name, out var nickName, out var description);
+            param.GetNames(out var name, out var nickName, out var description);
 
             var result = param.CreateParam();
             result.Name = name;
@@ -497,8 +493,7 @@ public abstract class TypePropertyComponent<T>()
                 _setProps.Add(param);
                 SetPropsName.Add(param.PropInfo.Name);
 
-                param.GetNames($"Prop {index}", $"P {index}",
-                    out var name, out var nickName, out var description);
+                param.GetNames(out var name, out var nickName, out var description);
 
                 var result = param.CreateParam();
                 result.Name = name;
@@ -513,8 +508,7 @@ public abstract class TypePropertyComponent<T>()
                 _getProps.Add(param);
                 GetPropsName.Add(param.PropInfo.Name);
 
-                param.GetNames($"Prop {index}", $"P {index}",
-                    out name, out nickName, out description);
+                param.GetNames(out name, out nickName, out description);
 
                 result = param.CreateParam();
                 result.Name = name;

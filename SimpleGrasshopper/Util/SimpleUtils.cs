@@ -4,16 +4,13 @@ using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using Rhino;
-using Rhino.Geometry;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.DocumentObjects;
 using SimpleGrasshopper.Undo;
 using System.Collections;
 using System.ComponentModel;
-using System.Linq;
 using System.Net;
-using System.Windows.Forms.VisualStyles;
 
 namespace SimpleGrasshopper.Util;
 
@@ -750,5 +747,43 @@ public static class SimpleUtils
     {
         var doc = obj.OnPingDocument();
         doc.UndoUtil.RecordEvent(memberName + " Changed", new GH_MemberUndoAction(obj, memberName, after, action));
+    }
+
+    /// <summary>
+    /// Add the space to the strings.
+    /// </summary>
+    /// <param name="str"></param>
+    /// <returns></returns>
+    public static string SpaceStr(this string str)
+    {
+        var result = string.Empty;
+
+        bool isLastUpper = true;
+        foreach (var c in str)
+        {
+            if (!isLastUpper && char.IsUpper(c))
+            {
+                result += " ";
+            }
+            result += c;
+            isLastUpper = char.IsUpper(c);
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Get the upper string.
+    /// </summary>
+    /// <param name="str"></param>
+    /// <returns></returns>
+    public static string UpperStr(this string str)
+    {
+        var result = string.Empty;
+        foreach (var c in str)
+        {
+            if (!char.IsUpper(c)) continue;
+            result += c;
+        }
+        return result;
     }
 }

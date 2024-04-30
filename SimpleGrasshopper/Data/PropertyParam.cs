@@ -8,11 +8,11 @@ internal readonly struct PropertyParam(FieldPropInfo info, int index)
     public FieldPropInfo PropInfo => info;
     public GH_ParamAccess Access => Param.Access;
 
-    public void GetNames(string defaultName, string defaultNickName, out string name, out string nickName, out string description)
+    public void GetNames(out string name, out string nickName, out string description)
     {
         var attr = PropInfo.GetCustomAttribute<DocObjAttribute>();
-        defaultName = PropInfo.Name ?? defaultName;
-        defaultNickName = PropInfo.Name ?? defaultNickName;
+        var defaultName = PropInfo.Name.SpaceStr();
+        var defaultNickName = PropInfo.Name.UpperStr();
 
         name = attr?.Name ?? defaultName;
         nickName = attr?.NickName ?? defaultNickName;
