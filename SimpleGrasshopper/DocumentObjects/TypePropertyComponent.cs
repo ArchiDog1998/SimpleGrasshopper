@@ -4,7 +4,6 @@ using Grasshopper.Kernel.Attributes;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
-using System.Linq;
 
 namespace SimpleGrasshopper.DocumentObjects;
 
@@ -36,12 +35,12 @@ public abstract class TypePropertyComponent<T>()
     /// <summary>
     ///
     /// </summary>
-    protected static Func<FieldPropInfo, bool> DefaultSetProp = prop => prop.DeclaringType == typeof(T);
+    protected static Func<FieldPropInfo, bool> DefaultSetProp = prop => prop.DeclaringType == typeof(T) && !prop.Name.Contains(".");
 
     /// <summary>
     ///
     /// </summary>
-    protected static Func<FieldPropInfo, bool> DefaultGetProp = prop => prop.DeclaringType == typeof(T);
+    protected static Func<FieldPropInfo, bool> DefaultGetProp = DefaultSetProp;
 
     private static IEnumerable<PropertyInfo> AllProperties { get; } = typeof(T).GetRuntimeProperties().Where(prop => prop.GetCustomAttribute<IgnoreAttribute>() == null);
     private static IEnumerable<FieldInfo> AllFields { get; } = typeof(T).GetRuntimeFields().Where(prop => prop.GetCustomAttribute<IgnoreAttribute>() == null && prop.IsPublic);
@@ -123,7 +122,11 @@ public abstract class TypePropertyComponent<T>()
     /// <inheritdoc/>
     protected sealed override void RegisterInputParams(GH_InputParamManager pManager)
     {
-        AssemblyPriority.PropertyComponentsGuid[typeof(T)] = ComponentGuid;
+        if (Instances.DocumentEditor == null)
+        {
+            AssemblyPriority.PropertyComponentsGuid[typeof(T)] = ComponentGuid;
+            return;
+        }
 
         int start = 0;
         _setProps.Clear();
@@ -155,6 +158,8 @@ public abstract class TypePropertyComponent<T>()
     /// <inheritdoc/>
     protected sealed override void RegisterOutputParams(GH_OutputParamManager pManager)
     {
+        if (Instances.DocumentEditor == null) return;
+
         int start = 0;
         _getProps.Clear();
 
@@ -185,12 +190,16 @@ public abstract class TypePropertyComponent<T>()
     /// <inheritdoc/>
     protected sealed override void SolveInstance(IGH_DataAccess DA)
     {
+        if (Instances.DocumentEditor == null) return;
+
         T obj = default!;
         if (Type == TypePropertyType.Ctor || !DA.GetData(0, ref obj))
         {
             if (typeof(T).IsInterface) return;
             obj = (T)typeof(T).CreateInstance();
         }
+
+        if (!BeforePropertyChange(obj)) return;
 
         object o = obj!;
         if (SetProperty)
@@ -209,16 +218,37 @@ public abstract class TypePropertyComponent<T>()
             }
         }
 
+        obj = (T)o;
+        AfterPropertyChanged(obj);
+
         if (Type != TypePropertyType.Dtor)
         {
             DA.SetData(0, o);
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="value">Can do changes.</param>
+    /// <returns></returns>
+    protected virtual bool BeforePropertyChange(T value)
+    {
+        return true;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="value"></param>
+    protected virtual void AfterPropertyChanged(T value) { }
+
     /// <inheritdoc/>
     public override void AppendAdditionalMenuItems(ToolStripDropDown mainMenu)
     {
         base.AppendAdditionalMenuItems(mainMenu);
+
+        if (Instances.DocumentEditor == null) return;
 
         mainMenu.Items.Add(GetItem("Set Properties", AllSetProperties, SetPropsName, p =>
         {
