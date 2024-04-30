@@ -2,6 +2,7 @@
 using SimpleGrasshopper.Util;
 
 namespace SimpleGrasshopper.Data;
+
 internal readonly struct PropertyParam(FieldPropInfo info, int index)
 {
     public TypeParam Param { get; } = new(info.DataType, index);
@@ -11,8 +12,11 @@ internal readonly struct PropertyParam(FieldPropInfo info, int index)
     public void GetNames(out string name, out string nickName, out string description)
     {
         var attr = PropInfo.GetCustomAttribute<DocObjAttribute>();
-        var defaultName = PropInfo.Name.SpaceStr();
-        var defaultNickName = PropInfo.Name.UpperStr();
+
+        var propName = PropInfo.Name.Split('.').LastOrDefault();
+
+        var defaultName = propName.SpaceStr();
+        var defaultNickName = propName.UpperStr();
 
         name = attr?.Name ?? defaultName;
         nickName = attr?.NickName ?? defaultNickName;

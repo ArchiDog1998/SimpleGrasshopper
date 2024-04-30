@@ -779,10 +779,18 @@ public static class SimpleUtils
     public static string UpperStr(this string str)
     {
         var result = string.Empty;
+        bool isFirst = true;
         foreach (var c in str)
         {
-            if (!char.IsUpper(c)) continue;
-            result += c;
+            if (isFirst)
+            {
+                result += char.ToUpper(c);
+                isFirst = false;
+            }
+            else if (char.IsUpper(c))
+            {
+                result += c;
+            }
         }
         return result;
     }
