@@ -351,7 +351,7 @@ public abstract class TypePropertyComponent<T>()
 
                 item.Click += (sender, e) =>
                 {
-                    var property = (PropertyInfo)((ToolStripMenuItem)sender).Tag;
+                    var property = (FieldPropInfo)((ToolStripMenuItem)sender).Tag;
                     if (item.Checked)
                     {
                         remove(property);
@@ -380,7 +380,7 @@ public abstract class TypePropertyComponent<T>()
 
             item.Click += (sender, e) =>
             {
-                var property = (PropertyInfo)((ToolStripMenuItem)sender).Tag;
+                var property = (FieldPropInfo)((ToolStripMenuItem)sender).Tag;
                 if (item.Checked)
                 {
                     remove(property);
