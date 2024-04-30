@@ -1,44 +1,46 @@
 ﻿using SimpleGrasshopper.Util;
 
 namespace SimpleGrasshopper.Data;
-internal class FieldPropInfo
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+public class FieldPropInfo
 {
-    private readonly PropertyInfo? _property;
-    private readonly FieldInfo? _field;
+    public readonly PropertyInfo? Property;
+    public readonly FieldInfo? Field;
+    public Type DeclaringType => Property?.DeclaringType ?? Field?.DeclaringType!;
 
-    public Type DataType => _property?.PropertyType ?? _field?.FieldType!;
+    public Type DataType => Property?.PropertyType ?? Field?.FieldType!;
 
-    public string Name => _property?.Name ?? _field?.Name!;
+    public string Name => Property?.Name ?? Field?.Name!;
 
     public FieldPropInfo(PropertyInfo info)
     {
-        _property = info;
+        Property = info;
     }
 
     public FieldPropInfo(FieldInfo info)
     {
-        _field = info;
+        Field = info;
     }
 
     public string GetDocObjName()
     {
-        return _property?.GetDocObjName() ?? _field?.GetDocObjName()!;
+        return Property?.GetDocObjName() ?? Field?.GetDocObjName()!;
     }
 
     public void SetValue(object obj, object value)
     {
-        _property?.SetValue(obj, value);
-        _field?.SetValue(obj, value);
+        Property?.SetValue(obj, value);
+        Field?.SetValue(obj, value);
     }
 
     public object? GetValue(object obj)
     {
-        return _property?.GetValue(obj) ?? _field?.GetValue(obj);
+        return Property?.GetValue(obj) ?? Field?.GetValue(obj);
     }
 
     public T GetCustomAttribute<T>() where T : Attribute
     {
-        return _property?.GetCustomAttribute<T>() ?? _field?.GetCustomAttribute<T>()!;
+        return Property?.GetCustomAttribute<T>() ?? Field?.GetCustomAttribute<T>()!;
     }
 
     public static implicit operator FieldPropInfo(PropertyInfo info) => new (info);

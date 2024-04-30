@@ -4,6 +4,7 @@ using Grasshopper.Kernel.Attributes;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
+using System.Linq;
 
 namespace SimpleGrasshopper.DocumentObjects;
 
@@ -32,16 +33,25 @@ public abstract class TypePropertyComponent<T>()
     /// </summary>
     protected virtual bool SetProperty => true;
 
-    private static IEnumerable<PropertyInfo> AllProperties { get; } = typeof(T).GetRuntimeProperties().Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null);
-    private static IEnumerable<FieldInfo> AllFields { get; } = typeof(T).GetRuntimeFields()
-        .Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null && p.IsPublic);
+    /// <summary>
+    ///
+    /// </summary>
+    protected static Func<FieldPropInfo, bool> DefaultSetProp = prop => prop.DeclaringType == typeof(T);
+
+    /// <summary>
+    ///
+    /// </summary>
+    protected static Func<FieldPropInfo, bool> DefaultGetProp = prop => prop.DeclaringType == typeof(T);
+
+    private static IEnumerable<PropertyInfo> AllProperties { get; } = typeof(T).GetRuntimeProperties().Where(prop => prop.GetCustomAttribute<IgnoreAttribute>() == null);
+    private static IEnumerable<FieldInfo> AllFields { get; } = typeof(T).GetRuntimeFields().Where(prop => prop.GetCustomAttribute<IgnoreAttribute>() == null && prop.IsPublic);
     private static FieldPropInfo[] AllSetProperties { get; } = [.. AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic), .. AllFields];
     private static FieldPropInfo[] AllGetProperties { get; } = [.. AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic), .. AllFields];
     [DocData]
-    internal List<string> SetPropsName { get; set; } = [.. AllSetProperties.Select(p => p.Name)];
+    internal List<string> SetPropsName { get; set; } = [.. AllSetProperties.Where(DefaultSetProp).Select(p => p.Name)];
 
     [DocData]
-    internal List<string> GetPropsName { get; set; } = [.. AllGetProperties.Select(p => p.Name)];
+    internal List<string> GetPropsName { get; set; } = [.. AllGetProperties.Where(DefaultGetProp).Select(p => p.Name)];
 
     private static string GetName(Type type)
     {
