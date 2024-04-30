@@ -1,4 +1,6 @@
-﻿using Grasshopper.GUI;
+﻿using GH_IO.Serialization;
+using Grasshopper.GUI;
+using Grasshopper.Kernel.Attributes;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
@@ -396,6 +398,50 @@ public abstract class TypePropertyComponent<T>()
         result.DropDown.MaximumSize = new(500, 600);
 
         return result;
+    }
+
+    private bool _changing = false;
+
+    /// <inheritdoc/>
+    public sealed override void CreateAttributes()
+    {
+        if (!_changing || m_attributes == null)
+        {
+            m_attributes = CreateAttribute();
+        }
+    }
+
+    /// <summary>
+    /// Your custom <see cref="IGH_Attributes"/>
+    /// </summary>
+    /// <returns>the attribute you want.</returns>
+    public virtual IGH_Attributes CreateAttribute()
+    {
+        return new GH_ComponentAttributes(this);
+    }
+
+    /// <inheritdoc/>
+    public override bool Read(GH_IReader reader)
+    {
+        reader.Read(this);
+
+        //Destroy
+        Params.Clear();
+        DestroyIconCache();
+
+        //Build
+        _changing = true;
+        PostConstructor();
+        _changing = false;
+
+        return base.Read(reader);
+    }
+
+    /// <inheritdoc/>
+    public override bool Write(GH_IWriter writer)
+    {
+        writer.Write(this);
+        return base.Write(writer);
     }
 
     /// <inheritdoc/>
