@@ -1,12 +1,11 @@
-﻿using Newtonsoft.Json;
-using SimpleGrasshopper.Attributes;
+﻿using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Util;
 
 namespace SimpleGrasshopper.Data;
-internal readonly struct PropertyParam(PropertyInfo info, int index)
+internal readonly struct PropertyParam(FieldPropInfo info, int index)
 {
-    public TypeParam Param { get; } = new(info.PropertyType, index);
-    public PropertyInfo PropInfo => info;
+    public TypeParam Param { get; } = new(info.DataType, index);
+    public FieldPropInfo PropInfo => info;
     public GH_ParamAccess Access => Param.Access;
 
     public void GetNames(string defaultName, string defaultNickName, out string name, out string nickName, out string description)

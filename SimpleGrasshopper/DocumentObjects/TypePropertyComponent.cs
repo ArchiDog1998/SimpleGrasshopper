@@ -30,10 +30,11 @@ public abstract class TypePropertyComponent<T>()
     /// </summary>
     protected virtual bool SetProperty => true;
 
-    private static IEnumerable<PropertyInfo> AllProperties { get; } = typeof(T).GetRuntimeProperties().Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null);
-    private static PropertyInfo[] AllSetProperties { get; } = AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic).ToArray();
-    private static PropertyInfo[] AllGetProperties { get; } = AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic).ToArray();
-
+    private static IEnumerable<PropertyInfo> AllProperties { get; } = typeof(T).GetRuntimeProperties().Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null && !p.SetMethod.IsStatic);
+    private static IEnumerable<FieldInfo> AllFields { get; } = typeof(T).GetRuntimeFields()
+        .Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null && p.IsPublic);
+    private static FieldPropInfo[] AllSetProperties { get; } = [.. AllProperties.Where(p => p.SetMethod != null && !p.SetMethod.IsStatic), .. AllFields];
+    private static FieldPropInfo[] AllGetProperties { get; } = [..AllProperties.Where(p => p.GetMethod != null && !p.GetMethod.IsStatic), .. AllFields];
     [DocData]
     internal List<string> SetPropsName { get; set; } = [..AllSetProperties.Select(p => p.Name)];
 
@@ -309,7 +310,7 @@ public abstract class TypePropertyComponent<T>()
         }
     }
 
-    private ToolStripMenuItem GetItem(string name, PropertyInfo[] properties, List<string> props,  Action<PropertyInfo> add, Action<PropertyInfo> remove)
+    private ToolStripMenuItem GetItem(string name, FieldPropInfo[] properties, List<string> props,  Action<FieldPropInfo> add, Action<FieldPropInfo> remove)
     {
         var result = new ToolStripMenuItem(name);
         var count = properties.Length;
