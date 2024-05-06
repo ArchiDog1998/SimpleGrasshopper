@@ -39,6 +39,11 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// </summary>
     public static List<TypeStringDelegate> TypeStringFormats { get; } = [];
 
+    /// <summary>
+    /// The types that should be regarded as the list in grasshopper.
+    /// </summary>
+    public static List<Type> ListTypes { get; } = [typeof(List<>), typeof(IEnumerable<>)];
+
     internal static Dictionary<Type, Guid> PropertyComponentsGuid { get; } = [];
 
     /// <summary>

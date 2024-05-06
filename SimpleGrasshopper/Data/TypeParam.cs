@@ -61,21 +61,18 @@ internal class TypeParam
                 access = GH_ParamAccess.list;
                 return type.GetElementType()!;
             }
-            else if (type.IsGeneralType(typeof(List<>)) is Type listType)
+
+            foreach (var listType in AssemblyPriority.ListTypes)
             {
-                access = GH_ParamAccess.list;
-                return listType;
+                if (type.IsGeneralType(listType) is Type ltType)
+                {
+                    access = GH_ParamAccess.list;
+                    return ltType;
+                }
             }
-            else if (type.IsGeneralType(typeof(IEnumerable<>)) is Type enumerableType)
-            {
-                access = GH_ParamAccess.list;
-                return enumerableType;
-            }
-            else
-            {
-                access = GH_ParamAccess.item;
-                return type;
-            }
+
+            access = GH_ParamAccess.item;
+            return type;
         }
     }
 

@@ -22,6 +22,8 @@
 
 	<EmbeddedResource Include="Icons/*.png" />
 
+	<None Remove="DocumentObjects\TypeParameter.cs~RF24959626.TMP" />
+
 	<None Include="..\SimpleGrasshopper.SourceGenerators\bin\$(Configuration)\netstandard2.0\SimpleGrasshopper.SourceGenerators.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 	  
 	<None Include="..\README.md">
