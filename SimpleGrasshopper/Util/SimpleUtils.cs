@@ -4,6 +4,7 @@ using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Types;
 using Rhino;
+using Rhino.Commands;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.DocumentObjects;
@@ -793,5 +794,36 @@ public static class SimpleUtils
             }
         }
         return result;
+    }
+
+    internal static void SearchDropdown(ToolStripDropDown dropdown, Action<string> updateItems)
+    {
+        var width = (int)Math.Round(220f * GH_GraphicsUtil.UiScale);
+
+        var textItem = new ToolStripTextBox
+        {
+            Text = string.Empty,
+            BorderStyle = BorderStyle.FixedSingle,
+            Width = width,
+            AutoSize = false,
+            ToolTipText = "Searching...",
+        };
+
+        dropdown.Items.Add(textItem);
+
+        textItem.TextChanged += (sender, e) => UpdateItems();
+
+        dropdown.MaximumSize = new(500, 600);
+
+        UpdateItems();
+
+        void UpdateItems()
+        {
+            while (dropdown.Items.Count > 1)
+            {
+                dropdown.Items.RemoveAt(1);
+            }
+            updateItems(textItem.Text);
+        }
     }
 }

@@ -80,25 +80,41 @@ public abstract class TypeParameter<T>()
     /// <inheritdoc/>
     public override void AppendAdditionalMenuItems(ToolStripDropDown menu)
     {
-        if (!AssemblyPriority.PropertyComponentsGuid.TryGetValue(typeof(T), out var guid))
+        var type = typeof(T);
+        Dictionary<Type, Guid> dict = [];
+
+        foreach (var pair in AssemblyPriority.PropertyComponentsGuid)
+        {
+            if (!type.IsAssignableFrom(pair.Key)) continue;
+
+            dict[pair.Key] = pair.Value;
+        }
+
+        if (dict.Count == 0)
         {
             base.AppendAdditionalMenuItems(menu);
             return;
         }
 
+        Guid? id = null;
+        if (dict.TryGetValue(GetBestType(), out var guid))
+        {
+            id = guid;
+        }
+
         switch (Kind)
         {
             case GH_ParamKind.floating:
-                menu.Items.Add(GetConstructor(guid));
-                menu.Items.Add(GetDeconstructor(guid));
+                menu.Items.Add(GetCtor(id, dict));
+                menu.Items.Add(GetDtor(id, dict));
                 break;
 
             case GH_ParamKind.input:
-                menu.Items.Add(GetConstructor(guid));
+                menu.Items.Add(GetCtor(id, dict));
                 break;
 
             case GH_ParamKind.output:
-                menu.Items.Add(GetDeconstructor(guid));
+                menu.Items.Add(GetDtor(id, dict));
                 break;
         }
 
@@ -107,53 +123,143 @@ public abstract class TypeParameter<T>()
         return;
     }
 
-    private ToolStripMenuItem GetDeconstructor(Guid guid)
+    private Type GetBestType()
     {
-        var item = new ToolStripMenuItem("Deconstructor");
-        item.Click += (s, e) =>
+        var dataTypes = this.VolatileData.AllData(true)
+            .Select(goo => goo.GetType().GetRuntimeProperty("Value")?.GetValue(goo)?.GetType())
+            .OfType<Type>().ToArray();
+
+        var majorType = typeof(T);
+
+        if (dataTypes.Length == 0)
         {
-            var point = this.Attributes.Pivot;
-            point.X += 200;
+            return majorType;
+        }
 
-            Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
-            Instances.ActiveCanvas.InstantiateNewObject(guid, point, false);
-            Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
+        majorType = dataTypes.First();
 
-            void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
+        foreach (var type in dataTypes)
+        {
+            majorType = Parent(majorType, type);
+        }
+
+        return majorType;
+    }
+
+    //TODO : Interfaces.
+    private Type Parent(Type type1, Type type2)
+    {
+        if (type1.IsAssignableFrom(type2))
+        {
+            return type1;
+        }
+        else if (type2.IsAssignableFrom(type1))
+        {
+            return type2;
+        }
+        else
+        {
+            var result = type1;
+            while (!result.IsAssignableFrom(type2))
             {
-                foreach (var item in e.Objects)
-                {
-                    if (item is not IGH_Component comp) continue;
-                    comp.Params.Input[0].AddSource(this);
-                    this.ExpireSolution(true);
-                }
+                var baseType = result.BaseType;
+                if (baseType == null) break;
+                result = baseType;
             }
-        };
+            return result;
+        }
+    }
+
+    private ToolStripMenuItem GetDtor(Guid? guid, Dictionary<Type, Guid> dict)
+    {
+        var result = GetDeconstructor(guid);
+
+        SimpleUtils.SearchDropdown(result.DropDown, s =>
+        {
+            foreach (var item in dict)
+            {
+                if (!item.Key.Name.Contains(s)) continue;
+
+                result.DropDown.Items.Add(GetDeconstructor(item.Value, item.Key.Name.SpaceStr()));
+            }
+        });
+
+        return result;
+    }
+
+    private ToolStripMenuItem GetDeconstructor(Guid? guid, string name = "Deconstructor")
+    {
+        var item = new ToolStripMenuItem(name);
+
+        if (guid.HasValue)
+        {
+            item.Click += (s, e) =>
+            {
+                var point = this.Attributes.Pivot;
+                point.X += 200;
+
+                Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
+                Instances.ActiveCanvas.InstantiateNewObject(guid.Value, point, false);
+                Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
+
+                void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
+                {
+                    foreach (var item in e.Objects)
+                    {
+                        if (item is not IGH_Component comp) continue;
+                        comp.Params.Input[0].AddSource(this);
+                        this.ExpireSolution(true);
+                    }
+                }
+            };
+        }
+
         return item;
     }
 
-    private ToolStripMenuItem GetConstructor(Guid guid)
+    private ToolStripMenuItem GetCtor(Guid? guid, Dictionary<Type, Guid> dict)
     {
-        var item = new ToolStripMenuItem("Constructor");
-        item.Click += (s, e) =>
+        var result = GetConstructor(guid);
+
+        SimpleUtils.SearchDropdown(result.DropDown, s =>
         {
-            var point = this.Attributes.Pivot;
-            point.X -= 200;
-
-            Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
-            Instances.ActiveCanvas.InstantiateNewObject(guid, point, false);
-            Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
-
-            void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
+            foreach (var item in dict)
             {
-                foreach (var item in e.Objects)
-                {
-                    if (item is not IGH_Component comp) continue;
-                    this.AddSource(comp.Params.Output[0]);
-                    comp.ExpireSolution(true);
-                }
+                if (!item.Key.Name.Contains(s)) continue;
+
+                result.DropDown.Items.Add(GetConstructor(item.Value, item.Key.Name.SpaceStr()));
             }
-        };
+        });
+
+        return result;
+    }
+
+    private ToolStripMenuItem GetConstructor(Guid? guid, string name = "Constructor")
+    {
+        var item = new ToolStripMenuItem(name);
+
+        if (guid.HasValue)
+        {
+            item.Click += (s, e) =>
+            {
+                var point = this.Attributes.Pivot;
+                point.X -= 200;
+
+                Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
+                Instances.ActiveCanvas.InstantiateNewObject(guid.Value, point, false);
+                Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
+
+                void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
+                {
+                    foreach (var item in e.Objects)
+                    {
+                        if (item is not IGH_Component comp) continue;
+                        this.AddSource(comp.Params.Output[0]);
+                        comp.ExpireSolution(true);
+                    }
+                }
+            };
+        }
         return item;
     }
 }

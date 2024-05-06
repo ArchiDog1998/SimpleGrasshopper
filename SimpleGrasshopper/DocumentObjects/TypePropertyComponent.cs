@@ -4,6 +4,7 @@ using Grasshopper.Kernel.Attributes;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
+using System.Linq;
 
 namespace SimpleGrasshopper.DocumentObjects;
 
@@ -355,32 +356,20 @@ public abstract class TypePropertyComponent<T>()
     private ToolStripMenuItem GetItem(string name, FieldPropInfo[] properties, List<string> props, Action<FieldPropInfo> add, Action<FieldPropInfo> remove)
     {
         var result = new ToolStripMenuItem(name);
-        var count = properties.Length;
 
-        var width = (int)Math.Round(220f * GH_GraphicsUtil.UiScale);
+        SimpleUtils.SearchDropdown(result.DropDown, UpdateItems);
+;
+        return result;
 
-        var textItem = new ToolStripTextBox
+        void UpdateItems(string search)
         {
-            Text = string.Empty,
-            BorderStyle = BorderStyle.FixedSingle,
-            Width = width,
-            AutoSize = false,
-            ToolTipText = "Searching...",
-        };
+            var count = properties.Length;
 
-        result.DropDown.Items.Add(textItem);
-
-        textItem.TextChanged += (sender, e) =>
-        {
-            while (result.DropDown.Items.Count > 1)
-            {
-                result.DropDown.Items.RemoveAt(1);
-            }
             for (int i = 0; i < count; i++)
             {
                 var prop = properties[i];
 
-                if (!prop.Name.StartsWith(textItem.Text, StringComparison.OrdinalIgnoreCase)) continue;
+                if (!prop.Name.Contains(search)) continue;
 
                 var item = new ToolStripMenuItem
                 {
@@ -406,40 +395,7 @@ public abstract class TypePropertyComponent<T>()
 
                 result.DropDown.Items.Add(item);
             }
-        };
-
-        for (int i = 0; i < count; i++)
-        {
-            var prop = properties[i];
-
-            var item = new ToolStripMenuItem
-            {
-                Text = prop.GetDocObjName(),
-                Checked = props.Contains(prop.Name),
-                Tag = prop,
-            };
-
-            item.Click += (sender, e) =>
-            {
-                var property = (FieldPropInfo)((ToolStripMenuItem)sender).Tag;
-                if (item.Checked)
-                {
-                    remove(property);
-                }
-                else
-                {
-                    add(property);
-                }
-                this.Params.OnParametersChanged();
-                this.ExpireSolution(true);
-            };
-
-            result.DropDown.Items.Add(item);
         }
-
-        result.DropDown.MaximumSize = new(500, 600);
-
-        return result;
     }
 
     private bool _changing = false;
