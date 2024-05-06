@@ -82,18 +82,18 @@ public static class SimpleUtils
     }
 
     internal static string GetDocObjName(this MemberInfo method)
-        => GetDocObjProperty(method, a => a.Name);
+        => GetDocObjProperty(method, a => a.Name) ?? method.Name.SpaceStr();
 
     internal static string GetDocObjNickName(this MemberInfo method)
-        => GetDocObjProperty(method, a => a.NickName);
+        => GetDocObjProperty(method, a => a.NickName) ?? method.Name.UpperStr();
 
     internal static string GetDocObjDescription(this MemberInfo method)
-        => GetDocObjProperty(method, a => a.Description);
+        => GetDocObjProperty(method, a => a.Description) ?? method.Name.SpaceStr();
 
-    private static string GetDocObjProperty(this MemberInfo member, Func<DocObjAttribute, string> getProperty)
+    private static string? GetDocObjProperty(this MemberInfo member, Func<DocObjAttribute, string?> getProperty)
     {
         var attr = member.GetCustomAttribute<DocObjAttribute>();
-        if(attr != null) return getProperty(attr);
+        if (attr != null) return getProperty(attr);
         if (member is MethodInfo method && method.IsSpecialName)
         {
             var parameters = string.Join(", ", method.GetParameters()
@@ -104,15 +104,15 @@ public static class SimpleUtils
     }
 
     internal static string GetDocObjName(this Type type)
-        => GetDocObjProperty(type, a => a.Name);
+        => GetDocObjProperty(type, a => a.Name) ?? type.Name.SpaceStr();
 
     internal static string GetDocObjNickName(this Type type)
-        => GetDocObjProperty(type, a => a.NickName);
+        => GetDocObjProperty(type, a => a.NickName) ?? type.Name.UpperStr();
 
     internal static string GetDocObjDescription(this Type type)
-        => GetDocObjProperty(type, a => a.Description);
+        => GetDocObjProperty(type, a => a.Description) ?? type.Name.SpaceStr();
 
-    private static string GetDocObjProperty(this Type type, Func<DocObjAttribute, string> getProperty)
+    private static string? GetDocObjProperty(this Type type, Func<DocObjAttribute, string?> getProperty)
     {
         var attr = type.GetCustomAttribute<DocObjAttribute>();
         return attr == null ? type.Name : getProperty(attr);

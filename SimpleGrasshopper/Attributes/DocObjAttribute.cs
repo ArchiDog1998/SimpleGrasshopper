@@ -8,20 +8,20 @@
 /// <param name="description">This is for <see cref="IGH_InstanceDescription.Description"/></param>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface |
     AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue)]
-public class DocObjAttribute(string name, string nickName, string description) : Attribute
+public class DocObjAttribute(string? name = null, string? nickName = null, string? description = null) : Attribute
 {
     /// <summary>
     /// 
     /// </summary>
-    public string Name => name;
+    public string? Name => name;
 
     /// <summary>
     /// 
     /// </summary>
-    public string NickName => nickName;
+    public string? NickName => nickName;
 
     /// <summary>
     /// 
     /// </summary>
-    public string Description => description;
+    public string? Description => description;
 }
