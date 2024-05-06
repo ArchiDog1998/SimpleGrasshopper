@@ -74,6 +74,17 @@ public class SimpleGoo<T> : GH_Goo<T>
             Value = (T)source;
             return true;
         }
+        else if (source is IGH_Goo
+            && sType.GetRuntimeProperty("Value") is PropertyInfo property)
+        {
+            var v = property.GetValue(source);
+
+            if (type.IsAssignableFrom(v.GetType()))
+            {
+                Value = (T)v;
+                return true;
+            }
+        }
 
         try
         {
@@ -111,6 +122,15 @@ public class SimpleGoo<T> : GH_Goo<T>
         {
             target = (Q)(object)Value!;
             return true;
+        }
+        else if (target is IGH_Goo
+            && QType.GetRuntimeProperty("Value") is PropertyInfo property)
+        {
+            if (property.PropertyType.IsAssignableFrom(type))
+            {
+                property.SetValue(target, Value);
+                return true;
+            }
         }
 
         try

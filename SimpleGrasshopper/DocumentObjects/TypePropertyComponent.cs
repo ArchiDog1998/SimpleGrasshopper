@@ -232,7 +232,7 @@ public abstract class TypePropertyComponent<T>()
     /// </summary>
     /// <param name="value">Can do changes.</param>
     /// <returns></returns>
-    protected virtual bool BeforePropertyChange(T value)
+    protected virtual bool BeforePropertyChange(T? value)
     {
         return true;
     }
@@ -241,7 +241,7 @@ public abstract class TypePropertyComponent<T>()
     /// 
     /// </summary>
     /// <param name="value"></param>
-    protected virtual void AfterPropertyChanged(T value) { }
+    protected virtual void AfterPropertyChanged(T? value) { }
 
     /// <inheritdoc/>
     public override void AppendAdditionalMenuItems(ToolStripDropDown mainMenu)
