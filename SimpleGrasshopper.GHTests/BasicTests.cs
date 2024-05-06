@@ -46,6 +46,7 @@ internal static class BasicTests
     private static void ParamTest(
     [DocObj("Name", "N", "The name of sth.")] string name,
     [Param(ParamGuids.FilePath)] string path,
+    ref IEnumerable<int> values,
     [Angle] ref double angle)
     {
     }

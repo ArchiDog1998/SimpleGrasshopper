@@ -66,6 +66,11 @@ internal class TypeParam
                 access = GH_ParamAccess.list;
                 return listType;
             }
+            else if (type.IsGeneralType(typeof(IEnumerable<>)) is Type enumerableType)
+            {
+                access = GH_ParamAccess.list;
+                return enumerableType;
+            }
             else
             {
                 access = GH_ParamAccess.item;
