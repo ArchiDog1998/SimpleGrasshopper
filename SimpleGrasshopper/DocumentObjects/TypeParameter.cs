@@ -102,19 +102,20 @@ public abstract class TypeParameter<T>()
             id = guid;
         }
 
+        Menu_AppendSeparator(menu);
         switch (Kind)
         {
             case GH_ParamKind.floating:
-                menu.Items.Add(GetCtor(id, dict));
-                menu.Items.Add(GetDtor(id, dict));
+                menu.Items.Add(GetCtor(id, menu.Close, dict));
+                menu.Items.Add(GetDtor(id, menu.Close, dict));
                 break;
 
             case GH_ParamKind.input:
-                menu.Items.Add(GetCtor(id, dict));
+                menu.Items.Add(GetCtor(id, menu.Close, dict));
                 break;
 
             case GH_ParamKind.output:
-                menu.Items.Add(GetDtor(id, dict));
+                menu.Items.Add(GetDtor(id, menu.Close, dict));
                 break;
         }
 
@@ -170,9 +171,9 @@ public abstract class TypeParameter<T>()
         }
     }
 
-    private ToolStripMenuItem GetDtor(Guid? guid, Dictionary<Type, Guid> dict)
+    private ToolStripMenuItem GetDtor(Guid? guid, Action close, Dictionary<Type, Guid> dict)
     {
-        var result = GetDeconstructor(guid);
+        var result = GetDeconstructor(guid, close);
 
         SimpleUtils.SearchDropdown(result.DropDown, s =>
         {
@@ -180,14 +181,14 @@ public abstract class TypeParameter<T>()
             {
                 if (!item.Key.Name.Contains(s)) continue;
 
-                result.DropDown.Items.Add(GetDeconstructor(item.Value, item.Key.Name.SpaceStr()));
+                result.DropDown.Items.Add(GetDeconstructor(item.Value, close, item.Key.Name.SpaceStr()));
             }
         });
 
         return result;
     }
 
-    private ToolStripMenuItem GetDeconstructor(Guid? guid, string name = "Deconstructor")
+    private ToolStripMenuItem GetDeconstructor(Guid? guid, Action close, string name = "Deconstructor")
     {
         var item = new ToolStripMenuItem(name);
 
@@ -195,6 +196,8 @@ public abstract class TypeParameter<T>()
         {
             item.Click += (s, e) =>
             {
+                close();
+
                 var point = this.Attributes.Pivot;
                 point.X += 200;
 
@@ -208,7 +211,7 @@ public abstract class TypeParameter<T>()
                     {
                         if (item is not IGH_Component comp) continue;
                         comp.Params.Input[0].AddSource(this);
-                        this.ExpireSolution(true);
+                        item.ExpireSolution(true);
                     }
                 }
             };
@@ -217,9 +220,9 @@ public abstract class TypeParameter<T>()
         return item;
     }
 
-    private ToolStripMenuItem GetCtor(Guid? guid, Dictionary<Type, Guid> dict)
+    private ToolStripMenuItem GetCtor(Guid? guid, Action close, Dictionary<Type, Guid> dict)
     {
-        var result = GetConstructor(guid);
+        var result = GetConstructor(guid, close);
 
         SimpleUtils.SearchDropdown(result.DropDown, s =>
         {
@@ -227,14 +230,14 @@ public abstract class TypeParameter<T>()
             {
                 if (!item.Key.Name.Contains(s)) continue;
 
-                result.DropDown.Items.Add(GetConstructor(item.Value, item.Key.Name.SpaceStr()));
+                result.DropDown.Items.Add(GetConstructor(item.Value, close, item.Key.Name.SpaceStr()));
             }
         });
 
         return result;
     }
 
-    private ToolStripMenuItem GetConstructor(Guid? guid, string name = "Constructor")
+    private ToolStripMenuItem GetConstructor(Guid? guid, Action close, string name = "Constructor")
     {
         var item = new ToolStripMenuItem(name);
 
@@ -242,6 +245,8 @@ public abstract class TypeParameter<T>()
         {
             item.Click += (s, e) =>
             {
+                close();
+
                 var point = this.Attributes.Pivot;
                 point.X -= 200;
 
