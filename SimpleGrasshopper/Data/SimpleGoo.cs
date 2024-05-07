@@ -166,13 +166,21 @@ public class SimpleGoo<T> : GH_Goo<T>
                 return true;
             }
 
-            if (AssemblyPriority.CastToDict.TryGetValue(type, out var dele)
+            var t = QType;
+
+            if (target is IGH_Goo
+                && QType.GetRuntimeProperty("Value") is PropertyInfo prop)
+            {
+                t = prop.PropertyType;
+            }
+
+            if (AssemblyPriority.CastToDict.TryGetValue(t, out var dele)
                 && dele(Value!, out var v1))
             {
                 if (target is IGH_Goo
-                    && QType.GetRuntimeProperty("Value") is PropertyInfo prop)
+                    && QType.GetRuntimeProperty("Value") is PropertyInfo p)
                 {
-                    prop.SetValue(target, v1);
+                    p.SetValue(target, v1);
                     return true;
                 }
                 else
