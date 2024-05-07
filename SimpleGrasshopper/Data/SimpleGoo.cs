@@ -103,7 +103,23 @@ public class SimpleGoo<T> : GH_Goo<T>
                 return true;
             }
 
-            Value = (T)source.ChangeType(typeof(T));
+            if (AssemblyPriority.CastFromDict.TryGetValue(type, out var dele))
+            {
+                var o = source;
+                if (source is IGH_Goo
+                && sType.GetRuntimeProperty("Value") is PropertyInfo prop)
+                {
+                    o = prop.GetValue(o);
+                }
+
+                if (dele(o, out var v))
+                {
+                    Value = (T)v;
+                    return true;
+                }
+            }
+
+            Value = (T)source.ChangeType(type);
             return true;
         }
         catch
@@ -148,6 +164,22 @@ public class SimpleGoo<T> : GH_Goo<T>
                 var v = method1.Invoke(null, [Value]);
                 property.SetValue(target, v);
                 return true;
+            }
+
+            if (AssemblyPriority.CastToDict.TryGetValue(type, out var dele)
+                && dele(Value!, out var v1))
+            {
+                if (target is IGH_Goo
+                    && QType.GetRuntimeProperty("Value") is PropertyInfo prop)
+                {
+                    prop.SetValue(target, v1);
+                    return true;
+                }
+                else
+                {
+                    target = (Q)v1;
+                    return true;
+                }
             }
 
             target = (Q)Value!.ChangeType(QType);

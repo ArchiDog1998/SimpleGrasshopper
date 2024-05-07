@@ -249,7 +249,7 @@ public abstract class MethodComponent(
 
     private bool CanCreateDeclaringType(out TypeParam param)
     {
-        param = default;
+        param = default!;
         if (MethodInfo.IsStatic) return false;
         if (MethodInfo.DeclaringType is not Type t) return false;
         param = new(t, 0);
@@ -315,6 +315,8 @@ public abstract class MethodComponent(
     /// <inheritdoc/>
     protected override void SolveInstance(IGH_DataAccess DA)
     {
+        if (Instances.DocumentEditor == null) return;
+
         try
         {
             var parameters = GetParameters(DA, out var obj);

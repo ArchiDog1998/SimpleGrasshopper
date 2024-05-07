@@ -47,6 +47,24 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     internal static Dictionary<Type, Guid> PropertyComponentsGuid { get; } = [];
 
     /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public delegate bool CastDelegate(object obj, out object value);
+
+    /// <summary>
+    /// The custom cast from values.
+    /// </summary>
+    public static Dictionary<Type, CastDelegate> CastFromDict { get; } = [];
+
+    /// <summary>
+    /// The custom cast to values.
+    /// </summary>
+    public static Dictionary<Type, CastDelegate> CastToDict { get; } = [];
+
+    /// <summary>
     /// The delegate for <see cref="CustomShortcutClicked"/>
     /// </summary>
     /// <param name="key">the clicked key.</param>
