@@ -51,7 +51,11 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
         SimpleUtils.SetSpecial(ref param, Param.RawInnerTypeNoGoo,
             ParamInfo.GetCustomAttribute<AngleAttribute>() != null,
             ParamInfo.GetCustomAttribute<HiddenAttribute>() != null);
-        SetOptional(ParamInfo, owner, param);
+
+        if (owner != null)
+        {
+            SetOptional(ParamInfo, owner, param);
+        }
 
         principal = ParamInfo.GetCustomAttribute<ParamTagAttribute>() is ParamTagAttribute tag
             && SetTags(param, tag);
@@ -60,11 +64,12 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
 
         return param;
 
-        static void SetOptional(ParameterInfo info, Type? owner, IGH_Param param)
+        static void SetOptional(ParameterInfo info, Type owner, IGH_Param param)
         {
-            var data = info.DefaultValue;
+            var data = info.HasDefaultValue ? info.DefaultValue : null;
+
             if (info.GetCustomAttribute<PersistentDataAttribute>()
-                is PersistentDataAttribute persist && owner != null)
+                is PersistentDataAttribute persist)
             {
                 data = persist.GetValue(owner) ?? data;
             }
@@ -77,7 +82,6 @@ internal readonly struct ParameterParam(ParameterInfo info, int index, int metho
             {
                 param.Optional = true;
             }
-
         }
 
         static bool SetTags(IGH_Param param, ParamTagAttribute tag)
