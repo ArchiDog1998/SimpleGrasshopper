@@ -2,7 +2,7 @@
     <PropertyGroup>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Authors>秋水</Authors>
-		<Version>1.7.12</Version>
+		<Version>1.7.13</Version>
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
     </PropertyGroup>
