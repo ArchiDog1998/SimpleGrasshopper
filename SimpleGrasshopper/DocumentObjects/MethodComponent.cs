@@ -34,8 +34,10 @@ public abstract class MethodComponent(
 
     private int _methodIndex = -1;
 
-    [DocData]
-    private int MethodIndex
+    /// <summary>
+    /// The index of the method.
+    /// </summary>
+    public int MethodIndex
     {
         get => _methodIndex;
         set
