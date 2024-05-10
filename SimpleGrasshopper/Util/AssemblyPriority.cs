@@ -44,7 +44,15 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
     /// </summary>
     public static List<Type> ListTypes { get; } = [typeof(List<>), typeof(IEnumerable<>)];
 
-    internal static Dictionary<Type, Guid> PropertyComponentsGuid { get; } = [];
+    /// <summary>
+    /// Your property components guid.
+    /// </summary>
+    public static Dictionary<Type, Guid> PropertyComponentsGuid { get; } = [];
+
+    /// <summary>
+    /// The bool is for if the item is input.
+    /// </summary>
+    public static Dictionary<Guid, Action<IGH_Component, bool>> PropertyComponentCreated{ get; } = [];
 
     /// <summary>
     /// 

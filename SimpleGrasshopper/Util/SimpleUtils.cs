@@ -141,6 +141,10 @@ public static class SimpleUtils
         {
             return new Guid(ParamGuids.String);
         }
+        else if(type == typeof(byte) || type == typeof(long))
+        {
+            return new Guid(ParamGuids.Integer);
+        }
 
         var paramTypes = Instances.ComponentServer.ObjectProxies
             .Where(p =>

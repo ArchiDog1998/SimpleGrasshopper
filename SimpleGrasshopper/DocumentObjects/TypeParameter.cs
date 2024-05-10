@@ -198,16 +198,6 @@ public abstract class TypeParameter<T>()
             Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
             Instances.ActiveCanvas.InstantiateNewObject(item.Id.Value, point, false);
             Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
-
-            void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
-            {
-                foreach (var item in e.Objects)
-                {
-                    if (item is not IGH_Component comp) continue;
-                    comp.Params.Input[0].AddSource(this);
-                    item.ExpireSolution(true);
-                }
-            }
         });
 
         return result;
@@ -229,20 +219,32 @@ public abstract class TypeParameter<T>()
                 Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
                 Instances.ActiveCanvas.InstantiateNewObject(guid.Value, point, false);
                 Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
-
-                void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
-                {
-                    foreach (var item in e.Objects)
-                    {
-                        if (item is not IGH_Component comp) continue;
-                        comp.Params.Input[0].AddSource(this);
-                        item.ExpireSolution(true);
-                    }
-                }
             };
         }
 
         return item;
+    }
+
+    void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
+    {
+        foreach (var item in e.Objects)
+        {
+            if (item is not IGH_Component comp) continue;
+
+            if(AssemblyPriority.PropertyComponentCreated.TryGetValue(comp.ComponentGuid, out var action))
+            {
+                try
+                {
+                    action(comp, false);
+                }
+                catch
+                {
+
+                }
+            }
+            comp.Params.Input[0].AddSource(this);
+            item.ExpireSolution(true);
+        }
     }
 
     private ToolStripMenuItem GetCtor(Guid? guid, Action close, Dictionary<Type, Guid> dict)
@@ -263,22 +265,35 @@ public abstract class TypeParameter<T>()
             var point = this.Attributes.Pivot;
             point.X -= 200;
 
-            Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
+            Instances.ActiveCanvas.Document_ObjectsAdded += ModifyOutput;
             Instances.ActiveCanvas.InstantiateNewObject(item.Value.Id.Value, point, false);
-            Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
-
-            void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
-            {
-                foreach (var item in e.Objects)
-                {
-                    if (item is not IGH_Component comp) continue;
-                    this.AddSource(comp.Params.Output[0]);
-                    comp.ExpireSolution(true);
-                }
-            }
+            Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyOutput;
         });
 
         return result;
+    }
+
+
+    void ModifyOutput(GH_Document sender, GH_DocObjectEventArgs e)
+    {
+        foreach (var item in e.Objects)
+        {
+            if (item is not IGH_Component comp) continue;
+
+            if (AssemblyPriority.PropertyComponentCreated.TryGetValue(comp.ComponentGuid, out var action))
+            {
+                try
+                {
+                    action(comp, true);
+                }
+                catch
+                {
+
+                }
+            }
+            this.AddSource(comp.Params.Output[0]);
+            comp.ExpireSolution(true);
+        }
     }
 
     private ToolStripMenuItem GetConstructor(Guid? guid, Action close, string name = "Constructor")
@@ -294,19 +309,9 @@ public abstract class TypeParameter<T>()
                 var point = this.Attributes.Pivot;
                 point.X -= 200;
 
-                Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
+                Instances.ActiveCanvas.Document_ObjectsAdded += ModifyOutput;
                 Instances.ActiveCanvas.InstantiateNewObject(guid.Value, point, false);
-                Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
-
-                void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
-                {
-                    foreach (var item in e.Objects)
-                    {
-                        if (item is not IGH_Component comp) continue;
-                        this.AddSource(comp.Params.Output[0]);
-                        comp.ExpireSolution(true);
-                    }
-                }
+                Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyOutput;
             };
         }
         return item;
