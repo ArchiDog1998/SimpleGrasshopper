@@ -171,17 +171,42 @@ public abstract class TypeParameter<T>()
         }
     }
 
+    private readonly struct ObjectItem(Guid? id, string name)
+    {
+        public readonly Guid? Id => id;
+        public readonly string Name => name;
+        public override string ToString() => Name;
+    }
+
     private ToolStripMenuItem GetDtor(Guid? guid, Action close, Dictionary<Type, Guid> dict)
     {
         var result = GetDeconstructor(guid, close);
 
-        SimpleUtils.SearchDropdown(result.DropDown, s =>
-        {
-            foreach (var item in dict)
-            {
-                if (!item.Key.Name.Contains(s)) continue;
+        var items = dict.Select(i => new ObjectItem(i.Value, i.Key.Name.SpaceStr()));
 
-                result.DropDown.Items.Add(GetDeconstructor(item.Value, close, item.Key.Name.SpaceStr()));
+        SimpleUtils.SearchDropdown(result.DropDown, [..items], i => false, SelectionMode.One, (s, e)=>
+        {
+            if (s is not ListBox list) return;
+            var item = (ObjectItem)list.SelectedItem;
+            if (!item.Id.HasValue) return;
+
+            close();
+
+            var point = this.Attributes.Pivot;
+            point.X += 200;
+
+            Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
+            Instances.ActiveCanvas.InstantiateNewObject(item.Id.Value, point, false);
+            Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
+
+            void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
+            {
+                foreach (var item in e.Objects)
+                {
+                    if (item is not IGH_Component comp) continue;
+                    comp.Params.Input[0].AddSource(this);
+                    item.ExpireSolution(true);
+                }
             }
         });
 
@@ -224,13 +249,31 @@ public abstract class TypeParameter<T>()
     {
         var result = GetConstructor(guid, close);
 
-        SimpleUtils.SearchDropdown(result.DropDown, s =>
-        {
-            foreach (var item in dict)
-            {
-                if (!item.Key.Name.Contains(s)) continue;
+        var items = dict.Select(i => new ObjectItem(i.Value, i.Key.Name.SpaceStr()));
 
-                result.DropDown.Items.Add(GetConstructor(item.Value, close, item.Key.Name.SpaceStr()));
+        SimpleUtils.SearchDropdown(result.DropDown, [.. items], i => false, SelectionMode.One, (s, e) =>
+        {
+            if (s is not ListBox list) return;
+            var item = (ObjectItem)list.SelectedItem;
+            if (!item.Id.HasValue) return;
+
+            close();
+
+            var point = this.Attributes.Pivot;
+            point.X -= 200;
+
+            Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
+            Instances.ActiveCanvas.InstantiateNewObject(item.Id.Value, point, false);
+            Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
+
+            void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
+            {
+                foreach (var item in e.Objects)
+                {
+                    if (item is not IGH_Component comp) continue;
+                    this.AddSource(comp.Params.Output[0]);
+                    comp.ExpireSolution(true);
+                }
             }
         });
 

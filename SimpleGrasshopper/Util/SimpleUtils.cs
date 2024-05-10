@@ -11,6 +11,7 @@ using SimpleGrasshopper.DocumentObjects;
 using SimpleGrasshopper.Undo;
 using System.Collections;
 using System.ComponentModel;
+using System.Linq;
 using System.Net;
 
 namespace SimpleGrasshopper.Util;
@@ -796,7 +797,7 @@ public static class SimpleUtils
         return result;
     }
 
-    internal static void SearchDropdown(ToolStripDropDown dropdown, Action<string> updateItems)
+    internal static void SearchDropdown<T>(ToolStripDropDown dropdown, T[] items, Func<T, bool> isSelected, SelectionMode mode, EventHandler? boxSelectedValueChanged = null)
     {
         var width = (int)Math.Round(220f * GH_GraphicsUtil.UiScale);
 
@@ -811,7 +812,22 @@ public static class SimpleUtils
 
         dropdown.Items.Add(textItem);
 
+        var box = new ListBox()
+        {
+            BorderStyle = BorderStyle.FixedSingle,
+            Width = width,
+            Height = (int)Math.Round(180f * GH_GraphicsUtil.UiScale),
+            SelectionMode = mode,
+        };
+
+        GH_Component.Menu_AppendCustomItem(dropdown, box);
+
         textItem.TextChanged += (sender, e) => UpdateItems();
+
+        if (boxSelectedValueChanged != null)
+        {
+            box.SelectedValueChanged += boxSelectedValueChanged;
+        }
 
         dropdown.MaximumSize = new(500, 600);
 
@@ -823,7 +839,36 @@ public static class SimpleUtils
             {
                 dropdown.Items.RemoveAt(1);
             }
-            updateItems(textItem.Text);
+
+            box.Items.Clear();
+
+            foreach (var item in items.OrderByDescending(i => Similarity(i?.ToString() ?? string.Empty, textItem.Text)))
+            {
+                var index = box.Items.Add(item);
+                box.SetSelected(index, isSelected(item));
+            }
         }
+    }
+
+    private static readonly char[] _splitChar = [' ', ',', '、', '.', '。'];
+
+    /// <summary>
+    /// The similarity of the two texts.
+    /// </summary>
+    /// <param name="text"></param>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    public static float Similarity(string text, string key)
+    {
+        if (string.IsNullOrEmpty(text)) return 0;
+
+        var chars = text.Split(_splitChar, StringSplitOptions.RemoveEmptyEntries);
+        var keys = key.Split(_splitChar, StringSplitOptions.RemoveEmptyEntries);
+
+        var startWithCount = chars.Count(i => keys.Any(k => i.StartsWith(k, StringComparison.OrdinalIgnoreCase)));
+
+        var containCount = chars.Count(i => keys.Any(k => i.ToUpper().Contains(k.ToUpper())));
+
+        return startWithCount * 3 + containCount;
     }
 }

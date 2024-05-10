@@ -45,4 +45,6 @@ public class FieldPropInfo
 
     public static implicit operator FieldPropInfo(PropertyInfo info) => new (info);
     public static implicit operator FieldPropInfo(FieldInfo info) => new (info);
+
+    public override string ToString() => GetDocObjName();
 }

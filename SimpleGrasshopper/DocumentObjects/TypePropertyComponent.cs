@@ -357,45 +357,32 @@ public abstract class TypePropertyComponent<T>()
     {
         var result = new ToolStripMenuItem(name);
 
-        SimpleUtils.SearchDropdown(result.DropDown, UpdateItems);
-;
-        return result;
-
-        void UpdateItems(string search)
+        SimpleUtils.SearchDropdown(result.DropDown, properties, i => props.Contains(i.Name), SelectionMode.MultiSimple, (s, e) =>
         {
-            var count = properties.Length;
+            if (s is not ListBox b) return;
+            var selectedItems = b.SelectedItems.OfType<FieldPropInfo>();
 
-            for (int i = 0; i < count; i++)
+            foreach (var item in selectedItems)
             {
-                var prop = properties[i];
-
-                if (!prop.Name.Contains(search)) continue;
-
-                var item = new ToolStripMenuItem
+                if (!props.Contains(item.Name))
                 {
-                    Text = prop.GetDocObjName(),
-                    Checked = props.Contains(prop.Name),
-                    Tag = prop,
-                };
-
-                item.Click += (sender, e) =>
-                {
-                    var property = (FieldPropInfo)((ToolStripMenuItem)sender).Tag;
-                    if (item.Checked)
-                    {
-                        remove(property);
-                    }
-                    else
-                    {
-                        add(property);
-                    }
-                    this.Params.OnParametersChanged();
-                    this.ExpireSolution(true);
-                };
-
-                result.DropDown.Items.Add(item);
+                    add(item);
+                }
             }
-        }
+            foreach (var name in props)
+            {
+                if(!selectedItems.Any(i => i.Name == name))
+                {
+                    var item = b.Items.OfType<FieldPropInfo>().FirstOrDefault(i => i.Name == name);
+                    if (item != null)
+                    {
+                        remove(item);
+                    }
+                }
+            }
+        });
+
+        return result;
     }
 
     private bool _changing = false;

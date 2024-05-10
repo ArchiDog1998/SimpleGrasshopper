@@ -429,64 +429,22 @@ public abstract class MethodComponent(
         }
         else if (count > 10)
         {
-            var width = (int)Math.Round(220f * GH_GraphicsUtil.UiScale);
-
-            var textItem = new ToolStripTextBox
-            {
-                Text = string.Empty,
-                BorderStyle = BorderStyle.FixedSingle,
-                Width = width,
-                AutoSize = false,
-                ToolTipText = "Searching...",
-            };
-
-            menu.Items.Add(textItem);
-
-            var box = new ListBox()
-            {
-                BorderStyle = BorderStyle.FixedSingle,
-                Width = width,
-                Height = (int)Math.Round(150f * GH_GraphicsUtil.UiScale),
-                SelectionMode = SelectionMode.One,
-            };
+            List<MemberShowing> items = [];
             for (int i = 0; i < count; i++)
             {
                 var method = methodInfos[i];
-
-                var item = new MemberShowing(method, i);
-                box.Items.Add(item);
-                if (MethodIndex == i)
-                {
-                    box.SelectedItem = item;
-                }
+                items.Add(new MemberShowing(method, i));
             }
-            textItem.TextChanged += (sender, e) =>
-            {
-                box.Items.Clear();
-                for (int i = 0; i < count; i++)
-                {
-                    var method = methodInfos[i];
 
-                    if (!method.GetDocObjName().Contains(textItem.Text)) continue;
-
-                    var item = new MemberShowing(method, i);
-                    box.Items.Add(item);
-                    if (MethodIndex == i)
-                    {
-                        box.SelectedItem = item;
-                    }
-                }
-            };
-            box.SelectedValueChanged += (sender, e) =>
+            SimpleUtils.SearchDropdown(menu, [.. items], i => MethodIndex == i.Index, SelectionMode.One, (s, e) =>
             {
-                if (sender is not ListBox listBox
-                || listBox.SelectedItem is not MemberShowing member) return;
+                if (s is not ListBox listBox
+                    || listBox.SelectedItem is not MemberShowing member) return;
 
                 this.RecordDocumentObjectMember(nameof(MethodIndex), Undo.AfterUndo.None);
 
                 MethodIndex = member.Index;
-            };
-            GH_Component.Menu_AppendCustomItem(menu, box);
+            });
         }
         else
         {
