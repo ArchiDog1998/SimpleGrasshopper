@@ -820,7 +820,7 @@ public static class SimpleUtils
             SelectionMode = mode,
         };
 
-        GH_Component.Menu_AppendCustomItem(dropdown, box);
+        GH_DocumentObject.Menu_AppendCustomItem(dropdown, box);
 
         textItem.TextChanged += (sender, e) => UpdateItems();
 
@@ -835,11 +835,6 @@ public static class SimpleUtils
 
         void UpdateItems()
         {
-            while (dropdown.Items.Count > 1)
-            {
-                dropdown.Items.RemoveAt(1);
-            }
-
             box.Items.Clear();
 
             foreach (var item in items.OrderByDescending(i => Similarity(i?.ToString() ?? string.Empty, textItem.Text)))

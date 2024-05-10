@@ -202,29 +202,35 @@ public abstract class TypePropertyComponent<T>()
 
         if (!BeforePropertyChange(obj)) return;
 
-        object o = obj!;
-        if (SetProperty)
+        try
         {
-            foreach (var prop in _setProps)
+            object o = obj!;
+            if (SetProperty)
             {
-                prop.GetValue(DA, ref o, Params.Input[prop.Param.ParamIndex]);
+                foreach (var prop in _setProps)
+                {
+                    prop.GetValue(DA, ref o, Params.Input[prop.Param.ParamIndex]);
+                }
+            }
+
+            if (obj != null)
+            {
+                foreach (var prop in _getProps)
+                {
+                    prop.SetValue(DA, o);
+                }
+            }
+
+            obj = (T)o;
+
+            if (Type != TypePropertyType.Dtor)
+            {
+                DA.SetData(0, o);
             }
         }
-
-        if (obj != null)
+        finally
         {
-            foreach (var prop in _getProps)
-            {
-                prop.SetValue(DA, o);
-            }
-        }
-
-        obj = (T)o;
-        AfterPropertyChanged(obj);
-
-        if (Type != TypePropertyType.Dtor)
-        {
-            DA.SetData(0, o);
+            AfterPropertyChanged(obj);
         }
     }
 
@@ -369,6 +375,8 @@ public abstract class TypePropertyComponent<T>()
                     add(item);
                 }
             }
+
+            List<FieldPropInfo> removedLs = [];
             foreach (var name in props)
             {
                 if(!selectedItems.Any(i => i.Name == name))
@@ -376,10 +384,17 @@ public abstract class TypePropertyComponent<T>()
                     var item = b.Items.OfType<FieldPropInfo>().FirstOrDefault(i => i.Name == name);
                     if (item != null)
                     {
-                        remove(item);
+                        removedLs.Add(item);
                     }
                 }
             }
+
+            foreach (var item in removedLs)
+            {
+                remove(item);
+            }
+
+            this.ExpireSolution(true);
         });
 
         return result;

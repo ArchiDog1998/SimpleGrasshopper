@@ -254,8 +254,9 @@ public abstract class TypeParameter<T>()
         SimpleUtils.SearchDropdown(result.DropDown, [.. items], i => false, SelectionMode.One, (s, e) =>
         {
             if (s is not ListBox list) return;
-            var item = (ObjectItem)list.SelectedItem;
-            if (!item.Id.HasValue) return;
+            var item = list.SelectedItem as ObjectItem?;
+            if (!item.HasValue) return;
+            if (!item.Value.Id.HasValue) return;
 
             close();
 
@@ -263,7 +264,7 @@ public abstract class TypeParameter<T>()
             point.X -= 200;
 
             Instances.ActiveCanvas.Document_ObjectsAdded += ModifyInput;
-            Instances.ActiveCanvas.InstantiateNewObject(item.Id.Value, point, false);
+            Instances.ActiveCanvas.InstantiateNewObject(item.Value.Id.Value, point, false);
             Instances.ActiveCanvas.Document_ObjectsAdded -= ModifyInput;
 
             void ModifyInput(GH_Document sender, GH_DocObjectEventArgs e)
