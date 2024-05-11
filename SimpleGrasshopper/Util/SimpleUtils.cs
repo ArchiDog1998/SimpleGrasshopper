@@ -771,7 +771,7 @@ public static class SimpleUtils
             {
                 result += " ";
             }
-            result += c;
+            result += string.IsNullOrEmpty(result) ? char.ToUpper(c) : c;
             isLastUpper = char.IsUpper(c);
         }
         return result;

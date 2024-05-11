@@ -80,6 +80,26 @@ public abstract class MethodComponent(
     }
 
     /// <summary>
+    /// Add the button about if the component should add the run button.
+    /// </summary>
+    public virtual bool AddShouldRun => MethodInfo.GetCustomAttribute<RunButtonAttribute>() != null;
+
+    private bool _shouldRun = false;
+
+    /// <summary>
+    /// Should this component run the instances.
+    /// </summary>
+    public virtual bool ShouldRun 
+    {
+        get
+        {
+            if (!AddShouldRun) return true;
+            return _shouldRun;
+        }
+        set => _shouldRun = value;
+    } 
+
+    /// <summary>
     /// The declaring type of this method.
     /// </summary>
     protected virtual Type? DeclaringType { get; } = null;
@@ -318,6 +338,7 @@ public abstract class MethodComponent(
     protected override void SolveInstance(IGH_DataAccess DA)
     {
         if (Instances.DocumentEditor == null) return;
+        if (!ShouldRun) return;
 
         try
         {
@@ -491,7 +512,7 @@ public abstract class MethodComponent(
     /// <returns>the attribute you want.</returns>
     public virtual IGH_Attributes CreateAttribute()
     {
-        return new GH_ComponentAttributes(this);
+        return new SimpleComponentAttribute(this);
     }
 
     /// <inheritdoc/>

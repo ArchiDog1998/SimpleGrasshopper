@@ -97,13 +97,13 @@ internal static class BasicTests
 
     [BaseComponent("SimpleGrasshopper.GHTests.TestComponent")]
     [DocObj("Save", "S", "S")]
-
     private static GH_Surface SaveTest(MethodComponent ___instance, Curve srf)
     {
         var t = ___instance.GetType();
         return null!;
     }
 
+    [DocObj("Save", "S", "S")]
     private static void SaveTest(MethodComponent ___instance, out string output, string input = null!)
     {
         //SettingClass.RecordTestingData(___instance.OnPingDocument());
