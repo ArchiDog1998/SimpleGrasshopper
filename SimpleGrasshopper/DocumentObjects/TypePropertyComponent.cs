@@ -273,6 +273,7 @@ public abstract class TypePropertyComponent<T>()
             result.Description = description;
             result.Access = param.Access;
             this.Params.RegisterInputParam(result);
+            Params.OnParametersChanged();
         }, p =>
         {
             var index = SetPropsName.IndexOf(p.Name);
@@ -294,6 +295,7 @@ public abstract class TypePropertyComponent<T>()
             result.Description = description;
             result.Access = param.Access;
             this.Params.RegisterOutputParam(result);
+            Params.OnParametersChanged();
         }, p =>
         {
             var index = GetPropsName.IndexOf(p.Name);
@@ -330,6 +332,7 @@ public abstract class TypePropertyComponent<T>()
             }
 
             this.Params.OnParametersChanged();
+            Params.OnParametersChanged();
             this.ExpireSolution(true);
         };
         mainMenu.Items.Add(clear);
@@ -345,6 +348,7 @@ public abstract class TypePropertyComponent<T>()
         {
             _setProps[i].Param.ParamIndex--;
         }
+        Params.OnParametersChanged();
     }
 
     private void RemoveGetProps(int index)
@@ -357,6 +361,7 @@ public abstract class TypePropertyComponent<T>()
         {
             _getProps[i].Param.ParamIndex--;
         }
+        Params.OnParametersChanged();
     }
 
     private ToolStripMenuItem GetItem(string name, FieldPropInfo[] properties, List<string> props, Action<FieldPropInfo> add, Action<FieldPropInfo> remove)
