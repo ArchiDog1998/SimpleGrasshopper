@@ -1,10 +1,8 @@
 ﻿using GH_IO.Serialization;
-using Grasshopper.GUI;
 using Grasshopper.Kernel.Attributes;
 using SimpleGrasshopper.Attributes;
 using SimpleGrasshopper.Data;
 using SimpleGrasshopper.Util;
-using System.Linq;
 
 namespace SimpleGrasshopper.DocumentObjects;
 
