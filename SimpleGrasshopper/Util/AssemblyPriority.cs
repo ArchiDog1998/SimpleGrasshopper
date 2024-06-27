@@ -975,7 +975,10 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
             if (propertyInfo.GetCustomAttribute<ShortcutAttribute>() is ShortcutAttribute shortcut)
             {
-                major.ShortcutKeyDisplayString = shortcut.DisplayString ?? shortcut.ShortcutKey.ToString();
+                if (shortcut.DisplayString != null)
+                {
+                    major.ShortcutKeyDisplayString = shortcut.DisplayString;
+                }
                 major.ShortcutKeys = shortcut.ShortcutKey;
                 major.ShowShortcutKeys = shortcut.ShowShortcut;
             }
