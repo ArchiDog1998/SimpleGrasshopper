@@ -276,6 +276,20 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
 
         CreateMajorMenu(editor);
         CreateToolbar(editor);
+
+        Instances.ActiveCanvas.DocumentChanged += ActiveCanvas_DocumentChangedFinal;
+    }
+
+    private readonly List<ToolStripItem> _docItems = [];
+
+    private void ActiveCanvas_DocumentChangedFinal(GH_Canvas sender, GH_CanvasDocumentChangedEventArgs e)
+    {
+        var enable = e.NewDocument != null;
+
+        foreach (var item in _docItems)
+        {
+            item.Enabled = enable;
+        }
     }
 
     /// <summary>
@@ -310,6 +324,12 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             var button = CreateToolButton(property);
             if (button == null) continue;
             canvasToolbar.Items.Add(button);
+
+            if (property.GetCustomAttribute<DocDataAttribute>() != null)
+            {
+                button.Enabled = Instances.ActiveCanvas.Document != null;
+                _docItems.Add(button);
+            }
         }
     }
 
@@ -446,6 +466,16 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             if (property == null) continue;
 
             var items = CreateItems(property);
+
+            if (property.GetCustomAttribute<DocDataAttribute>() != null)
+            {
+                _docItems.AddRange(items);
+
+                foreach (var item in items)
+                {
+                    item.Enabled = Instances.ActiveCanvas.Document != null;
+                }
+            }
 
             var attr = property.GetCustomAttribute<ConfigAttribute>();
             var parent = attr?.Parent ?? string.Empty;
