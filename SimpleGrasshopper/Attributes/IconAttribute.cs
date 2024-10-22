@@ -10,7 +10,13 @@
 public class IconAttribute(string iconPath) : Attribute
 {
     /// <summary>
-    /// 
+    /// Te path to the icon.
     /// </summary>
     public string IconPath => iconPath;
+
+    /// <summary>
+    /// The method to get a bitmap.
+    /// </summary>
+    /// <returns></returns>
+    public virtual Bitmap? GetBitmap() => null;
 }

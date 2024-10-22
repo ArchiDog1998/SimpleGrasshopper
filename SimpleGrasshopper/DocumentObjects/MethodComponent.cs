@@ -142,9 +142,13 @@ public abstract class MethodComponent(
         {
             if (_icons.TryGetValue(MethodIndex, out Bitmap? icon)) return icon;
 
+            var iconAttribute = MethodInfo.GetCustomAttribute<IconAttribute>();
+            var iconResult = iconAttribute.GetBitmap();
+            if (iconResult != null) return iconResult;
+
             var path = MethodIndex < 0
-                ? iconPath ?? MethodInfo.GetCustomAttribute<IconAttribute>()?.IconPath
-                : MethodInfo.GetCustomAttribute<IconAttribute>()?.IconPath ?? iconPath;
+                ? iconPath ?? iconAttribute?.IconPath
+                : iconAttribute?.IconPath ?? iconPath;
 
             if (path == null) return base.Icon;
 

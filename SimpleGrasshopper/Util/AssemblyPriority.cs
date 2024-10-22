@@ -4,6 +4,7 @@ using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
 using SimpleGrasshopper.Attributes;
 using System.Drawing.Imaging;
+using System.Linq;
 
 namespace SimpleGrasshopper.Util;
 
@@ -699,10 +700,11 @@ public abstract class AssemblyPriority : GH_AssemblyPriority
             {
                 var eItem = (Enum)@enum;
 
-                var iconPath = eItem.GetCustomAttribute<IconAttribute>()?.IconPath;
+                var iconAttribute = eItem.GetCustomAttribute<IconAttribute>();
+                var iconPath = iconAttribute ?.IconPath;
 
                 var i = new ToolStripMenuItem(eItem.GetDescription(),
-                     iconPath == null ? null : GetType().Assembly.GetBitmap(iconPath),
+                     iconAttribute?.GetBitmap() ?? GetType().Assembly.GetBitmap(iconPath),
                      (s, e) =>
                 {
                     propertyInfo.SetValue(null, eItem);

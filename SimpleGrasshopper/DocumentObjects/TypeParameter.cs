@@ -26,7 +26,15 @@ public abstract class TypeParameter<T>()
         get
         {
             if (_icon != null) return _icon;
-            var path = typeof(T).GetCustomAttribute<IconAttribute>()?.IconPath;
+
+            var iconAttribute = typeof(T).GetCustomAttribute<IconAttribute>();
+            if (iconAttribute != null)
+            {
+                var iconResult = iconAttribute.GetBitmap();
+                if (iconResult != null) return iconResult;
+            }
+
+            var path = iconAttribute?.IconPath;
             if (path == null) return base.Icon;
 
             return _icon = GetType().Assembly.GetBitmap(path) ?? base.Icon;

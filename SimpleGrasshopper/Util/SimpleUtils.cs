@@ -307,8 +307,10 @@ public static class SimpleUtils
     /// <param name="assembly"></param>
     /// <param name="path">name or local path or guid or url</param>
     /// <returns>bitmap</returns>
-    public static Bitmap? GetBitmap(this Assembly assembly, string path)
+    public static Bitmap? GetBitmap(this Assembly assembly, string? path)
     {
+        if (path == null) return null;
+
         var bitmap = GetBitmapRaw(assembly, path);
         if (bitmap != null) return bitmap;
 
